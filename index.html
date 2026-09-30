@@ -83,7 +83,7 @@
                     <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
                 </h2>
                 <div id="matches-list" class="space-y-3">
-                    <p class="text-xs text-slate-500">Carregando partidas...</p>
+                    <p class="text-xs text-slate-500">A carregar partidas...</p>
                 </div>
             </div>
 
@@ -224,26 +224,50 @@
                 </p>
             </div>
 
-            <!-- FORMULÁRIO DE CADASTRO -->
-            <div id="modal-register-form" class="hidden space-y-4">
+            <!-- FORMULÁRIO DE CADASTRO COMPLETO -->
+            <div id="modal-register-form" class="hidden space-y-3">
                 <h3 class="text-lg font-black text-amber-400">Criar Nova Conta</h3>
                 <div id="register-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-lg text-xs font-semibold"></div>
+                
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Nome Completo</label>
                     <input type="text" id="reg-name" placeholder="Ex: João Silva" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">CPF</label>
+                        <input type="text" id="reg-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Telefone / WhatsApp</label>
+                        <input type="text" id="reg-phone" placeholder="(88) 99999-9999" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">E-mail Válido</label>
                     <input type="email" id="reg-email" placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
+
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">Crie uma Senha (mínimo 6 caracteres)</label>
+                    <label class="block text-xs text-slate-400 mb-1">Senha (mínimo 6 caracteres)</label>
                     <input type="password" id="reg-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
-                <button onclick="handleRegister()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition">
+
+                <!-- Checkbox de Termos e Condições -->
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="checkbox" id="reg-terms" class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-amber-500">
+                    <label for="reg-terms" class="text-[11px] text-slate-400">
+                        Concordo com os <a href="#" class="text-amber-400 underline">Termos do Site</a> e declaro ter +18 anos.
+                    </label>
+                </div>
+
+                <button onclick="handleRegister()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition mt-2">
                     Finalizar Cadastro
                 </button>
-                <p class="text-xs text-center text-slate-500 pt-2">
+                
+                <p class="text-xs text-center text-slate-500 pt-1">
                     Já possui conta? <button onclick="openAuthModal('login')" class="text-amber-400 font-bold hover:underline">Fazer Login</button>
                 </p>
             </div>
@@ -284,22 +308,39 @@
 
         async function handleRegister() {
             const name = document.getElementById('reg-name').value.trim();
+            const cpf = document.getElementById('reg-cpf').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
+            const terms = document.getElementById('reg-terms').checked;
             const errDiv = document.getElementById('register-error');
 
-            if (!name || !email || !password) {
-                errDiv.innerText = "Preencha todos os campos.";
+            if (!name || !cpf || !phone || !email || !password) {
+                errDiv.innerText = "Por favor, preencha todos os campos do formulário.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (!terms) {
+                errDiv.innerText = "Você precisa concordar com os termos para continuar.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
             const { data, error } = await supabaseClient.auth.signUp({
-                email, password, options: { data: { full_name: name } }
+                email, 
+                password, 
+                options: { 
+                    data: { 
+                        full_name: name,
+                        cpf: cpf,
+                        phone: phone
+                    } 
+                }
             });
 
             if (error) {
-                errDiv.innerText = "Erro: " + error.message;
+                errDiv.innerText = "Erro ao cadastrar: " + error.message;
                 errDiv.classList.remove('hidden');
                 return;
             }
@@ -521,7 +562,8 @@
                     <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-bold text-white">${u.full_name} (${u.role})</p>
-                            <p class="text-emerald-400 font-semibold">Saldo: R$ ${u.balance.toFixed(2)}</p>
+                            <p class="text-slate-400">CPF: ${u.cpf || 'N/A'} | Tel: ${u.phone || 'N/A'}</p>
+                            <p class="text-emerald-400 font-semibold mt-1">Saldo: R$ ${u.balance.toFixed(2)}</p>
                         </div>
                         <div class="flex space-x-2">
                             <button onclick="adminAddBalance('${u.id}', ${u.balance}, 10)" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded">+ R$ 10</button>
