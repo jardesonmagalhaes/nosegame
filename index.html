@@ -14,16 +14,21 @@
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
     <script>
-        // CREDENCIAIS E DADOS CONFIGURADOS
+        // CONFIGURAÇÃO OFICIAL
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
         const PIX_KEY = "jardesonofc@gmail.com"; 
 
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Inicialização do Supabase com persistência de sessão ativada
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: true }
+        });
+
         let currentUser = null;
         let userProfile = null;
         let selections = {};
+        let activeTab = 'client';
     </script>
 
     <!-- Header Profissional -->
@@ -45,7 +50,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação com CSS Dinâmico -->
+    <!-- Barra de Navegação e Saldo do Usuário Logado -->
     <nav id="app-nav" class="hidden bg-slate-900 border-b border-slate-800 px-4 py-2.5">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
             <div class="flex space-x-4 font-bold">
@@ -159,7 +164,7 @@
             <div id="user-tickets-list" class="space-y-3"></div>
         </section>
 
-        <!-- PAINEL DO DONO (ADMIN EXCLUSIVO) -->
+        <!-- PAINEL DO DONO (ADMIN) -->
         <section id="view-admin" class="hidden space-y-6">
             <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex justify-between items-center">
                 <div>
@@ -168,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- ENCERRAMENTO DE PARTIDAS & PLACAR (NOVO) -->
+            <!-- ENCERRAMENTO DE PARTIDAS & PLACAR -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Encerrar Partidas & Pagar Vencedores</h3>
                 <div id="admin-matches-management" class="space-y-3">
@@ -201,7 +206,7 @@
 
     </main>
 
-    <!-- MODAL DE AUTENTICAÇÃO SEPARADO -->
+    <!-- MODAL DE AUTENTICAÇÃO -->
     <div id="auth-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
@@ -277,8 +282,36 @@
         </div>
     </div>
 
-    <!-- Scripts com Lógica Totalmente Corrigida -->
+    <!-- SCRIPTS E LÓGICA REVISADOS -->
     <script>
+        // LISTENER DE AUTENTICAÇÃO PERSISTENTE
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session?.user) {
+                currentUser = session.user;
+                await checkUserProfile();
+            }
+
+            // Garante que a sessão continue ao atualizar a página
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    currentUser = session.user;
+                    await checkUserProfile();
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    userProfile = null;
+                    document.getElementById('app-nav').classList.add('hidden');
+                    document.getElementById('nav-auth-section').innerHTML = `
+                        <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-2 rounded-lg font-semibold border border-slate-700 transition">Entrar</button>
+                        <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-lg font-extrabold shadow-lg transition">Criar Conta</button>
+                    `;
+                    switchTab('client');
+                }
+            });
+
+            loadMatches();
+        });
+
         function openAuthModal(mode) {
             document.getElementById('auth-modal').classList.remove('hidden');
             document.getElementById('login-error').classList.add('hidden');
@@ -297,15 +330,15 @@
             document.getElementById('auth-modal').classList.add('hidden');
         }
 
-        // MUDANÇA DE ABAS COM CSS CORRIGIDO DYNAMICAMENTE
         function switchTab(tab) {
+            activeTab = tab;
             ['client', 'wallet', 'my-tickets', 'admin'].forEach(t => {
                 const el = document.getElementById(`view-${t}`);
                 if (el) el.classList.add('hidden');
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
-            // Corrige as cores das abas
+            // Correção visual dinâmica do CSS da barra de navegação
             document.querySelectorAll('.nav-tab-btn').forEach(btn => {
                 btn.classList.remove('text-amber-400', 'border-b-2', 'border-amber-400');
                 btn.classList.add('text-slate-400');
@@ -335,13 +368,13 @@
             const errDiv = document.getElementById('register-error');
 
             if (!name || !cpf || !phone || !email || !password) {
-                errDiv.innerText = "Por favor, preencha todos os campos do formulário.";
+                errDiv.innerText = "Por favor, preencha todos os campos.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
             if (!terms) {
-                errDiv.innerText = "Você precisa concordar com os termos para continuar.";
+                errDiv.innerText = "Você precisa aceitar os termos.";
                 errDiv.classList.remove('hidden');
                 return;
             }
@@ -359,7 +392,6 @@
 
             alert("Conta criada com sucesso!");
             closeAuthModal();
-            handleLoginDirect(email, password);
         }
 
         async function handleLogin() {
@@ -368,7 +400,7 @@
             const errDiv = document.getElementById('login-error');
 
             if (!email || !password) {
-                errDiv.innerText = "Informe o e-mail e a senha.";
+                errDiv.innerText = "Informe e-mail e senha.";
                 errDiv.classList.remove('hidden');
                 return;
             }
@@ -385,14 +417,6 @@
             await checkUserProfile();
         }
 
-        async function handleLoginDirect(email, password) {
-            const { data } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (data?.user) {
-                currentUser = data.user;
-                await checkUserProfile();
-            }
-        }
-
         async function checkUserProfile() {
             if (!currentUser) return;
             const { data } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
@@ -405,7 +429,7 @@
                     <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-2 py-1 rounded hover:bg-slate-700">Sair</button>
                 `;
                 if (data.role === 'ADMIN') document.getElementById('nav-btn-admin').classList.remove('hidden');
-                switchTab('client');
+                switchTab(activeTab);
             }
         }
 
@@ -508,13 +532,14 @@
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
-            // Desconta saldo
+            // 1. Desconta o saldo do cliente no banco
             const newBalance = userProfile.balance - stake;
-            await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
+            const { error: balErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
+            if (balErr) return alert("Erro ao atualizar saldo: " + balErr.message);
 
-            // Grava bilhete com a primeira seleção vinculada
+            // 2. Grava o bilhete relacionando partida e mercado
             const firstSelection = selections[keys[0]];
-            await supabaseClient.from('tickets').insert([{
+            const { error: ticketErr } = await supabaseClient.from('tickets').insert([{
                 code: ticketCode, 
                 user_id: currentUser.id,
                 match_id: firstSelection.matchId,
@@ -525,9 +550,12 @@
                 status: 'ACTIVE'
             }]);
 
+            if (ticketErr) return alert("Erro ao registrar bilhete: " + ticketErr.message);
+
             alert("Aposta confirmada com sucesso!");
             selections = {};
-            checkUserProfile();
+            renderCart();
+            await checkUserProfile();
             switchTab('my-tickets');
         }
 
@@ -549,35 +577,50 @@
         }
 
         async function loadUserTickets() {
-            const { data: tickets } = await supabaseClient.from('tickets').select('*, matches(home_team, away_team)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            if (!currentUser) return;
+            const { data: tickets, error } = await supabaseClient
+                .from('tickets')
+                .select('*, matches(home_team, away_team)')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
             const container = document.getElementById('user-tickets-list');
-            if (!tickets || tickets.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete encontrado.</p>`;
+            if (error) {
+                container.innerHTML = `<p class="text-xs text-rose-500">Erro ao carregar bilhetes: ${error.message}</p>`;
                 return;
             }
+
+            if (!tickets || tickets.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete cadastrado ainda.</p>`;
+                return;
+            }
+
             container.innerHTML = '';
             tickets.forEach(t => {
-                let statusBadge = '<span class="text-amber-400">Em Andamento</span>';
-                if (t.status === 'WON') statusBadge = '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> GANHOU</span>';
-                if (t.status === 'LOST') statusBadge = '<span class="text-rose-400 font-bold"><i class="fa-solid fa-circle-xmark"></i> PERDEU</span>';
+                let statusBadge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Em Andamento</span>';
+                if (t.status === 'WON') statusBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-circle-check mr-1"></i> GANHOU</span>';
+                if (t.status === 'LOST') statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> PERDEU</span>';
+
+                let marketText = t.selected_market === 'HOME' ? 'Casa' : (t.selected_market === 'AWAY' ? 'Fora' : 'Empate');
 
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
-                        <div class="flex justify-between font-bold">
-                            <span>#${t.code}</span>
-                            <span>${statusBadge}</span>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-2 shadow-lg">
+                        <div class="flex justify-between items-center font-bold">
+                            <span class="text-amber-400">#${t.code}</span>
+                            <div>${statusBadge}</div>
                         </div>
-                        <p class="text-slate-300 font-semibold">${t.matches?.home_team || 'Partida'} vs ${t.matches?.away_team || ''}</p>
-                        <div class="flex justify-between text-slate-400 pt-1">
-                            <span>Apostado: R$ ${t.stake_amount.toFixed(2)}</span>
-                            <span>Retorno: R$ ${t.potential_payout.toFixed(2)}</span>
+                        <p class="text-sm font-extrabold text-white">${t.matches?.home_team || 'Partida'} <span class="text-xs text-slate-500 font-normal">VS</span> ${t.matches?.away_team || ''}</p>
+                        <p class="text-slate-400">Palpite: <strong class="text-white">${marketText}</strong> @ Odd ${t.total_odds.toFixed(2)}</p>
+                        <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800/80">
+                            <span>Apostado: <strong>R$ ${t.stake_amount.toFixed(2)}</strong></span>
+                            <span>Retorno Possível: <strong class="text-emerald-400">R$ ${t.potential_payout.toFixed(2)}</strong></span>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // --- GESTÃO E ENCERRAMENTO DE PARTIDAS (NOVO) ---
+        // GESTÃO E LIQUIDAÇÃO DE PARTIDAS
         async function loadAdminMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('admin-matches-management');
@@ -588,16 +631,16 @@
             container.innerHTML = '';
             matches.forEach(m => {
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center text-xs gap-3">
                         <div>
-                            <p class="font-bold text-white">${m.home_team} VS ${m.away_team}</p>
-                            <p class="text-slate-400">Odds: Casa (${m.odd_home}) | Empate (${m.odd_draw}) | Fora (${m.odd_away})</p>
+                            <p class="font-extrabold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
+                            <p class="text-slate-400 mt-0.5">Odds: Casa (${m.odd_home.toFixed(2)}) | Empate (${m.odd_draw.toFixed(2)}) | Fora (${m.odd_away.toFixed(2)})</p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="score-home-${m.id}" placeholder="Gols Casa" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center text-white">
+                        <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                            <input type="number" id="score-home-${m.id}" placeholder="Casa" class="w-16 bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-white font-bold">
                             <span class="text-slate-500 font-bold">x</span>
-                            <input type="number" id="score-away-${m.id}" placeholder="Gols Fora" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center text-white">
-                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-extrabold px-3 py-1 rounded hover:bg-amber-400">
+                            <input type="number" id="score-away-${m.id}" placeholder="Fora" class="w-16 bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-white font-bold">
+                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-lg transition">
                                 Liquidar
                             </button>
                         </div>
@@ -615,25 +658,26 @@
             const scoreHome = parseInt(scoreHomeInput);
             const scoreAway = parseInt(scoreAwayInput);
 
-            // Determinar resultado ('HOME', 'DRAW', 'AWAY')
             let winningMarket = 'DRAW';
             if (scoreHome > scoreAway) winningMarket = 'HOME';
             if (scoreAway > scoreHome) winningMarket = 'AWAY';
 
-            // 1. Atualiza partida para encerra
-            await supabaseClient.from('matches').update({
+            // 1. Marca a partida como FINISHED
+            const { error: matchErr } = await supabaseClient.from('matches').update({
                 status: 'FINISHED',
                 score_home: scoreHome,
                 score_away: scoreAway
             }).eq('id', matchId);
 
-            // 2. Processa bilhetes associados
+            if (matchErr) return alert("Erro ao encerrar partida: " + matchErr.message);
+
+            // 2. Busca bilhetes ativos desta partida
             const { data: tickets } = await supabaseClient.from('tickets').select('*').eq('match_id', matchId).eq('status', 'ACTIVE');
 
-            if (tickets) {
+            if (tickets && tickets.length > 0) {
                 for (const ticket of tickets) {
                     if (ticket.selected_market === winningMarket) {
-                        // GANHOU: Paga o prêmio direto no saldo
+                        // GANHOU: Paga o prêmio no saldo do apostador
                         await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
                         const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
                         if (user) {
@@ -647,7 +691,7 @@
                 }
             }
 
-            alert("Partida encerrada e prêmios pagos aos vencedores!");
+            alert("Partida encerrada com sucesso! Todos os bilhetes foram calculados e os vencedores pagos.");
             loadAdminMatches();
             loadMatches();
         }
@@ -684,7 +728,7 @@
 
         async function adminSetBalance(userId) {
             const val = prompt("Digite o novo saldo exato:");
-            if (val !== null) {
+            if (val !== null && val !== '') {
                 await supabaseClient.from('profiles').update({ balance: parseFloat(val) }).eq('id', userId);
                 alert("Saldo alterado!");
                 loadAdminUsers();
@@ -701,11 +745,16 @@
 
             if (!home || !away || !time || !oddHome || !oddDraw || !oddAway) return alert("Preencha todos os campos.");
 
-            await supabaseClient.from('matches').insert([{
+            const { error } = await supabaseClient.from('matches').insert([{
                 home_team: home, away_team: away, match_time: time,
-                odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway
+                odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway, status: 'OPEN'
             }]);
-            alert("Partida cadastrada!");
+
+            if (error) return alert("Erro ao criar partida: " + error.message);
+
+            alert("Partida cadastrada com sucesso!");
+            document.getElementById('admin-home').value = '';
+            document.getElementById('admin-away').value = '';
             loadMatches();
             loadAdminMatches();
         }
