@@ -14,14 +14,11 @@
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
     <script>
-        // =========================================================================
-        // SUAS CREDENCIAIS E DADOS REAIS CONFIGURADOS
-        // =========================================================================
+        // CREDENCIAIS E DADOS CONFIGURADOS
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
         const PIX_KEY = "jardesonofc@gmail.com"; 
-        // =========================================================================
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
@@ -32,12 +29,11 @@
     <!-- Header Profissional -->
     <header class="bg-slate-900/90 border-b border-slate-800 p-4 sticky top-0 z-40 backdrop-blur-md">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('client')">
                 <i class="fa-solid fa-trophy text-amber-400 text-2xl"></i>
                 <h1 class="text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
             </div>
 
-            <!-- Área de Botões Deslogado / Perfil Logado -->
             <div id="nav-auth-section" class="flex items-center space-x-2">
                 <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-2 rounded-lg font-semibold border border-slate-700 transition">
                     Entrar
@@ -49,20 +45,20 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação e Saldo do Usuário Logado -->
+    <!-- Barra de Navegação com CSS Dinâmico -->
     <nav id="app-nav" class="hidden bg-slate-900 border-b border-slate-800 px-4 py-2.5">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
             <div class="flex space-x-4 font-bold">
-                <button onclick="switchTab('client')" id="tab-client-btn" class="text-amber-400 border-b-2 border-amber-400 pb-1">
+                <button onclick="switchTab('client')" id="nav-btn-client" class="nav-tab-btn text-amber-400 border-b-2 border-amber-400 pb-1">
                     <i class="fa-solid fa-futbol mr-1"></i> Partidas
                 </button>
-                <button onclick="switchTab('my-tickets')" class="text-slate-400 hover:text-white pb-1">
+                <button onclick="switchTab('my-tickets')" id="nav-btn-my-tickets" class="nav-tab-btn text-slate-400 hover:text-white pb-1">
                     <i class="fa-solid fa-receipt mr-1"></i> Meus Bilhetes
                 </button>
-                <button onclick="switchTab('wallet')" class="text-slate-400 hover:text-white pb-1">
+                <button onclick="switchTab('wallet')" id="nav-btn-wallet" class="nav-tab-btn text-slate-400 hover:text-white pb-1">
                     <i class="fa-solid fa-wallet mr-1"></i> Carteira / Pix
                 </button>
-                <button onclick="switchTab('admin')" id="tab-admin-btn" class="hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1">
+                <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-tab-btn hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1">
                     <i class="fa-solid fa-shield-halved mr-1"></i> Painel do Dono
                 </button>
             </div>
@@ -83,7 +79,7 @@
                     <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
                 </h2>
                 <div id="matches-list" class="space-y-3">
-                    <p class="text-xs text-slate-500">A carregar partidas...</p>
+                    <p class="text-xs text-slate-500">Carregando partidas...</p>
                 </div>
             </div>
 
@@ -163,12 +159,20 @@
             <div id="user-tickets-list" class="space-y-3"></div>
         </section>
 
-        <!-- PAINEL DO DONO (ADMIN) -->
+        <!-- PAINEL DO DONO (ADMIN EXCLUSIVO) -->
         <section id="view-admin" class="hidden space-y-6">
             <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex justify-between items-center">
                 <div>
                     <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i> Painel do Administrador</h2>
                     <p class="text-xs text-slate-400">Acesso restrito ao Dono da Banca.</p>
+                </div>
+            </div>
+
+            <!-- ENCERRAMENTO DE PARTIDAS & PLACAR (NOVO) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Encerrar Partidas & Pagar Vencedores</h3>
+                <div id="admin-matches-management" class="space-y-3">
+                    <p class="text-xs text-slate-500">Carregando partidas abertas...</p>
                 </div>
             </div>
 
@@ -197,7 +201,7 @@
 
     </main>
 
-    <!-- ================= MODAL DE AUTENTICAÇÃO SEPARADO ================= -->
+    <!-- MODAL DE AUTENTICAÇÃO SEPARADO -->
     <div id="auth-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
@@ -255,7 +259,6 @@
                     <input type="password" id="reg-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
 
-                <!-- Checkbox de Termos e Condições -->
                 <div class="flex items-center space-x-2 pt-1">
                     <input type="checkbox" id="reg-terms" class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-amber-500 focus:ring-amber-500">
                     <label for="reg-terms" class="text-[11px] text-slate-400">
@@ -274,7 +277,7 @@
         </div>
     </div>
 
-    <!-- Scripts da Lógica -->
+    <!-- Scripts com Lógica Totalmente Corrigida -->
     <script>
         function openAuthModal(mode) {
             document.getElementById('auth-modal').classList.remove('hidden');
@@ -294,6 +297,7 @@
             document.getElementById('auth-modal').classList.add('hidden');
         }
 
+        // MUDANÇA DE ABAS COM CSS CORRIGIDO DYNAMICAMENTE
         function switchTab(tab) {
             ['client', 'wallet', 'my-tickets', 'admin'].forEach(t => {
                 const el = document.getElementById(`view-${t}`);
@@ -301,9 +305,24 @@
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
+            // Corrige as cores das abas
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.classList.remove('text-amber-400', 'border-b-2', 'border-amber-400');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeBtn = document.getElementById(`nav-btn-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-amber-400', 'border-b-2', 'border-amber-400');
+            }
+
             if (tab === 'client') loadMatches();
             if (tab === 'my-tickets') loadUserTickets();
-            if (tab === 'admin') loadAdminUsers();
+            if (tab === 'admin') {
+                loadAdminUsers();
+                loadAdminMatches();
+            }
         }
 
         async function handleRegister() {
@@ -328,15 +347,8 @@
             }
 
             const { data, error } = await supabaseClient.auth.signUp({
-                email, 
-                password, 
-                options: { 
-                    data: { 
-                        full_name: name,
-                        cpf: cpf,
-                        phone: phone
-                    } 
-                }
+                email, password, 
+                options: { data: { full_name: name, cpf: cpf, phone: phone } }
             });
 
             if (error) {
@@ -392,7 +404,7 @@
                     <span class="text-xs text-slate-300 font-semibold mr-2"><i class="fa-solid fa-user text-amber-400"></i> ${data.full_name}</span>
                     <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-2 py-1 rounded hover:bg-slate-700">Sair</button>
                 `;
-                if (data.role === 'ADMIN') document.getElementById('tab-admin-btn').classList.remove('hidden');
+                if (data.role === 'ADMIN') document.getElementById('nav-btn-admin').classList.remove('hidden');
                 switchTab('client');
             }
         }
@@ -421,15 +433,15 @@
                             <span class="w-2/5 text-left">${m.away_team}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-3">
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
                                 <span class="block text-xs text-slate-400">Casa</span>
                                 <span class="font-bold text-amber-400">${m.odd_home.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'Empate', ${m.odd_draw})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
                                 <span class="block text-xs text-slate-400">Empate</span>
                                 <span class="font-bold text-amber-400">${m.odd_draw.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
                                 <span class="block text-xs text-slate-400">Fora</span>
                                 <span class="font-bold text-amber-400">${m.odd_away.toFixed(2)}</span>
                             </button>
@@ -439,8 +451,8 @@
             });
         }
 
-        function addSelection(matchId, matchTitle, option, odd) {
-            selections[matchId] = { matchTitle, option, odd };
+        function addSelection(matchId, matchTitle, marketType, optionName, odd) {
+            selections[matchId] = { matchId, matchTitle, marketType, optionName, odd };
             renderCart();
         }
 
@@ -465,7 +477,7 @@
                     <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-semibold text-slate-200">${item.matchTitle}</p>
-                            <p class="text-amber-400 font-medium">${item.option} @ ${item.odd.toFixed(2)}</p>
+                            <p class="text-amber-400 font-medium">${item.optionName} @ ${item.odd.toFixed(2)}</p>
                         </div>
                         <button onclick="delete selections['${id}']; renderCart();" class="text-slate-500 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
                     </div>
@@ -496,13 +508,21 @@
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
+            // Desconta saldo
             const newBalance = userProfile.balance - stake;
             await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
 
+            // Grava bilhete com a primeira seleção vinculada
+            const firstSelection = selections[keys[0]];
             await supabaseClient.from('tickets').insert([{
-                code: ticketCode, user_id: currentUser.id,
-                stake_amount: stake, total_odds: totalOdds,
-                potential_payout: payout, status: 'ACTIVE'
+                code: ticketCode, 
+                user_id: currentUser.id,
+                match_id: firstSelection.matchId,
+                selected_market: firstSelection.marketType,
+                stake_amount: stake, 
+                total_odds: totalOdds,
+                potential_payout: payout, 
+                status: 'ACTIVE'
             }]);
 
             alert("Aposta confirmada com sucesso!");
@@ -529,7 +549,7 @@
         }
 
         async function loadUserTickets() {
-            const { data: tickets } = await supabaseClient.from('tickets').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            const { data: tickets } = await supabaseClient.from('tickets').select('*, matches(home_team, away_team)').eq('user_id', currentUser.id).order('created_at', { ascending: false });
             const container = document.getElementById('user-tickets-list');
             if (!tickets || tickets.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete encontrado.</p>`;
@@ -537,19 +557,99 @@
             }
             container.innerHTML = '';
             tickets.forEach(t => {
+                let statusBadge = '<span class="text-amber-400">Em Andamento</span>';
+                if (t.status === 'WON') statusBadge = '<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> GANHOU</span>';
+                if (t.status === 'LOST') statusBadge = '<span class="text-rose-400 font-bold"><i class="fa-solid fa-circle-xmark"></i> PERDEU</span>';
+
                 container.innerHTML += `
                     <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
                         <div class="flex justify-between font-bold">
                             <span>#${t.code}</span>
-                            <span class="text-emerald-400">${t.status}</span>
+                            <span>${statusBadge}</span>
                         </div>
-                        <div class="flex justify-between text-slate-400">
-                            <span>Valor: R$ ${t.stake_amount.toFixed(2)}</span>
+                        <p class="text-slate-300 font-semibold">${t.matches?.home_team || 'Partida'} vs ${t.matches?.away_team || ''}</p>
+                        <div class="flex justify-between text-slate-400 pt-1">
+                            <span>Apostado: R$ ${t.stake_amount.toFixed(2)}</span>
                             <span>Retorno: R$ ${t.potential_payout.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        // --- GESTÃO E ENCERRAMENTO DE PARTIDAS (NOVO) ---
+        async function loadAdminMatches() {
+            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
+            const container = document.getElementById('admin-matches-management');
+            if (!matches || matches.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhuma partida aberta para encerramento.</p>`;
+                return;
+            }
+            container.innerHTML = '';
+            matches.forEach(m => {
+                container.innerHTML += `
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-white">${m.home_team} VS ${m.away_team}</p>
+                            <p class="text-slate-400">Odds: Casa (${m.odd_home}) | Empate (${m.odd_draw}) | Fora (${m.odd_away})</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="score-home-${m.id}" placeholder="Gols Casa" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center text-white">
+                            <span class="text-slate-500 font-bold">x</span>
+                            <input type="number" id="score-away-${m.id}" placeholder="Gols Fora" class="w-16 bg-slate-900 border border-slate-700 rounded p-1 text-center text-white">
+                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-extrabold px-3 py-1 rounded hover:bg-amber-400">
+                                Liquidar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function adminFinishMatch(matchId) {
+            const scoreHomeInput = document.getElementById(`score-home-${matchId}`).value;
+            const scoreAwayInput = document.getElementById(`score-away-${matchId}`).value;
+
+            if (scoreHomeInput === '' || scoreAwayInput === '') return alert("Digite os placares reais da partida.");
+
+            const scoreHome = parseInt(scoreHomeInput);
+            const scoreAway = parseInt(scoreAwayInput);
+
+            // Determinar resultado ('HOME', 'DRAW', 'AWAY')
+            let winningMarket = 'DRAW';
+            if (scoreHome > scoreAway) winningMarket = 'HOME';
+            if (scoreAway > scoreHome) winningMarket = 'AWAY';
+
+            // 1. Atualiza partida para encerra
+            await supabaseClient.from('matches').update({
+                status: 'FINISHED',
+                score_home: scoreHome,
+                score_away: scoreAway
+            }).eq('id', matchId);
+
+            // 2. Processa bilhetes associados
+            const { data: tickets } = await supabaseClient.from('tickets').select('*').eq('match_id', matchId).eq('status', 'ACTIVE');
+
+            if (tickets) {
+                for (const ticket of tickets) {
+                    if (ticket.selected_market === winningMarket) {
+                        // GANHOU: Paga o prêmio direto no saldo
+                        await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
+                        const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
+                        if (user) {
+                            const updatedBalance = user.balance + ticket.potential_payout;
+                            await supabaseClient.from('profiles').update({ balance: updatedBalance }).eq('id', ticket.user_id);
+                        }
+                    } else {
+                        // PERDEU
+                        await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', ticket.id);
+                    }
+                }
+            }
+
+            alert("Partida encerrada e prêmios pagos aos vencedores!");
+            loadAdminMatches();
+            loadMatches();
         }
 
         async function loadAdminUsers() {
@@ -607,6 +707,7 @@
             }]);
             alert("Partida cadastrada!");
             loadMatches();
+            loadAdminMatches();
         }
     </script>
 </body>
