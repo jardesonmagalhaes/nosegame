@@ -15,15 +15,16 @@
 
     <script>
         // =========================================================================
-        // PREENCHA AQUI COM AS SUAS INFORMAÇÕES
+        // PREENCHA AQUI COM AS SUAS INFORMAÇÕES DO SUPABASE
         // =========================================================================
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
-        const ADMIN_WHATSAPP = "5588997263753"; // Seu número com DDD (ex: 5588999999999)
-        const PIX_KEY = "jardesonofc@gmail.com"; // Sua chave Pix para receber os valores
+        const ADMIN_WHATSAPP = "5588997263753"; 
+        const PIX_KEY = "jardesonofc@gmail.com"; 
         // =========================================================================
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Inicialização única do cliente Supabase
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
         let userRole = 'CLIENT';
         let selections = {};
@@ -175,7 +176,7 @@
 
             if (!name || !email || !password) return alert("Preencha todos os campos.");
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseClient.auth.signUp({
                 email, password,
                 options: { data: { full_name: name } }
             });
@@ -189,7 +190,7 @@
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
 
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) return alert("Erro no login: " + error.message);
 
             currentUser = data.user;
@@ -198,7 +199,7 @@
 
         async function checkUserProfile() {
             if (!currentUser) return;
-            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+            const { data } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
             if (data) {
                 userRole = data.role;
                 document.getElementById('app-nav').classList.remove('hidden');
@@ -212,12 +213,12 @@
         }
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.reload();
         }
 
         async function loadMatches() {
-            const { data: matches } = await supabase.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
+            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('matches-list');
             if (!matches || matches.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto no momento.</p>`;
@@ -314,7 +315,7 @@
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
-            const { error } = await supabase.from('tickets').insert([{
+            const { error } = await supabaseClient.from('tickets').insert([{
                 code: ticketCode,
                 user_id: currentUser.id,
                 stake_amount: stake,
@@ -337,7 +338,7 @@
         }
 
         async function loadUserTickets() {
-            const { data: tickets } = await supabase.from('tickets').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            const { data: tickets } = await supabaseClient.from('tickets').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
             const container = document.getElementById('user-tickets-list');
             if (!tickets || tickets.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete encontrado.</p>`;
@@ -371,7 +372,7 @@
 
             if (!home || !away || !time || !oddHome || !oddDraw || !oddAway) return alert("Preencha todos os campos do jogo.");
 
-            const { error } = await supabase.from('matches').insert([{
+            const { error } = await supabaseClient.from('matches').insert([{
                 home_team: home, away_team: away, match_time: time,
                 odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway
             }]);
@@ -382,7 +383,7 @@
         }
 
         async function loadAdminTickets() {
-            const { data: tickets } = await supabase.from('tickets').select('*, profiles(full_name)').order('created_at', { ascending: false });
+            const { data: tickets } = await supabaseClient.from('tickets').select('*, profiles(full_name)').order('created_at', { ascending: false });
             const container = document.getElementById('admin-tickets-list');
             if (!tickets || tickets.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete para validar.</p>`;
@@ -407,7 +408,7 @@
         }
 
         async function adminApproveTicket(ticketId) {
-            const { error } = await supabase.from('tickets').update({ status: 'ACTIVE' }).eq('id', ticketId);
+            const { error } = await supabaseClient.from('tickets').update({ status: 'ACTIVE' }).eq('id', ticketId);
             if (error) return alert("Erro ao aprovar: " + error.message);
             alert("Aposta aprovada!");
             loadAdminTickets();
