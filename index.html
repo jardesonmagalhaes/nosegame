@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArenaBet - Banca de Apostas</title>
+    <title>ArenaBet - Aposta Esportiva Privada</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
     <script>
-        // CONFIGURAÇÕES DO SUPABASE
+        // =========================================================================
+        // SUAS CREDENCIAIS E DADOS REAIS CONFIGURADOS
+        // =========================================================================
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
         const PIX_KEY = "jardesonofc@gmail.com"; 
+        // =========================================================================
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let currentUser = null;
@@ -23,90 +29,94 @@
         let selections = {};
     </script>
 
-    <!-- Header -->
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
+    <!-- Header Profissional -->
+    <header class="bg-slate-900/90 border-b border-slate-800 p-4 sticky top-0 z-40 backdrop-blur-md">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-trophy text-amber-400 text-2xl"></i>
-                <h1 class="text-xl font-bold tracking-wider text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
+                <h1 class="text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
             </div>
-            <div id="nav-auth-section">
-                <button onclick="switchTab('login')" class="text-xs bg-amber-500 text-slate-950 px-3 py-1.5 rounded-lg font-bold">Entrar / Cadastrar</button>
+
+            <!-- Área de Botões Deslogado / Perfil Logado -->
+            <div id="nav-auth-section" class="flex items-center space-x-2">
+                <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-2 rounded-lg font-semibold border border-slate-700 transition">
+                    Entrar
+                </button>
+                <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-lg font-extrabold shadow-lg transition">
+                    Criar Conta
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Navegação -->
-    <nav id="app-nav" class="hidden bg-slate-900/80 border-b border-slate-800 px-4 py-2">
+    <!-- Barra de Navegação e Saldo do Usuário Logado -->
+    <nav id="app-nav" class="hidden bg-slate-900 border-b border-slate-800 px-4 py-2.5">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
-            <div class="flex space-x-4 font-semibold">
-                <button onclick="switchTab('client')" id="tab-client-btn" class="text-amber-400 border-b-2 border-amber-400 pb-1"><i class="fa-solid fa-futbol mr-1"></i> Jogos</button>
-                <button onclick="switchTab('my-tickets')" class="text-slate-400 hover:text-white pb-1"><i class="fa-solid fa-ticket mr-1"></i> Meus Bilhetes</button>
-                <button onclick="switchTab('wallet')" class="text-slate-400 hover:text-white pb-1"><i class="fa-solid fa-wallet mr-1"></i> Carteira</button>
-                <button onclick="switchTab('admin')" id="tab-admin-btn" class="hidden text-rose-400 font-bold pb-1"><i class="fa-solid fa-user-shield mr-1"></i> Painel do Dono</button>
+            <div class="flex space-x-4 font-bold">
+                <button onclick="switchTab('client')" id="tab-client-btn" class="text-amber-400 border-b-2 border-amber-400 pb-1">
+                    <i class="fa-solid fa-futbol mr-1"></i> Partidas
+                </button>
+                <button onclick="switchTab('my-tickets')" class="text-slate-400 hover:text-white pb-1">
+                    <i class="fa-solid fa-receipt mr-1"></i> Meus Bilhetes
+                </button>
+                <button onclick="switchTab('wallet')" class="text-slate-400 hover:text-white pb-1">
+                    <i class="fa-solid fa-wallet mr-1"></i> Carteira / Pix
+                </button>
+                <button onclick="switchTab('admin')" id="tab-admin-btn" class="hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Painel do Dono
+                </button>
             </div>
-            <!-- Exibição do Saldo do Cliente -->
-            <div class="bg-slate-950 border border-emerald-500/30 px-3 py-1 rounded-full font-bold text-emerald-400 flex items-center">
-                <i class="fa-solid fa-coins mr-1.5"></i> Saldo: R$ <span id="user-balance-display">0,00</span>
+
+            <div class="bg-slate-950 border border-emerald-500/40 px-3.5 py-1 rounded-full font-bold text-emerald-400 flex items-center shadow-inner">
+                <i class="fa-solid fa-coins mr-1.5 text-xs"></i> Saldo: R$ <span id="user-balance-display">0,00</span>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto p-4 md:p-6">
+    <!-- Conteúdo Principal -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 w-full flex-1">
 
-        <!-- LOGIN -->
-        <section id="view-login" class="max-w-md mx-auto bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl mt-8">
-            <h2 class="text-lg font-bold text-center text-amber-400 mb-4">Acesse sua Conta</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Nome Completo</label>
-                    <input type="text" id="auth-name" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">E-mail</label>
-                    <input type="email" id="auth-email" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Senha</label>
-                    <input type="password" id="auth-password" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
-                </div>
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="handleLogin()" class="bg-amber-500 text-slate-950 font-bold py-2.5 rounded-lg text-xs">Entrar</button>
-                    <button onclick="handleSignUp()" class="bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-xs border border-slate-700">Criar Conta</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TELA DO CLIENTE (JOGOS) -->
-        <section id="view-client" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- TELA DO CLIENTE (JOGOS E CADERNO) -->
+        <section id="view-client" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-4">
-                <h2 class="text-base font-semibold text-slate-300"><i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis</h2>
-                <div id="matches-list" class="space-y-3"></div>
+                <h2 class="text-base font-bold text-slate-300 flex items-center">
+                    <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
+                </h2>
+                <div id="matches-list" class="space-y-3">
+                    <p class="text-xs text-slate-500">Carregando partidas...</p>
+                </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl h-fit space-y-4">
-                <h3 class="text-base font-bold text-slate-200 border-b border-slate-800 pb-3 flex justify-between items-center">
-                    <span><i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Cupom de Aposta</span>
-                    <span id="items-count" class="text-xs bg-amber-500 text-slate-950 font-extrabold px-2 py-0.5 rounded-full">0</span>
+            <!-- Cupom de Aposta -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl h-fit space-y-4">
+                <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <span><i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Boletim de Aposta</span>
+                    <span id="items-count" class="text-xs bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">0</span>
                 </h3>
+
                 <div id="cart-items" class="py-2 space-y-2 max-h-60 overflow-y-auto">
                     <p class="text-xs text-slate-500 text-center">Nenhum palpite selecionado.</p>
                 </div>
+
                 <div class="border-t border-slate-800 pt-3 space-y-3">
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-sm font-semibold">
                         <span class="text-slate-400">Cotação Total:</span>
-                        <span id="total-odds" class="font-bold text-amber-400">1.00</span>
+                        <span id="total-odds" class="font-extrabold text-amber-400">1.00</span>
                     </div>
+
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$)</label>
-                        <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-semibold">
+                        <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:outline-none focus:border-amber-500">
                     </div>
-                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2.5 flex justify-between items-center">
-                        <span class="text-xs text-emerald-400 font-semibold">Retorno Possível:</span>
-                        <span id="potential-payout" class="text-base font-extrabold text-emerald-400">R$ 0,00</span>
+
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex justify-between items-center">
+                        <span class="text-xs text-emerald-400 font-bold">Retorno Possível:</span>
+                        <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
                     </div>
-                    <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-lg text-sm transition">
-                        Apostar Usando Saldo
+
+                    <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg">
+                        Confirmar Aposta
                     </button>
                 </div>
             </div>
@@ -115,28 +125,32 @@
         <!-- TELA CARTEIRA (DEPÓSITO & SAQUE) -->
         <section id="view-wallet" class="hidden max-w-xl mx-auto space-y-6">
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-                <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-qrcode mr-2"></i> Depositar Saldo</h3>
-                <p class="text-xs text-slate-400">Faça o Pix para a chave abaixo e envie o comprovante para o Dono liberar seus créditos no site.</p>
-                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center font-mono text-sm text-emerald-400 font-bold select-all">
-                    Chave Pix: <span class="text-white">${PIX_KEY}</span>
+                <h3 class="text-base font-bold text-amber-400 flex items-center">
+                    <i class="fa-solid fa-qrcode mr-2"></i> Depositar Saldo (Pix)
+                </h3>
+                <p class="text-xs text-slate-400">Realize a transferência Pix para a chave abaixo e informe o Dono para liberação dos seus créditos.</p>
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center font-mono text-xs text-emerald-400 font-bold select-all">
+                    Chave Pix (E-mail): <span class="text-white">jardesonofc@gmail.com</span>
                 </div>
-                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs flex items-center justify-center">
-                    <i class="fa-brands fa-whatsapp text-base mr-2"></i> Enviar Comprovante do Pix
+                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs flex items-center justify-center transition">
+                    <i class="fa-brands fa-whatsapp text-base mr-2"></i> Notificar Dono no WhatsApp
                 </button>
             </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-                <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-money-bill-transfer mr-2"></i> Solicitada de Saque</h3>
+                <h3 class="text-base font-bold text-amber-400 flex items-center">
+                    <i class="fa-solid fa-money-bill-transfer mr-2"></i> Solicitar Saque
+                </h3>
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Valor do Saque (R$)</label>
                         <input type="number" id="withdraw-amount" placeholder="Ex: 50.00" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
                     </div>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Sua Chave Pix para Receber</label>
-                        <input type="text" id="withdraw-pix" placeholder="CPF, E-mail ou Telefone" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+                        <label class="block text-xs text-slate-400 mb-1">Chave Pix para Recebimento</label>
+                        <input type="text" id="withdraw-pix" placeholder="Sua chave Pix" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
                     </div>
-                    <button onclick="requestWithdrawal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg text-xs">
+                    <button onclick="requestWithdrawal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-lg text-xs transition">
                         Solicitar Saque no WhatsApp
                     </button>
                 </div>
@@ -145,30 +159,31 @@
 
         <!-- MEUS BILHETES -->
         <section id="view-my-tickets" class="hidden space-y-4 max-w-2xl mx-auto">
-            <h2 class="text-base font-semibold text-slate-300">Meus Bilhetes Cadastrados</h2>
+            <h2 class="text-base font-bold text-slate-300">Meus Bilhetes</h2>
             <div id="user-tickets-list" class="space-y-3"></div>
         </section>
 
-        <!-- PAINEL DO DONO (ADMIN EXCLUSIVO) -->
+        <!-- PAINEL DO DONO (ADMIN) -->
         <section id="view-admin" class="hidden space-y-6">
-            <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
-                <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-lock mr-2"></i> Painel de Controle do Dono</h2>
+            <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i> Painel do Administrador</h2>
+                    <p class="text-xs text-slate-400">Acesso restrito ao Dono da Banca.</p>
+                </div>
             </div>
 
-            <!-- Adicionar Saldo ao Cliente -->
+            <!-- Adicionar Saldo aos Clientes -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-user-plus mr-1"></i> Gerenciar Saldo dos Clientes</h3>
-                <div id="admin-users-list" class="space-y-3">
-                    <!-- Carregado via JS -->
-                </div>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Clientes Cadastrados & Saldo</h3>
+                <div id="admin-users-list" class="space-y-3"></div>
             </div>
 
             <!-- Cadastrar Partida -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Partida</h3>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Criar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" id="admin-home" placeholder="Time Casa" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                    <input type="text" id="admin-away" placeholder="Time Fora" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
                     <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
                 </div>
                 <div class="grid grid-cols-3 gap-3">
@@ -176,15 +191,90 @@
                     <input type="number" step="0.01" id="admin-odd-draw" placeholder="Odd Empate" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
                     <input type="number" step="0.01" id="admin-odd-away" placeholder="Odd Fora" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
                 </div>
-                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs">Salvar Partida</button>
+                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs">Publicar Partida</button>
             </div>
         </section>
 
     </main>
 
+    <!-- ================= MODAL DE AUTENTICAÇÃO SEPARADO ================= -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- FORMULÁRIO DE LOGIN -->
+            <div id="modal-login-form" class="space-y-4">
+                <h3 class="text-lg font-black text-amber-400">Entrar na ArenaBet</h3>
+                <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-lg text-xs font-semibold"></div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Seu E-mail</label>
+                    <input type="email" id="login-email" placeholder="nome@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Sua Senha</label>
+                    <input type="password" id="login-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition">
+                    Entrar na Conta
+                </button>
+                <p class="text-xs text-center text-slate-500 pt-2">
+                    Ainda não tem conta? <button onclick="openAuthModal('register')" class="text-amber-400 font-bold hover:underline">Cadastre-se</button>
+                </p>
+            </div>
+
+            <!-- FORMULÁRIO DE CADASTRO -->
+            <div id="modal-register-form" class="hidden space-y-4">
+                <h3 class="text-lg font-black text-amber-400">Criar Nova Conta</h3>
+                <div id="register-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-lg text-xs font-semibold"></div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Nome Completo</label>
+                    <input type="text" id="reg-name" placeholder="Ex: João Silva" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">E-mail Válido</label>
+                    <input type="email" id="reg-email" placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Crie uma Senha (mínimo 6 caracteres)</label>
+                    <input type="password" id="reg-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <button onclick="handleRegister()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition">
+                    Finalizar Cadastro
+                </button>
+                <p class="text-xs text-center text-slate-500 pt-2">
+                    Já possui conta? <button onclick="openAuthModal('login')" class="text-amber-400 font-bold hover:underline">Fazer Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts da Lógica -->
     <script>
+        function openAuthModal(mode) {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('register-error').classList.add('hidden');
+
+            if (mode === 'login') {
+                document.getElementById('modal-login-form').classList.remove('hidden');
+                document.getElementById('modal-register-form').classList.add('hidden');
+            } else {
+                document.getElementById('modal-login-form').classList.add('hidden');
+                document.getElementById('modal-register-form').classList.remove('hidden');
+            }
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
         function switchTab(tab) {
-            ['login', 'client', 'wallet', 'my-tickets', 'admin'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+            ['client', 'wallet', 'my-tickets', 'admin'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if (el) el.classList.add('hidden');
+            });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
             if (tab === 'client') loadMatches();
@@ -192,30 +282,62 @@
             if (tab === 'admin') loadAdminUsers();
         }
 
-        async function handleSignUp() {
-            const name = document.getElementById('auth-name').value.trim();
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
+        async function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const errDiv = document.getElementById('register-error');
 
-            if (!name || !email || !password) return alert("Preencha todos os campos.");
+            if (!name || !email || !password) {
+                errDiv.innerText = "Preencha todos os campos.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
 
             const { data, error } = await supabaseClient.auth.signUp({
                 email, password, options: { data: { full_name: name } }
             });
-            if (error) return alert("Erro: " + error.message);
-            alert("Conta criada!");
-            handleLogin();
+
+            if (error) {
+                errDiv.innerText = "Erro: " + error.message;
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            alert("Conta criada com sucesso!");
+            closeAuthModal();
+            handleLoginDirect(email, password);
         }
 
         async function handleLogin() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const errDiv = document.getElementById('login-error');
+
+            if (!email || !password) {
+                errDiv.innerText = "Informe o e-mail e a senha.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) return alert("Erro no login: " + error.message);
+            if (error) {
+                errDiv.innerText = "Usuário ou senha incorretos.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
 
             currentUser = data.user;
+            closeAuthModal();
             await checkUserProfile();
+        }
+
+        async function handleLoginDirect(email, password) {
+            const { data } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (data?.user) {
+                currentUser = data.user;
+                await checkUserProfile();
+            }
         }
 
         async function checkUserProfile() {
@@ -227,7 +349,7 @@
                 document.getElementById('user-balance-display').innerText = data.balance.toFixed(2).replace('.', ',');
                 document.getElementById('nav-auth-section').innerHTML = `
                     <span class="text-xs text-slate-300 font-semibold mr-2"><i class="fa-solid fa-user text-amber-400"></i> ${data.full_name}</span>
-                    <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-2 py-1 rounded">Sair</button>
+                    <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-2 py-1 rounded hover:bg-slate-700">Sair</button>
                 `;
                 if (data.role === 'ADMIN') document.getElementById('tab-admin-btn').classList.remove('hidden');
                 switchTab('client');
@@ -243,7 +365,7 @@
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('matches-list');
             if (!matches || matches.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto no momento.</p>`;
                 return;
             }
             container.innerHTML = '';
@@ -321,39 +443,35 @@
         }
 
         async function submitBetWithBalance() {
+            if (!currentUser) return openAuthModal('login');
             const keys = Object.keys(selections);
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
 
             if (keys.length === 0) return alert("Selecione um jogo.");
             if (stake < 2) return alert("Aposta mínima de R$ 2,00.");
-            if (userProfile.balance < stake) return alert("Saldo insuficiente! Faça um depósito via Pix com o Dono.");
+            if (userProfile.balance < stake) return alert("Saldo insuficiente! Faça um Pix para o Dono liberar créditos.");
 
             const ticketCode = "BET-" + Math.floor(1000 + Math.random() * 9000);
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
-            // 1. Desconta o saldo do cliente
             const newBalance = userProfile.balance - stake;
             await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
 
-            // 2. Grava o bilhete
             await supabaseClient.from('tickets').insert([{
-                code: ticketCode,
-                user_id: currentUser.id,
-                stake_amount: stake,
-                total_odds: totalOdds,
-                potential_payout: payout,
-                status: 'ACTIVE' // Já entra ativo pois foi pago com saldo!
+                code: ticketCode, user_id: currentUser.id,
+                stake_amount: stake, total_odds: totalOdds,
+                potential_payout: payout, status: 'ACTIVE'
             }]);
 
-            alert("Aposta realizada com sucesso!");
+            alert("Aposta confirmada com sucesso!");
             selections = {};
             checkUserProfile();
             switchTab('my-tickets');
         }
 
         function openDepositWhatsApp() {
-            const msg = `Olá! Acabei de fazer um Pix para a banca. Pode liberar meu saldo no site?\nE-mail da conta: ${currentUser.email}`;
+            const msg = `Olá! Fiz um Pix para a banca. Pode liberar meus créditos no site?\nE-mail da conta: ${currentUser.email}`;
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -363,7 +481,7 @@
 
             if (!amount || amount <= 0) return alert("Digite um valor válido.");
             if (!pixKey) return alert("Digite sua chave Pix.");
-            if (userProfile.balance < amount) return alert("Saldo insuficiente para saque.");
+            if (userProfile.balance < amount) return alert("Saldo insuficiente.");
 
             const msg = `💸 *SOLICITAÇÃO DE SAQUE*\nCliente: ${userProfile.full_name}\nValor: R$ ${amount.toFixed(2)}\nChave Pix: ${pixKey}`;
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -386,14 +504,13 @@
                         </div>
                         <div class="flex justify-between text-slate-400">
                             <span>Valor: R$ ${t.stake_amount.toFixed(2)}</span>
-                            <span>Retorno Possível: R$ ${t.potential_payout.toFixed(2)}</span>
+                            <span>Retorno: R$ ${t.potential_payout.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // --- PAINEL DO DONO ---
         async function loadAdminUsers() {
             const { data: users } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-users-list');
@@ -404,11 +521,11 @@
                     <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-bold text-white">${u.full_name} (${u.role})</p>
-                            <p class="text-emerald-400 font-semibold">Saldo Atual: R$ ${u.balance.toFixed(2)}</p>
+                            <p class="text-emerald-400 font-semibold">Saldo: R$ ${u.balance.toFixed(2)}</p>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 10)" class="bg-emerald-600 text-white font-bold px-2.5 py-1 rounded">+ R$ 10</button>
-                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 50)" class="bg-emerald-600 text-white font-bold px-2.5 py-1 rounded">+ R$ 50</button>
+                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 10)" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded">+ R$ 10</button>
+                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 50)" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded">+ R$ 50</button>
                             <button onclick="adminSetBalance('${u.id}')" class="bg-slate-800 text-amber-400 font-bold px-2 py-1 rounded">Editar</button>
                         </div>
                     </div>
@@ -419,12 +536,12 @@
         async function adminAddBalance(userId, currentBal, amount) {
             const newBal = currentBal + amount;
             await supabaseClient.from('profiles').update({ balance: newBal }).eq('id', userId);
-            alert("Saldo adicionado!");
+            alert("Saldo atualizado!");
             loadAdminUsers();
         }
 
         async function adminSetBalance(userId) {
-            const val = prompt("Digite o novo saldo exato para este usuário:");
+            const val = prompt("Digite o novo saldo exato:");
             if (val !== null) {
                 await supabaseClient.from('profiles').update({ balance: parseFloat(val) }).eq('id', userId);
                 alert("Saldo alterado!");
