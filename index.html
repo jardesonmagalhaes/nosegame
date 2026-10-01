@@ -36,10 +36,10 @@
 
         let selections = {};
         let isCartOpen = false;
-        let lastCreatedBet = null;
+        let lastCreatedTicket = null;
     </script>
 
-    <!-- Header Simples -->
+    <!-- Header Limpo (Sem Botão Admin Visível) -->
     <header class="bg-slate-900 border-b border-slate-800 p-3 md:p-4 sticky top-0 z-40 backdrop-blur-md">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             
@@ -48,12 +48,9 @@
                 <h1 class="text-lg md:text-xl font-black tracking-widest text-amber-400 uppercase">NOSE<span class="text-white">GAME</span></h1>
             </div>
 
-            <div class="flex space-x-2 text-xs">
-                <button onclick="openConsultModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-2 rounded-xl font-bold border border-slate-700 transition">
+            <div>
+                <button onclick="openConsultModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs px-3 py-2 rounded-xl font-bold border border-slate-700 transition">
                     <i class="fa-solid fa-magnifying-glass mr-1"></i> Consultar Bilhete
-                </button>
-                <button onclick="openAdminAuthPrompt()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-3 py-2 rounded-xl font-bold border border-rose-500/20 transition">
-                    <i class="fa-solid fa-user-shield mr-1"></i> Cambista / Admin
                 </button>
             </div>
 
@@ -73,7 +70,7 @@
             </div>
         </section>
 
-        <!-- PAINEL DO CAMBISTA / ADMIN -->
+        <!-- PAINEL OCULTO DO CAMBISTA / ADMIN -->
         <section id="view-admin" class="hidden space-y-6">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -220,6 +217,20 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             loadMatches();
+
+            // Abre o Admin com tecla de atalho F8
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F8') {
+                    e.preventDefault();
+                    promptAdminAccess();
+                }
+            });
+
+            // Permite abrir via URL (ex: ?admin=true)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') {
+                promptAdminAccess();
+            }
         });
 
         function switchView(view) {
@@ -232,8 +243,8 @@
             else floatBtn.classList.remove('hidden');
         }
 
-        function openAdminAuthPrompt() {
-            const pass = prompt("Digite a senha do Cambista/Admin:");
+        function promptAdminAccess() {
+            const pass = prompt("Acesso do Cambista - Digite a senha:");
             if (pass === "admin123") {
                 switchView('admin');
                 switchAdminSub('validate');
@@ -340,7 +351,7 @@
             else modal.classList.add('hidden');
         }
 
-        // GERAR CÓDIGO PIN (SEM LOGIN)
+        // GERAR CÓDIGO PIN (USA TABELA TICKETS EXISTENTE)
         async function generateBetPIN() {
             const name = document.getElementById('bettor-name-input').value.trim();
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
@@ -355,7 +366,8 @@
             const payout = (stake * totalOdds);
             const selectionsList = keys.map(k => selections[k]);
 
-            const { data, error } = await supabaseClient.from('bets').insert([{
+            const { data, error } = await supabaseClient.from('tickets').insert([{
+                code: "BET-" + pinCode,
                 pin: pinCode,
                 bettor_name: name,
                 selections_data: selectionsList,
@@ -367,7 +379,7 @@
 
             if (error) return alert("Erro ao gerar PIN: " + error.message);
 
-            lastCreatedBet = data;
+            lastCreatedTicket = data;
             selections = {};
             toggleCartModal();
             loadMatches();
@@ -382,8 +394,8 @@
         }
 
         function sendPINToWhatsApp() {
-            if (!lastCreatedBet) return;
-            const msg = `Olá! Fiz um pré-bilhete no site.\n\n👤 *Apostador:* ${lastCreatedBet.bettor_name}\n🔑 *Código PIN:* ${lastCreatedBet.pin}\n💵 *Valor:* R$ ${lastCreatedBet.stake_amount.toFixed(2)}\n🎯 *Retorno Possível:* R$ ${lastCreatedBet.potential_payout.toFixed(2)}\n\nPode validar para mim?`;
+            if (!lastCreatedTicket) return;
+            const msg = `Olá! Fiz um pré-bilhete no site.\n\n👤 *Apostador:* ${lastCreatedTicket.bettor_name}\n🔑 *Código PIN:* ${lastCreatedTicket.pin}\n💵 *Valor:* R$ ${lastCreatedTicket.stake_amount.toFixed(2)}\n🎯 *Retorno Possível:* R$ ${lastCreatedTicket.potential_payout.toFixed(2)}\n\nPode validar para mim?`;
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -396,20 +408,20 @@
             const area = document.getElementById('consult-result-area');
             if (!pin) return;
 
-            const { data: bet, error } = await supabaseClient.from('bets').select('*').eq('pin', pin).single();
+            const { data: bet, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
             if (error || !bet) {
                 area.innerHTML = `<p class="text-rose-400 font-bold">Bilhete com PIN ${pin} não encontrado.</p>`;
                 return;
             }
 
             let statusText = '<span class="text-amber-400 font-bold">Aguardando Pagamento/Validação</span>';
-            if (bet.status === 'VALIDATED') statusText = '<span class="text-emerald-400 font-bold">Validado / Em Andamento</span>';
+            if (bet.status === 'VALIDATED' || bet.status === 'ACTIVE') statusText = '<span class="text-emerald-400 font-bold">Validado / Em Andamento</span>';
             if (bet.status === 'WON') statusText = '<span class="text-emerald-400 font-bold">GANHOU</span>';
             if (bet.status === 'LOST') statusText = '<span class="text-rose-400 font-bold">PERDEU</span>';
 
             area.innerHTML = `
                 <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <p><strong>Apostador:</strong> ${bet.bettor_name}</p>
+                    <p><strong>Apostador:</strong> ${bet.bettor_name || 'N/I'}</p>
                     <p><strong>Status:</strong> ${statusText}</p>
                     <p><strong>Apostado:</strong> R$ ${bet.stake_amount.toFixed(2)}</p>
                     <p><strong>Retorno:</strong> R$ ${bet.potential_payout.toFixed(2)}</p>
@@ -437,7 +449,7 @@
             const area = document.getElementById('pin-result-area');
             if (!pin) return;
 
-            const { data: bet, error } = await supabaseClient.from('bets').select('*').eq('pin', pin).single();
+            const { data: bet, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
             if (error || !bet) {
                 area.innerHTML = `<p class="text-xs text-rose-400 font-bold">PIN não encontrado no sistema.</p>`;
                 return;
@@ -449,7 +461,7 @@
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-3">
                     <div class="flex justify-between font-bold border-b border-slate-800 pb-2">
                         <span class="text-amber-400 font-mono text-sm">PIN #${bet.pin}</span>
-                        <span class="text-slate-300">${bet.bettor_name}</span>
+                        <span class="text-slate-300">${bet.bettor_name || 'N/I'}</span>
                     </div>
                     <div class="space-y-1 text-slate-300">${matchesText}</div>
                     <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
@@ -468,14 +480,14 @@
         }
 
         async function confirmValidateBet(betId) {
-            const { error } = await supabaseClient.from('bets').update({ status: 'VALIDATED' }).eq('id', betId);
+            const { error } = await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', betId);
             if (error) return alert("Erro ao validar: " + error.message);
             alert("Aposta validada com sucesso!");
             searchAndValidatePIN();
         }
 
         async function loadAdminTickets() {
-            const { data: bets } = await supabaseClient.from('bets').select('*').order('created_at', { ascending: false });
+            const { data: bets } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-tickets-list');
             if (!bets || bets.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete no sistema.</p>`;
@@ -484,14 +496,14 @@
             container.innerHTML = '';
             bets.forEach(b => {
                 let badge = '<span class="text-amber-400 font-bold">Aguardando Pagamento</span>';
-                if (b.status === 'VALIDATED') badge = '<span class="text-emerald-400 font-bold">Validado</span>';
+                if (b.status === 'VALIDATED' || b.status === 'ACTIVE') badge = '<span class="text-emerald-400 font-bold">Validado</span>';
                 if (b.status === 'WON') badge = '<span class="text-emerald-400 font-bold">GANHOU</span>';
                 if (b.status === 'LOST') badge = '<span class="text-rose-400 font-bold">PERDEU</span>';
 
                 container.innerHTML += `
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
                         <div>
-                            <span class="font-mono text-amber-400 font-bold">PIN #${b.pin}</span> - <strong>${b.bettor_name}</strong>
+                            <span class="font-mono text-amber-400 font-bold">PIN #${b.pin || b.code}</span> - <strong>${b.bettor_name || 'Usuário'}</strong>
                             <p class="text-slate-400">Valor: R$ ${b.stake_amount.toFixed(2)} | Retorno: R$ ${b.potential_payout.toFixed(2)}</p>
                         </div>
                         <div>${badge}</div>
@@ -531,7 +543,7 @@
             await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
             
             // Recalcula bilhetes validados
-            const { data: bets } = await supabaseClient.from('bets').select('*').eq('status', 'VALIDATED');
+            const { data: bets } = await supabaseClient.from('tickets').select('*').or('status.eq.VALIDATED,status.eq.ACTIVE');
             if (bets) {
                 for (const b of bets) {
                     const items = b.selections_data || [];
@@ -539,7 +551,7 @@
                     if (containsMatch) {
                         let winning = scoreH > scoreA ? 'HOME' : (scoreA > scoreH ? 'AWAY' : 'DRAW');
                         let won = items.every(i => i.marketType === winning);
-                        await supabaseClient.from('bets').update({ status: won ? 'WON' : 'LOST' }).eq('id', b.id);
+                        await supabaseClient.from('tickets').update({ status: won ? 'WON' : 'LOST' }).eq('id', b.id);
                     }
                 }
             }
