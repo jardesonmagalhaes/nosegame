@@ -10,17 +10,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
 
     <script>
-        // CONFIGURAÇÃO OFICIAL
+        // CONFIGURAÇÕES
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
         const PIX_KEY = "jardesonofc@gmail.com"; 
 
-        // Inicialização do Supabase com persistência de sessão ativada
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             auth: { persistSession: true }
         });
@@ -29,46 +35,47 @@
         let userProfile = null;
         let selections = {};
         let activeTab = 'client';
+        let selectedUserForBalance = null;
     </script>
 
     <!-- Header Profissional -->
-    <header class="bg-slate-900/90 border-b border-slate-800 p-4 sticky top-0 z-40 backdrop-blur-md">
+    <header class="bg-slate-900/90 border-b border-slate-800/80 p-4 sticky top-0 z-40 backdrop-blur-md shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('client')">
-                <i class="fa-solid fa-trophy text-amber-400 text-2xl"></i>
+            <div class="flex items-center space-x-2 cursor-pointer group" onclick="switchTab('client')">
+                <i class="fa-solid fa-trophy text-amber-400 text-2xl group-hover:scale-110 transition-transform"></i>
                 <h1 class="text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
             </div>
 
             <div id="nav-auth-section" class="flex items-center space-x-2">
-                <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-2 rounded-lg font-semibold border border-slate-700 transition">
+                <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-semibold border border-slate-700 transition shadow">
                     Entrar
                 </button>
-                <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-lg font-extrabold shadow-lg transition">
+                <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl font-extrabold shadow-lg hover:shadow-amber-500/20 transition">
                     Criar Conta
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Barra de Navegação e Saldo do Usuário Logado -->
-    <nav id="app-nav" class="hidden bg-slate-900 border-b border-slate-800 px-4 py-2.5">
+    <!-- Barra de Navegação -->
+    <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2.5 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
-            <div class="flex space-x-4 font-bold">
-                <button onclick="switchTab('client')" id="nav-btn-client" class="nav-tab-btn text-amber-400 border-b-2 border-amber-400 pb-1">
+            <div class="flex space-x-2 md:space-x-4 font-bold">
+                <button onclick="switchTab('client')" id="nav-btn-client" class="nav-tab-btn text-amber-400 border-b-2 border-amber-400 pb-1 px-1 transition">
                     <i class="fa-solid fa-futbol mr-1"></i> Partidas
                 </button>
-                <button onclick="switchTab('my-tickets')" id="nav-btn-my-tickets" class="nav-tab-btn text-slate-400 hover:text-white pb-1">
+                <button onclick="switchTab('my-tickets')" id="nav-btn-my-tickets" class="nav-tab-btn text-slate-400 hover:text-white pb-1 px-1 transition">
                     <i class="fa-solid fa-receipt mr-1"></i> Meus Bilhetes
                 </button>
-                <button onclick="switchTab('wallet')" id="nav-btn-wallet" class="nav-tab-btn text-slate-400 hover:text-white pb-1">
+                <button onclick="switchTab('wallet')" id="nav-btn-wallet" class="nav-tab-btn text-slate-400 hover:text-white pb-1 px-1 transition">
                     <i class="fa-solid fa-wallet mr-1"></i> Carteira / Pix
                 </button>
-                <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-tab-btn hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1">
+                <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-tab-btn hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1 px-1 transition">
                     <i class="fa-solid fa-shield-halved mr-1"></i> Painel do Dono
                 </button>
             </div>
 
-            <div class="bg-slate-950 border border-emerald-500/40 px-3.5 py-1 rounded-full font-bold text-emerald-400 flex items-center shadow-inner">
+            <div class="bg-slate-950/80 border border-emerald-500/30 px-3.5 py-1.5 rounded-full font-bold text-emerald-400 flex items-center shadow-inner">
                 <i class="fa-solid fa-coins mr-1.5 text-xs"></i> Saldo: R$ <span id="user-balance-display">0,00</span>
             </div>
         </div>
@@ -77,19 +84,19 @@
     <!-- Conteúdo Principal -->
     <main class="max-w-6xl mx-auto p-4 md:p-6 w-full flex-1">
 
-        <!-- TELA DO CLIENTE (JOGOS E CADERNO) -->
+        <!-- TELA DO CLIENTE -->
         <section id="view-client" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-4">
                 <h2 class="text-base font-bold text-slate-300 flex items-center">
                     <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
                 </h2>
                 <div id="matches-list" class="space-y-3">
-                    <p class="text-xs text-slate-500">Carregando partidas...</p>
+                    <p class="text-xs text-slate-500">A carregar partidas...</p>
                 </div>
             </div>
 
             <!-- Cupom de Aposta -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-2xl h-fit space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl h-fit space-y-4">
                 <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex justify-between items-center">
                     <span><i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Boletim de Aposta</span>
                     <span id="items-count" class="text-xs bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">0</span>
@@ -108,50 +115,50 @@
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$)</label>
                         <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" 
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:outline-none focus:border-amber-500">
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none focus:border-amber-500 transition">
                     </div>
 
-                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex justify-between items-center">
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
                         <span class="text-xs text-emerald-400 font-bold">Retorno Possível:</span>
                         <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
                     </div>
 
-                    <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-lg text-xs uppercase tracking-wider transition shadow-lg">
+                    <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/10">
                         Confirmar Aposta
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- TELA CARTEIRA (DEPÓSITO & SAQUE) -->
+        <!-- TELA CARTEIRA -->
         <section id="view-wallet" class="hidden max-w-xl mx-auto space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
                 <h3 class="text-base font-bold text-amber-400 flex items-center">
                     <i class="fa-solid fa-qrcode mr-2"></i> Depositar Saldo (Pix)
                 </h3>
                 <p class="text-xs text-slate-400">Realize a transferência Pix para a chave abaixo e informe o Dono para liberação dos seus créditos.</p>
-                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center font-mono text-xs text-emerald-400 font-bold select-all">
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center font-mono text-xs text-emerald-400 font-bold select-all">
                     Chave Pix (E-mail): <span class="text-white">jardesonofc@gmail.com</span>
                 </div>
-                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs flex items-center justify-center transition">
+                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center transition shadow-lg shadow-emerald-600/20">
                     <i class="fa-brands fa-whatsapp text-base mr-2"></i> Notificar Dono no WhatsApp
                 </button>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
                 <h3 class="text-base font-bold text-amber-400 flex items-center">
                     <i class="fa-solid fa-money-bill-transfer mr-2"></i> Solicitar Saque
                 </h3>
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Valor do Saque (R$)</label>
-                        <input type="number" id="withdraw-amount" placeholder="Ex: 50.00" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+                        <input type="number" id="withdraw-amount" placeholder="Ex: 50.00" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     </div>
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Chave Pix para Recebimento</label>
-                        <input type="text" id="withdraw-pix" placeholder="Sua chave Pix" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white">
+                        <input type="text" id="withdraw-pix" placeholder="Sua chave Pix" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     </div>
-                    <button onclick="requestWithdrawal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-lg text-xs transition">
+                    <button onclick="requestWithdrawal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
                         Solicitar Saque no WhatsApp
                     </button>
                 </div>
@@ -164,47 +171,89 @@
             <div id="user-tickets-list" class="space-y-3"></div>
         </section>
 
-        <!-- PAINEL DO DONO (ADMIN) -->
+        <!-- PAINEL DO DONO -->
         <section id="view-admin" class="hidden space-y-6">
-            <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 flex justify-between items-center">
+            <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex justify-between items-center">
                 <div>
                     <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i> Painel do Administrador</h2>
                     <p class="text-xs text-slate-400">Acesso restrito ao Dono da Banca.</p>
                 </div>
             </div>
 
-            <!-- ENCERRAMENTO DE PARTIDAS & PLACAR -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <!-- ENCERRAMENTO DE PARTIDAS -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Encerrar Partidas & Pagar Vencedores</h3>
                 <div id="admin-matches-management" class="space-y-3">
-                    <p class="text-xs text-slate-500">Carregando partidas abertas...</p>
+                    <p class="text-xs text-slate-500">A carregar partidas abertas...</p>
                 </div>
             </div>
 
-            <!-- Adicionar Saldo aos Clientes -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <!-- GESTÃO DE SALDO DOS CLIENTES -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Clientes Cadastrados & Saldo</h3>
                 <div id="admin-users-list" class="space-y-3"></div>
             </div>
 
-            <!-- Cadastrar Partida -->
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <!-- CADASTRAR PARTIDA -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Criar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                    <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                    <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <input type="number" step="0.01" id="admin-odd-home" placeholder="Odd Casa" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                    <input type="number" step="0.01" id="admin-odd-draw" placeholder="Odd Empate" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
-                    <input type="number" step="0.01" id="admin-odd-away" placeholder="Odd Fora" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-home" placeholder="Odd Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-draw" placeholder="Odd Empate" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-away" placeholder="Odd Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
                 </div>
-                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs">Publicar Partida</button>
+                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition">Publicar Partida</button>
             </div>
         </section>
 
     </main>
+
+    <!-- MODAL DE NOTIFICAÇÃO CUSTOMIZADO (SUBSTITUI ALERTS) -->
+    <div id="notify-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
+            <div id="notify-icon" class="text-4xl"></div>
+            <h4 id="notify-title" class="text-base font-bold text-white"></h4>
+            <p id="notify-message" class="text-xs text-slate-400"></p>
+            <button onclick="closeNotifyModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl text-xs transition border border-slate-700">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE GESTÃO DE SALDO (NOVO E CORRIGIDO) -->
+    <div id="balance-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 relative">
+            <button onclick="closeBalanceModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-coins mr-1"></i> Gerenciar Saldo do Cliente</h3>
+            <p id="balance-modal-username" class="text-xs text-slate-300 font-bold"></p>
+            <p id="balance-modal-current" class="text-xs text-emerald-400 font-semibold"></p>
+
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Tipo de Operação</label>
+                    <select id="balance-operation" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                        <option value="ADD">Adicionar (+)</option>
+                        <option value="SUBTRACT">Retirar (-)</option>
+                        <option value="SET">Definir Saldo Exato (=)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Valor (R$)</label>
+                    <input type="number" step="0.01" id="balance-amount-input" placeholder="Ex: 20.00" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                </div>
+                <button onclick="executeBalanceAdjustment()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-lg">
+                    Confirmar Alteração
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL DE AUTENTICAÇÃO -->
     <div id="auth-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -216,16 +265,16 @@
             <!-- FORMULÁRIO DE LOGIN -->
             <div id="modal-login-form" class="space-y-4">
                 <h3 class="text-lg font-black text-amber-400">Entrar na ArenaBet</h3>
-                <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-lg text-xs font-semibold"></div>
+                <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-xl text-xs font-semibold"></div>
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Seu E-mail</label>
-                    <input type="email" id="login-email" placeholder="nome@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="email" id="login-email" placeholder="nome@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Sua Senha</label>
-                    <input type="password" id="login-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="password" id="login-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition">
+                <button onclick="handleLogin()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition">
                     Entrar na Conta
                 </button>
                 <p class="text-xs text-center text-slate-500 pt-2">
@@ -233,35 +282,35 @@
                 </p>
             </div>
 
-            <!-- FORMULÁRIO DE CADASTRO COMPLETO -->
+            <!-- FORMULÁRIO DE CADASTRO -->
             <div id="modal-register-form" class="hidden space-y-3">
                 <h3 class="text-lg font-black text-amber-400">Criar Nova Conta</h3>
-                <div id="register-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-lg text-xs font-semibold"></div>
+                <div id="register-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-xl text-xs font-semibold"></div>
                 
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Nome Completo</label>
-                    <input type="text" id="reg-name" placeholder="Ex: João Silva" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="text" id="reg-name" placeholder="Ex: João Silva" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">CPF</label>
-                        <input type="text" id="reg-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <input type="text" id="reg-cpf" placeholder="000.000.000-00" maxlength="14" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                     </div>
                     <div>
                         <label class="block text-xs text-slate-400 mb-1">Telefone / WhatsApp</label>
-                        <input type="text" id="reg-phone" placeholder="(88) 99999-9999" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <input type="text" id="reg-phone" placeholder="(88) 99999-9999" maxlength="15" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">E-mail Válido</label>
-                    <input type="email" id="reg-email" placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="email" id="reg-email" placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
 
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Senha (mínimo 6 caracteres)</label>
-                    <input type="password" id="reg-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <input type="password" id="reg-password" placeholder="******" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                 </div>
 
                 <div class="flex items-center space-x-2 pt-1">
@@ -271,7 +320,7 @@
                     </label>
                 </div>
 
-                <button onclick="handleRegister()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs transition mt-2">
+                <button onclick="handleRegister()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition mt-2">
                     Finalizar Cadastro
                 </button>
                 
@@ -282,9 +331,9 @@
         </div>
     </div>
 
-    <!-- SCRIPTS E LÓGICA REVISADOS -->
+    <!-- SCRIPTS -->
     <script>
-        // LISTENER DE AUTENTICAÇÃO PERSISTENTE
+        // SESSÃO
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session?.user) {
@@ -292,7 +341,6 @@
                 await checkUserProfile();
             }
 
-            // Garante que a sessão continue ao atualizar a página
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session?.user) {
                     currentUser = session.user;
@@ -302,8 +350,8 @@
                     userProfile = null;
                     document.getElementById('app-nav').classList.add('hidden');
                     document.getElementById('nav-auth-section').innerHTML = `
-                        <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3.5 py-2 rounded-lg font-semibold border border-slate-700 transition">Entrar</button>
-                        <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-lg font-extrabold shadow-lg transition">Criar Conta</button>
+                        <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-semibold border border-slate-700 transition shadow">Entrar</button>
+                        <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl font-extrabold shadow-lg transition">Criar Conta</button>
                     `;
                     switchTab('client');
                 }
@@ -311,6 +359,24 @@
 
             loadMatches();
         });
+
+        // MODAL NOTIFY CUSTOMIZADO
+        function showNotify(title, message, type = 'success') {
+            const modal = document.getElementById('notify-modal');
+            const icon = document.getElementById('notify-icon');
+            document.getElementById('notify-title').innerText = title;
+            document.getElementById('notify-message').innerText = message;
+
+            if (type === 'success') icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            else if (type === 'error') icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
+            else icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-amber-400"></i>';
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notify-modal').classList.add('hidden');
+        }
 
         function openAuthModal(mode) {
             document.getElementById('auth-modal').classList.remove('hidden');
@@ -338,7 +404,6 @@
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
-            // Correção visual dinâmica do CSS da barra de navegação
             document.querySelectorAll('.nav-tab-btn').forEach(btn => {
                 btn.classList.remove('text-amber-400', 'border-b-2', 'border-amber-400');
                 btn.classList.add('text-slate-400');
@@ -390,8 +455,8 @@
                 return;
             }
 
-            alert("Conta criada com sucesso!");
             closeAuthModal();
+            showNotify("Conta Criada!", "Sua conta foi cadastrada com sucesso. Bem-vindo à ArenaBet!");
         }
 
         async function handleLogin() {
@@ -426,7 +491,7 @@
                 document.getElementById('user-balance-display').innerText = data.balance.toFixed(2).replace('.', ',');
                 document.getElementById('nav-auth-section').innerHTML = `
                     <span class="text-xs text-slate-300 font-semibold mr-2"><i class="fa-solid fa-user text-amber-400"></i> ${data.full_name}</span>
-                    <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-2 py-1 rounded hover:bg-slate-700">Sair</button>
+                    <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-3 py-1.5 rounded-xl hover:bg-slate-700 transition border border-slate-700">Sair</button>
                 `;
                 if (data.role === 'ADMIN') document.getElementById('nav-btn-admin').classList.remove('hidden');
                 switchTab(activeTab);
@@ -449,25 +514,25 @@
             matches.forEach(m => {
                 const date = new Date(m.match_time).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-slate-700/80 transition">
                         <div class="text-xs text-slate-400 mb-2"><i class="fa-regular fa-clock mr-1"></i> ${date}</div>
                         <div class="flex justify-between items-center my-2 text-sm font-bold">
                             <span class="w-2/5 text-right">${m.home_team}</span>
-                            <span class="text-xs text-slate-500">VS</span>
+                            <span class="text-xs text-slate-500 font-normal px-2">VS</span>
                             <span class="w-2/5 text-left">${m.away_team}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-3">
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
-                                <span class="block text-xs text-slate-400">Casa</span>
-                                <span class="font-bold text-amber-400">${m.odd_home.toFixed(2)}</span>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                                <span class="block text-xs text-slate-400 group-hover:text-amber-400">Casa</span>
+                                <span class="font-extrabold text-amber-400">${m.odd_home.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
-                                <span class="block text-xs text-slate-400">Empate</span>
-                                <span class="font-bold text-amber-400">${m.odd_draw.toFixed(2)}</span>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                                <span class="block text-xs text-slate-400 group-hover:text-amber-400">Empate</span>
+                                <span class="font-extrabold text-amber-400">${m.odd_draw.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 p-2 rounded text-center transition">
-                                <span class="block text-xs text-slate-400">Fora</span>
-                                <span class="font-bold text-amber-400">${m.odd_away.toFixed(2)}</span>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                                <span class="block text-xs text-slate-400 group-hover:text-amber-400">Fora</span>
+                                <span class="font-extrabold text-amber-400">${m.odd_away.toFixed(2)}</span>
                             </button>
                         </div>
                     </div>
@@ -498,12 +563,12 @@
                 const item = selections[id];
                 totalOdds *= item.odd;
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center text-xs">
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-semibold text-slate-200">${item.matchTitle}</p>
-                            <p class="text-amber-400 font-medium">${item.optionName} @ ${item.odd.toFixed(2)}</p>
+                            <p class="text-amber-400 font-bold">${item.optionName} @ ${item.odd.toFixed(2)}</p>
                         </div>
-                        <button onclick="delete selections['${id}']; renderCart();" class="text-slate-500 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button>
+                        <button onclick="delete selections['${id}']; renderCart();" class="text-slate-500 hover:text-rose-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 `;
             });
@@ -524,20 +589,18 @@
             const keys = Object.keys(selections);
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
 
-            if (keys.length === 0) return alert("Selecione um jogo.");
-            if (stake < 2) return alert("Aposta mínima de R$ 2,00.");
-            if (userProfile.balance < stake) return alert("Saldo insuficiente! Faça um Pix para o Dono liberar créditos.");
+            if (keys.length === 0) return showNotify("Atenção", "Selecione pelo menos um jogo para apostar.", "warning");
+            if (stake < 2) return showNotify("Atenção", "O valor mínimo por aposta é R$ 2,00.", "warning");
+            if (userProfile.balance < stake) return showNotify("Saldo Insuficiente", "Faça um depósito via Pix com o Dono para liberar créditos.", "error");
 
             const ticketCode = "BET-" + Math.floor(1000 + Math.random() * 9000);
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
-            // 1. Desconta o saldo do cliente no banco
             const newBalance = userProfile.balance - stake;
             const { error: balErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
-            if (balErr) return alert("Erro ao atualizar saldo: " + balErr.message);
+            if (balErr) return showNotify("Erro", "Falha ao atualizar saldo: " + balErr.message, "error");
 
-            // 2. Grava o bilhete relacionando partida e mercado
             const firstSelection = selections[keys[0]];
             const { error: ticketErr } = await supabaseClient.from('tickets').insert([{
                 code: ticketCode, 
@@ -550,12 +613,12 @@
                 status: 'ACTIVE'
             }]);
 
-            if (ticketErr) return alert("Erro ao registrar bilhete: " + ticketErr.message);
+            if (ticketErr) return showNotify("Erro", "Falha ao registrar bilhete: " + ticketErr.message, "error");
 
-            alert("Aposta confirmada com sucesso!");
             selections = {};
             renderCart();
             await checkUserProfile();
+            showNotify("Aposta Confirmada!", `Bilhete #${ticketCode} gerado com sucesso. Boa sorte!`);
             switchTab('my-tickets');
         }
 
@@ -568,9 +631,9 @@
             const amount = parseFloat(document.getElementById('withdraw-amount').value);
             const pixKey = document.getElementById('withdraw-pix').value.trim();
 
-            if (!amount || amount <= 0) return alert("Digite um valor válido.");
-            if (!pixKey) return alert("Digite sua chave Pix.");
-            if (userProfile.balance < amount) return alert("Saldo insuficiente.");
+            if (!amount || amount <= 0) return showNotify("Erro", "Digite um valor de saque válido.", "warning");
+            if (!pixKey) return showNotify("Erro", "Digite a sua chave Pix para recebimento.", "warning");
+            if (userProfile.balance < amount) return showNotify("Erro", "Saldo insuficiente para este valor de saque.", "error");
 
             const msg = `💸 *SOLICITAÇÃO DE SAQUE*\nCliente: ${userProfile.full_name}\nValor: R$ ${amount.toFixed(2)}\nChave Pix: ${pixKey}`;
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -597,14 +660,14 @@
 
             container.innerHTML = '';
             tickets.forEach(t => {
-                let statusBadge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Em Andamento</span>';
-                if (t.status === 'WON') statusBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-circle-check mr-1"></i> GANHOU</span>';
-                if (t.status === 'LOST') statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> PERDEU</span>';
+                let statusBadge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold">Em Andamento</span>';
+                if (t.status === 'WON') statusBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-check mr-1"></i> GANHOU</span>';
+                if (t.status === 'LOST') statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> PERDEU</span>';
 
                 let marketText = t.selected_market === 'HOME' ? 'Casa' : (t.selected_market === 'AWAY' ? 'Fora' : 'Empate');
 
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-2 shadow-lg">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs space-y-2 shadow-xl">
                         <div class="flex justify-between items-center font-bold">
                             <span class="text-amber-400">#${t.code}</span>
                             <div>${statusBadge}</div>
@@ -620,7 +683,7 @@
             });
         }
 
-        // GESTÃO E LIQUIDAÇÃO DE PARTIDAS
+        // ENCERRAMENTO DE PARTIDAS
         async function loadAdminMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('admin-matches-management');
@@ -631,16 +694,16 @@
             container.innerHTML = '';
             matches.forEach(m => {
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center text-xs gap-3">
+                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center text-xs gap-3">
                         <div>
                             <p class="font-extrabold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
                             <p class="text-slate-400 mt-0.5">Odds: Casa (${m.odd_home.toFixed(2)}) | Empate (${m.odd_draw.toFixed(2)}) | Fora (${m.odd_away.toFixed(2)})</p>
                         </div>
                         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                            <input type="number" id="score-home-${m.id}" placeholder="Casa" class="w-16 bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-white font-bold">
+                            <input type="number" id="score-home-${m.id}" placeholder="Casa" class="w-16 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
                             <span class="text-slate-500 font-bold">x</span>
-                            <input type="number" id="score-away-${m.id}" placeholder="Fora" class="w-16 bg-slate-900 border border-slate-700 rounded-lg p-2 text-center text-white font-bold">
-                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-lg transition">
+                            <input type="number" id="score-away-${m.id}" placeholder="Fora" class="w-16 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
+                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl transition shadow">
                                 Liquidar
                             </button>
                         </div>
@@ -653,7 +716,7 @@
             const scoreHomeInput = document.getElementById(`score-home-${matchId}`).value;
             const scoreAwayInput = document.getElementById(`score-away-${matchId}`).value;
 
-            if (scoreHomeInput === '' || scoreAwayInput === '') return alert("Digite os placares reais da partida.");
+            if (scoreHomeInput === '' || scoreAwayInput === '') return showNotify("Erro", "Digite os placares reais da partida.", "warning");
 
             const scoreHome = parseInt(scoreHomeInput);
             const scoreAway = parseInt(scoreAwayInput);
@@ -662,22 +725,19 @@
             if (scoreHome > scoreAway) winningMarket = 'HOME';
             if (scoreAway > scoreHome) winningMarket = 'AWAY';
 
-            // 1. Marca a partida como FINISHED
             const { error: matchErr } = await supabaseClient.from('matches').update({
                 status: 'FINISHED',
                 score_home: scoreHome,
                 score_away: scoreAway
             }).eq('id', matchId);
 
-            if (matchErr) return alert("Erro ao encerrar partida: " + matchErr.message);
+            if (matchErr) return showNotify("Erro", "Erro ao encerrar partida: " + matchErr.message, "error");
 
-            // 2. Busca bilhetes ativos desta partida
             const { data: tickets } = await supabaseClient.from('tickets').select('*').eq('match_id', matchId).eq('status', 'ACTIVE');
 
             if (tickets && tickets.length > 0) {
                 for (const ticket of tickets) {
                     if (ticket.selected_market === winningMarket) {
-                        // GANHOU: Paga o prêmio no saldo do apostador
                         await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
                         const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
                         if (user) {
@@ -685,17 +745,17 @@
                             await supabaseClient.from('profiles').update({ balance: updatedBalance }).eq('id', ticket.user_id);
                         }
                     } else {
-                        // PERDEU
                         await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', ticket.id);
                     }
                 }
             }
 
-            alert("Partida encerrada com sucesso! Todos os bilhetes foram calculados e os vencedores pagos.");
+            showNotify("Sucesso!", "Partida encerrada. Bilhetes calculados e vencedores pagos no saldo!");
             loadAdminMatches();
             loadMatches();
         }
 
+        // GESTÃO DE SALDO (NOVO MODAL)
         async function loadAdminUsers() {
             const { data: users } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-users-list');
@@ -703,35 +763,67 @@
 
             users.forEach(u => {
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-bold text-white">${u.full_name} (${u.role})</p>
                             <p class="text-slate-400">CPF: ${u.cpf || 'N/A'} | Tel: ${u.phone || 'N/A'}</p>
-                            <p class="text-emerald-400 font-semibold mt-1">Saldo: R$ ${u.balance.toFixed(2)}</p>
+                            <p class="text-emerald-400 font-bold mt-1">Saldo Atual: R$ ${u.balance.toFixed(2)}</p>
                         </div>
-                        <div class="flex space-x-2">
-                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 10)" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded">+ R$ 10</button>
-                            <button onclick="adminAddBalance('${u.id}', ${u.balance}, 50)" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded">+ R$ 50</button>
-                            <button onclick="adminSetBalance('${u.id}')" class="bg-slate-800 text-amber-400 font-bold px-2 py-1 rounded">Editar</button>
+                        <div>
+                            <button onclick='openBalanceModal(${JSON.stringify(u)})' class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl transition shadow">
+                                <i class="fa-solid fa-coins mr-1"></i> Alterar Saldo
+                            </button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        async function adminAddBalance(userId, currentBal, amount) {
-            const newBal = currentBal + amount;
-            await supabaseClient.from('profiles').update({ balance: newBal }).eq('id', userId);
-            alert("Saldo atualizado!");
-            loadAdminUsers();
+        function openBalanceModal(user) {
+            selectedUserForBalance = user;
+            document.getElementById('balance-modal-username').innerText = `Cliente: ${user.full_name}`;
+            document.getElementById('balance-modal-current').innerText = `Saldo Atual: R$ ${user.balance.toFixed(2)}`;
+            document.getElementById('balance-amount-input').value = '';
+            document.getElementById('balance-modal').classList.remove('hidden');
         }
 
-        async function adminSetBalance(userId) {
-            const val = prompt("Digite o novo saldo exato:");
-            if (val !== null && val !== '') {
-                await supabaseClient.from('profiles').update({ balance: parseFloat(val) }).eq('id', userId);
-                alert("Saldo alterado!");
-                loadAdminUsers();
+        function closeBalanceModal() {
+            selectedUserForBalance = null;
+            document.getElementById('balance-modal').classList.add('hidden');
+        }
+
+        async function executeBalanceAdjustment() {
+            if (!selectedUserForBalance) return;
+            const op = document.getElementById('balance-operation').value;
+            const amount = parseFloat(document.getElementById('balance-amount-input').value);
+
+            if (isNaN(amount) || amount <= 0) {
+                return showNotify("Atenção", "Digite um valor maior que zero.", "warning");
+            }
+
+            let newBalance = selectedUserForBalance.balance;
+
+            if (op === 'ADD') newBalance += amount;
+            else if (op === 'SUBTRACT') {
+                newBalance -= amount;
+                if (newBalance < 0) newBalance = 0;
+            } else if (op === 'SET') {
+                newBalance = amount;
+            }
+
+            const { error } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', selectedUserForBalance.id);
+
+            if (error) {
+                return showNotify("Erro", "Falha ao alterar saldo: " + error.message, "error");
+            }
+
+            closeBalanceModal();
+            showNotify("Saldo Atualizado!", `O saldo de ${selectedUserForBalance.full_name} foi alterado para R$ ${newBalance.toFixed(2)}.`);
+            loadAdminUsers();
+            
+            // Se o admin editou o seu próprio saldo, atualiza a barra superior
+            if (currentUser && currentUser.id === selectedUserForBalance.id) {
+                checkUserProfile();
             }
         }
 
@@ -743,16 +835,16 @@
             const oddDraw = parseFloat(document.getElementById('admin-odd-draw').value);
             const oddAway = parseFloat(document.getElementById('admin-odd-away').value);
 
-            if (!home || !away || !time || !oddHome || !oddDraw || !oddAway) return alert("Preencha todos os campos.");
+            if (!home || !away || !time || !oddHome || !oddDraw || !oddAway) return showNotify("Atenção", "Preencha todos os campos da partida.", "warning");
 
             const { error } = await supabaseClient.from('matches').insert([{
                 home_team: home, away_team: away, match_time: time,
                 odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway, status: 'OPEN'
             }]);
 
-            if (error) return alert("Erro ao criar partida: " + error.message);
+            if (error) return showNotify("Erro", "Erro ao criar partida: " + error.message, "error");
 
-            alert("Partida cadastrada com sucesso!");
+            showNotify("Sucesso!", "Partida cadastrada com sucesso!");
             document.getElementById('admin-home').value = '';
             document.getElementById('admin-away').value = '';
             loadMatches();
