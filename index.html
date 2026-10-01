@@ -79,10 +79,11 @@
                     </h2>
                     <p class="text-xs text-slate-400">Valide pré-bilhetes através do código PIN e gira os jogos.</p>
                 </div>
-                <div class="flex gap-2 text-xs">
+                <div class="flex flex-wrap gap-2 text-xs">
                     <button onclick="switchAdminSub('validate')" id="sub-btn-validate" class="bg-amber-500 text-slate-950 font-black px-3 py-2 rounded-xl">Validar PIN</button>
                     <button onclick="switchAdminSub('tickets')" id="sub-btn-tickets" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Bilhetes</button>
                     <button onclick="switchAdminSub('matches')" id="sub-btn-matches" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Jogos & Placar</button>
+                    <button onclick="switchAdminSub('import')" id="sub-btn-import" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-file-import mr-1"></i> Importar em Bloco</button>
                     <button onclick="switchAdminSub('create')" id="sub-btn-create" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Criar Jogo</button>
                 </div>
             </div>
@@ -109,7 +110,17 @@
                 <div id="admin-matches-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA CRIAR JOGO -->
+            <!-- SUB-ABA IMPORTAR JOGOS EM BLOCO -->
+            <div id="admin-sub-panel-import" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Cadastrar Vários Jogos de Uma Vez</h3>
+                <p class="text-xs text-slate-400">Cole aqui o código de jogos gerado no chat para inserir de forma automática:</p>
+                <textarea id="admin-import-json" rows="6" placeholder='[{"home_team":"Flamengo","away_team":"São Paulo","match_time":"2026-10-02T19:00:00Z","odd_home":1.85,"odd_draw":3.20,"odd_away":4.10}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
+                <button onclick="adminImportMatchesBulk()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs">
+                    Importar Todos os Jogos
+                </button>
+            </div>
+
+            <!-- SUB-ABA CRIAR JOGO MANUALLMENTE -->
             <div id="admin-sub-panel-create" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -351,7 +362,7 @@
             else modal.classList.add('hidden');
         }
 
-        // GERAR CÓDIGO PIN (USA TABELA TICKETS COM user_id NULL)
+        // GERAR CÓDIGO PIN (SEM USER_ID)
         async function generateBetPIN() {
             const name = document.getElementById('bettor-name-input').value.trim();
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
@@ -370,7 +381,6 @@
                 code: "BET-" + pinCode,
                 pin: pinCode,
                 bettor_name: name,
-                user_id: null, // Permite gravar sem usuário autenticado
                 selections_data: selectionsList,
                 stake_amount: stake,
                 total_odds: totalOdds,
@@ -432,7 +442,7 @@
 
         // SUB-ABAS DO CAMBISTA
         function switchAdminSub(sub) {
-            ['validate', 'tickets', 'matches', 'create'].forEach(s => {
+            ['validate', 'tickets', 'matches', 'import', 'create'].forEach(s => {
                 document.getElementById(`admin-sub-panel-${s}`).classList.add('hidden');
                 document.getElementById(`sub-btn-${s}`).classList.remove('bg-amber-500', 'text-slate-950');
                 document.getElementById(`sub-btn-${s}`).classList.add('bg-slate-800', 'text-slate-300');
@@ -543,7 +553,6 @@
 
             await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
             
-            // Recalcula bilhetes validados
             const { data: bets } = await supabaseClient.from('tickets').select('*').or('status.eq.VALIDATED,status.eq.ACTIVE');
             if (bets) {
                 for (const b of bets) {
@@ -559,6 +568,25 @@
 
             alert("Partida encerrada!");
             loadAdminMatches();
+        }
+
+        async function adminImportMatchesBulk() {
+            const jsonText = document.getElementById('admin-import-json').value.trim();
+            if (!jsonText) return alert("Cole o código dos jogos.");
+
+            try {
+                const matchesArray = JSON.parse(jsonText);
+                const { error } = await supabaseClient.from('matches').insert(matchesArray);
+
+                if (error) return alert("Erro ao importar: " + error.message);
+
+                alert(`${matchesArray.length} jogo(s) cadastrado(s) com sucesso!`);
+                document.getElementById('admin-import-json').value = '';
+                loadMatches();
+                loadAdminMatches();
+            } catch (err) {
+                alert("Formato inválido. Certifique-se de colar o código exatamente como gerado.");
+            }
         }
 
         async function adminCreateMatch() {
