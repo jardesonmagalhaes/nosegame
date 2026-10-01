@@ -11,7 +11,6 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #020617; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
@@ -21,7 +20,7 @@
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
 
     <script>
-        // CONFIGURAÇÕES
+        // CONFIGURAÇÕES REAIS
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
@@ -38,66 +37,74 @@
         let selectedUserForBalance = null;
     </script>
 
-    <!-- Header Profissional -->
-    <header class="bg-slate-900/90 border-b border-slate-800/80 p-4 sticky top-0 z-40 backdrop-blur-md shadow-lg">
+    <!-- Header Responsivo Estilo Betano -->
+    <header class="bg-slate-900/90 border-b border-slate-800/80 p-3 md:p-4 sticky top-0 z-40 backdrop-blur-md shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
+            
+            <!-- Logo ArenaBet -->
             <div class="flex items-center space-x-2 cursor-pointer group" onclick="switchTab('client')">
-                <i class="fa-solid fa-trophy text-amber-400 text-2xl group-hover:scale-110 transition-transform"></i>
-                <h1 class="text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
+                <i class="fa-solid fa-trophy text-amber-400 text-xl md:text-2xl group-hover:scale-110 transition-transform"></i>
+                <h1 class="text-lg md:text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
             </div>
 
+            <!-- Área de Autenticação / Perfil e Carteira Integrada -->
             <div id="nav-auth-section" class="flex items-center space-x-2">
-                <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-semibold border border-slate-700 transition shadow">
+                <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-semibold border border-slate-700 transition">
                     Entrar
                 </button>
-                <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl font-extrabold shadow-lg hover:shadow-amber-500/20 transition">
+                <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-2 rounded-xl font-extrabold shadow-lg transition">
                     Criar Conta
                 </button>
             </div>
-        </div>
-    </header>
 
-    <!-- Barra de Navegação -->
-    <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2.5 backdrop-blur-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
-            <div class="flex space-x-2 md:space-x-4 font-bold">
-                <button onclick="switchTab('client')" id="nav-btn-client" class="nav-tab-btn text-amber-400 border-b-2 border-amber-400 pb-1 px-1 transition">
-                    <i class="fa-solid fa-futbol mr-1"></i> Partidas
-                </button>
-                <button onclick="switchTab('my-tickets')" id="nav-btn-my-tickets" class="nav-tab-btn text-slate-400 hover:text-white pb-1 px-1 transition">
-                    <i class="fa-solid fa-receipt mr-1"></i> Meus Bilhetes
-                </button>
-                <button onclick="switchTab('wallet')" id="nav-btn-wallet" class="nav-tab-btn text-slate-400 hover:text-white pb-1 px-1 transition">
-                    <i class="fa-solid fa-wallet mr-1"></i> Carteira / Pix
-                </button>
-                <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-tab-btn hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1 px-1 transition">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> Painel do Dono
+            <!-- Perfil / Carteira (Exibido apenas quando logado) -->
+            <div id="nav-user-section" class="hidden flex items-center space-x-2">
+                <div onclick="openWalletModal()" class="cursor-pointer bg-slate-950 border border-emerald-500/40 px-3 py-1.5 rounded-xl font-bold text-emerald-400 flex items-center shadow-inner hover:border-emerald-500 transition">
+                    <i class="fa-solid fa-wallet mr-1.5 text-xs"></i>
+                    <span class="text-xs">R$ <span id="user-balance-display">0,00</span></span>
+                </div>
+                <button onclick="openWalletModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 p-2 rounded-xl text-xs flex items-center justify-center transition">
+                    <i class="fa-solid fa-user"></i>
                 </button>
             </div>
 
-            <div class="bg-slate-950/80 border border-emerald-500/30 px-3.5 py-1.5 rounded-full font-bold text-emerald-400 flex items-center shadow-inner">
-                <i class="fa-solid fa-coins mr-1.5 text-xs"></i> Saldo: R$ <span id="user-balance-display">0,00</span>
+        </div>
+    </header>
+
+    <!-- Barra de Navegação de Abas -->
+    <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 backdrop-blur-sm">
+        <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
+            <div class="flex space-x-3 md:space-x-6 font-bold">
+                <button onclick="switchTab('client')" id="nav-btn-client" class="nav-tab-btn text-amber-400 border-b-2 border-amber-400 pb-1 transition">
+                    <i class="fa-solid fa-futbol mr-1"></i> Partidas
+                </button>
+                <button onclick="switchTab('my-tickets')" id="nav-btn-my-tickets" class="nav-tab-btn text-slate-400 hover:text-white pb-1 transition">
+                    <i class="fa-solid fa-receipt mr-1"></i> Meus Bilhetes
+                </button>
+                <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-tab-btn hidden text-rose-400 hover:text-rose-300 font-extrabold pb-1 transition">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Painel do Dono
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-6xl mx-auto p-4 md:p-6 w-full flex-1">
+    <main class="max-w-6xl mx-auto p-3 md:p-6 w-full flex-1">
 
-        <!-- TELA DO CLIENTE -->
+        <!-- TELA DO CLIENTE (JOGOS E CUPOM) -->
         <section id="view-client" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-4">
-                <h2 class="text-base font-bold text-slate-300 flex items-center">
+                <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center">
                     <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
                 </h2>
                 <div id="matches-list" class="space-y-3">
-                    <p class="text-xs text-slate-500">A carregar partidas...</p>
+                    <p class="text-xs text-slate-500">Carregando partidas...</p>
                 </div>
             </div>
 
             <!-- Cupom de Aposta -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl h-fit space-y-4">
-                <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex justify-between items-center">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-2xl h-fit space-y-4">
+                <h3 class="text-sm md:text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex justify-between items-center">
                     <span><i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Boletim de Aposta</span>
                     <span id="items-count" class="text-xs bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">0</span>
                 </h3>
@@ -130,41 +137,6 @@
             </div>
         </section>
 
-        <!-- TELA CARTEIRA -->
-        <section id="view-wallet" class="hidden max-w-xl mx-auto space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-                <h3 class="text-base font-bold text-amber-400 flex items-center">
-                    <i class="fa-solid fa-qrcode mr-2"></i> Depositar Saldo (Pix)
-                </h3>
-                <p class="text-xs text-slate-400">Realize a transferência Pix para a chave abaixo e informe o Dono para liberação dos seus créditos.</p>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center font-mono text-xs text-emerald-400 font-bold select-all">
-                    Chave Pix (E-mail): <span class="text-white">jardesonofc@gmail.com</span>
-                </div>
-                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center transition shadow-lg shadow-emerald-600/20">
-                    <i class="fa-brands fa-whatsapp text-base mr-2"></i> Notificar Dono no WhatsApp
-                </button>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-                <h3 class="text-base font-bold text-amber-400 flex items-center">
-                    <i class="fa-solid fa-money-bill-transfer mr-2"></i> Solicitar Saque
-                </h3>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Valor do Saque (R$)</label>
-                        <input type="number" id="withdraw-amount" placeholder="Ex: 50.00" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Chave Pix para Recebimento</label>
-                        <input type="text" id="withdraw-pix" placeholder="Sua chave Pix" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
-                    </div>
-                    <button onclick="requestWithdrawal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
-                        Solicitar Saque no WhatsApp
-                    </button>
-                </div>
-            </div>
-        </section>
-
         <!-- MEUS BILHETES -->
         <section id="view-my-tickets" class="hidden space-y-4 max-w-2xl mx-auto">
             <h2 class="text-base font-bold text-slate-300">Meus Bilhetes</h2>
@@ -176,7 +148,7 @@
             <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex justify-between items-center">
                 <div>
                     <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i> Painel do Administrador</h2>
-                    <p class="text-xs text-slate-400">Acesso restrito ao Dono da Banca.</p>
+                    <p class="text-xs text-slate-400">Acesso exclusivo do Dono da Banca.</p>
                 </div>
             </div>
 
@@ -184,7 +156,7 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Encerrar Partidas & Pagar Vencedores</h3>
                 <div id="admin-matches-management" class="space-y-3">
-                    <p class="text-xs text-slate-500">A carregar partidas abertas...</p>
+                    <p class="text-xs text-slate-500">Carregando partidas abertas...</p>
                 </div>
             </div>
 
@@ -194,26 +166,61 @@
                 <div id="admin-users-list" class="space-y-3"></div>
             </div>
 
-            <!-- CADASTRAR PARTIDA -->
+            <!-- CADASTRAR PARTIDA MANUALLMENTE -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Criar Nova Partida</h3>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Criar Partida Manualmente</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
-                    <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
-                    <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <input type="number" step="0.01" id="admin-odd-home" placeholder="Odd Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
-                    <input type="number" step="0.01" id="admin-odd-draw" placeholder="Odd Empate" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
-                    <input type="number" step="0.01" id="admin-odd-away" placeholder="Odd Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-home" placeholder="Odd Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-draw" placeholder="Odd Empate" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="number" step="0.01" id="admin-odd-away" placeholder="Odd Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                 </div>
-                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs transition">Publicar Partida</button>
+                <button onclick="adminCreateMatch()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition">Publicar Partida</button>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL DE NOTIFICAÇÃO CUSTOMIZADO (SUBSTITUI ALERTS) -->
+    <!-- MODAL DE CARTEIRA E PERFIL PRÁTICO (NOVO) -->
+    <div id="user-wallet-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative space-y-4">
+            <button onclick="closeWalletModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <h3 id="wallet-modal-name" class="text-sm font-extrabold text-white">Carregando...</h3>
+                    <p id="wallet-modal-email" class="text-[11px] text-slate-400"></p>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 border border-emerald-500/30 p-3.5 rounded-xl text-center space-y-1">
+                <span class="text-xs text-slate-400">Saldo Disponível para Apostar</span>
+                <p class="text-xl font-black text-emerald-400">R$ <span id="wallet-modal-balance">0,00</span></p>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <button onclick="openDepositWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center transition shadow">
+                    <i class="fa-brands fa-whatsapp text-base mr-2"></i> Depositar via Pix (WhatsApp)
+                </button>
+                <button onclick="requestWithdrawalPrompt()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center transition">
+                    <i class="fa-solid fa-money-bill-transfer text-base mr-2"></i> Solicitar Saque
+                </button>
+                <button onclick="handleLogout()" class="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold py-2 rounded-xl text-xs transition border border-rose-500/20 mt-2">
+                    Sair da Conta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOTIFICAÇÃO -->
     <div id="notify-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
             <div id="notify-icon" class="text-4xl"></div>
@@ -225,7 +232,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE GESTÃO DE SALDO (NOVO E CORRIGIDO) -->
+    <!-- MODAL DE GESTÃO DE SALDO (ADMIN) -->
     <div id="balance-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 relative">
             <button onclick="closeBalanceModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
@@ -237,7 +244,7 @@
 
             <div class="space-y-3 pt-2">
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">Tipo de Operação</label>
+                    <label class="block text-xs text-slate-400 mb-1">Operação</label>
                     <select id="balance-operation" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                         <option value="ADD">Adicionar (+)</option>
                         <option value="SUBTRACT">Retirar (-)</option>
@@ -333,7 +340,6 @@
 
     <!-- SCRIPTS -->
     <script>
-        // SESSÃO
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session?.user) {
@@ -349,10 +355,8 @@
                     currentUser = null;
                     userProfile = null;
                     document.getElementById('app-nav').classList.add('hidden');
-                    document.getElementById('nav-auth-section').innerHTML = `
-                        <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-semibold border border-slate-700 transition shadow">Entrar</button>
-                        <button onclick="openAuthModal('register')" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl font-extrabold shadow-lg transition">Criar Conta</button>
-                    `;
+                    document.getElementById('nav-user-section').classList.add('hidden');
+                    document.getElementById('nav-auth-section').classList.remove('hidden');
                     switchTab('client');
                 }
             });
@@ -360,7 +364,6 @@
             loadMatches();
         });
 
-        // MODAL NOTIFY CUSTOMIZADO
         function showNotify(title, message, type = 'success') {
             const modal = document.getElementById('notify-modal');
             const icon = document.getElementById('notify-icon');
@@ -376,6 +379,30 @@
 
         function closeNotifyModal() {
             document.getElementById('notify-modal').classList.add('hidden');
+        }
+
+        function openWalletModal() {
+            if (!userProfile) return openAuthModal('login');
+            document.getElementById('wallet-modal-name').innerText = userProfile.full_name;
+            document.getElementById('wallet-modal-email').innerText = currentUser.email;
+            document.getElementById('wallet-modal-balance').innerText = userProfile.balance.toFixed(2).replace('.', ',');
+            document.getElementById('user-wallet-modal').classList.remove('hidden');
+        }
+
+        function closeWalletModal() {
+            document.getElementById('user-wallet-modal').classList.add('hidden');
+        }
+
+        function requestWithdrawalPrompt() {
+            closeWalletModal();
+            const val = prompt("Digite o valor do saque (R$):");
+            const pix = prompt("Digite a sua chave Pix para recebimento:");
+            if (val && pix) {
+                const amount = parseFloat(val);
+                if (amount > userProfile.balance) return showNotify("Erro", "Saldo insuficiente.", "error");
+                const msg = `💸 *SOLICITAÇÃO DE SAQUE*\nCliente: ${userProfile.full_name}\nValor: R$ ${amount.toFixed(2)}\nChave Pix: ${pix}`;
+                window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+            }
         }
 
         function openAuthModal(mode) {
@@ -398,7 +425,7 @@
 
         function switchTab(tab) {
             activeTab = tab;
-            ['client', 'wallet', 'my-tickets', 'admin'].forEach(t => {
+            ['client', 'my-tickets', 'admin'].forEach(t => {
                 const el = document.getElementById(`view-${t}`);
                 if (el) el.classList.add('hidden');
             });
@@ -456,7 +483,7 @@
             }
 
             closeAuthModal();
-            showNotify("Conta Criada!", "Sua conta foi cadastrada com sucesso. Bem-vindo à ArenaBet!");
+            showNotify("Conta Criada!", "Sua conta foi cadastrada com sucesso na ArenaBet!");
         }
 
         async function handleLogin() {
@@ -488,11 +515,11 @@
             if (data) {
                 userProfile = data;
                 document.getElementById('app-nav').classList.remove('hidden');
+                document.getElementById('nav-auth-section').classList.add('hidden');
+                document.getElementById('nav-user-section').classList.remove('hidden');
+                
                 document.getElementById('user-balance-display').innerText = data.balance.toFixed(2).replace('.', ',');
-                document.getElementById('nav-auth-section').innerHTML = `
-                    <span class="text-xs text-slate-300 font-semibold mr-2"><i class="fa-solid fa-user text-amber-400"></i> ${data.full_name}</span>
-                    <button onclick="handleLogout()" class="text-xs bg-slate-800 text-rose-400 px-3 py-1.5 rounded-xl hover:bg-slate-700 transition border border-slate-700">Sair</button>
-                `;
+                
                 if (data.role === 'ADMIN') document.getElementById('nav-btn-admin').classList.remove('hidden');
                 switchTab(activeTab);
             }
@@ -591,7 +618,7 @@
 
             if (keys.length === 0) return showNotify("Atenção", "Selecione pelo menos um jogo para apostar.", "warning");
             if (stake < 2) return showNotify("Atenção", "O valor mínimo por aposta é R$ 2,00.", "warning");
-            if (userProfile.balance < stake) return showNotify("Saldo Insuficiente", "Faça um depósito via Pix com o Dono para liberar créditos.", "error");
+            if (userProfile.balance < stake) return showNotify("Saldo Insuficiente", "Faça um depósito via Pix para liberar créditos.", "error");
 
             const ticketCode = "BET-" + Math.floor(1000 + Math.random() * 9000);
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
@@ -623,19 +650,8 @@
         }
 
         function openDepositWhatsApp() {
+            closeWalletModal();
             const msg = `Olá! Fiz um Pix para a banca. Pode liberar meus créditos no site?\nE-mail da conta: ${currentUser.email}`;
-            window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        async function requestWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            const pixKey = document.getElementById('withdraw-pix').value.trim();
-
-            if (!amount || amount <= 0) return showNotify("Erro", "Digite um valor de saque válido.", "warning");
-            if (!pixKey) return showNotify("Erro", "Digite a sua chave Pix para recebimento.", "warning");
-            if (userProfile.balance < amount) return showNotify("Erro", "Saldo insuficiente para este valor de saque.", "error");
-
-            const msg = `💸 *SOLICITAÇÃO DE SAQUE*\nCliente: ${userProfile.full_name}\nValor: R$ ${amount.toFixed(2)}\nChave Pix: ${pixKey}`;
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -683,7 +699,7 @@
             });
         }
 
-        // ENCERRAMENTO DE PARTIDAS
+        // PAINEL DO DONO
         async function loadAdminMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('admin-matches-management');
@@ -755,7 +771,6 @@
             loadMatches();
         }
 
-        // GESTÃO DE SALDO (NOVO MODAL)
         async function loadAdminUsers() {
             const { data: users } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-users-list');
@@ -821,7 +836,6 @@
             showNotify("Saldo Atualizado!", `O saldo de ${selectedUserForBalance.full_name} foi alterado para R$ ${newBalance.toFixed(2)}.`);
             loadAdminUsers();
             
-            // Se o admin editou o seu próprio saldo, atualiza a barra superior
             if (currentUser && currentUser.id === selectedUserForBalance.id) {
                 checkUserProfile();
             }
