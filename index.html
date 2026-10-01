@@ -44,6 +44,8 @@
         let activeTab = 'client';
         let adminSubTab = 'overview';
         let selectedUserForBalance = null;
+        let selectedUserForEdit = null;
+        let selectedMatchForEdit = null;
         let isCartOpen = false;
     </script>
 
@@ -81,7 +83,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação de Abas Principal -->
+    <!-- Barra de Navegação -->
     <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
             <div id="client-nav-tabs" class="flex space-x-3 md:space-x-6 font-bold">
@@ -124,9 +126,9 @@
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-rose-400 flex items-center">
-                        <i class="fa-solid fa-shield-halved mr-2"></i> Painel de Controle da Banca
+                        <i class="fa-solid fa-shield-halved mr-2"></i> Painel de Controle e Auditoria
                     </h2>
-                    <p class="text-xs text-slate-400">Gestão financeira, bilhetes, usuários e controle de placares.</p>
+                    <p class="text-xs text-slate-400">Gestão financeira, bilhetes, verificação de dados e liquidações.</p>
                 </div>
 
                 <!-- Menu Interno do Admin -->
@@ -138,10 +140,10 @@
                         <i class="fa-solid fa-list-check mr-1"></i> Bilhetes
                     </button>
                     <button onclick="switchAdminSubTab('matches')" id="admin-sub-matches" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
-                        <i class="fa-solid fa-trophy mr-1"></i> Liquidar Jogos
+                        <i class="fa-solid fa-trophy mr-1"></i> Liquidar & Editar Jogos
                     </button>
                     <button onclick="switchAdminSubTab('users')" id="admin-sub-users" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
-                        <i class="fa-solid fa-users mr-1"></i> Clientes
+                        <i class="fa-solid fa-users mr-1"></i> Gestão de Clientes
                     </button>
                     <button onclick="switchAdminSubTab('create')" id="admin-sub-create" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
                         <i class="fa-solid fa-plus mr-1"></i> Novo Jogo
@@ -170,24 +172,30 @@
             <!-- SUB-ABA 2: TODOS OS BILHETES DO SISTEMA -->
             <div id="admin-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase flex items-center">
-                    <i class="fa-solid fa-list-check mr-2"></i> Histórico Completo de Apostas
+                    <i class="fa-solid fa-list-check mr-2"></i> Histórico Geral de Apostas Emitidas
                 </h3>
                 <div id="admin-all-tickets-list" class="space-y-3">
                     <p class="text-xs text-slate-500">Carregando movimentações de bilhetes...</p>
                 </div>
             </div>
 
-            <!-- SUB-ABA 3: LIQUIDAR PARTIDAS -->
+            <!-- SUB-ABA 3: LIQUIDAR E REVERTER PARTIDAS -->
             <div id="admin-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Partidas Abertas (Definir Placar Real)</h3>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciador de Partidas (Abertas e Encerradas)</h3>
+                    <select id="admin-matches-filter" onchange="loadAdminMatches()" class="bg-slate-950 border border-slate-700 text-xs rounded-xl p-2 text-white">
+                        <option value="OPEN">Partidas Abertas</option>
+                        <option value="FINISHED">Partidas Encerradas (Reverter)</option>
+                    </select>
+                </div>
                 <div id="admin-matches-management" class="space-y-3">
-                    <p class="text-xs text-slate-500">Carregando partidas abertas...</p>
+                    <p class="text-xs text-slate-500">Carregando partidas...</p>
                 </div>
             </div>
 
-            <!-- SUB-ABA 4: CLIENTES E SALDOS -->
+            <!-- SUB-ABA 4: CLIENTES E EDITAR REGISTROS -->
             <div id="admin-panel-users" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Gestão de Clientes & Adicionar/Remover Saldo</h3>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Clientes Cadastrados, Edição e Exclusão</h3>
                 <div id="admin-users-list" class="space-y-3"></div>
             </div>
 
@@ -209,6 +217,72 @@
         </section>
 
     </main>
+
+    <!-- MODAL DE EDIÇÃO DE CLIENTE (ADMIN) -->
+    <div id="edit-user-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 relative">
+            <button onclick="closeEditUserModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-user-pen mr-1"></i> Editar Dados do Cliente</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Nome Completo</label>
+                    <input type="text" id="edit-user-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">CPF</label>
+                    <input type="text" id="edit-user-cpf" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Telefone / WhatsApp</label>
+                    <input type="text" id="edit-user-phone" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                </div>
+                <button onclick="saveUserEdit()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl transition shadow-lg">
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO DE PARTIDA (ADMIN) -->
+    <div id="edit-match-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4 relative">
+            <button onclick="closeEditMatchModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Partida</h3>
+            <div class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Time Casa</label>
+                        <input type="text" id="edit-match-home" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Time Fora</label>
+                        <input type="text" id="edit-match-away" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Odd Casa</label>
+                        <input type="number" step="0.01" id="edit-match-odd-home" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Odd Empate</label>
+                        <input type="number" step="0.01" id="edit-match-odd-draw" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Odd Fora</label>
+                        <input type="number" step="0.01" id="edit-match-odd-away" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
+                    </div>
+                </div>
+                <button onclick="saveMatchEdit()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition shadow-lg">
+                    Atualizar Partida
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- BOTÃO E CUPOM DE APOSTAS FLUTUANTE -->
     <div id="floating-cart-btn" class="fixed bottom-4 right-4 z-40">
@@ -510,7 +584,6 @@
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
-            // Oculta o botão flutuante de cupom se estiver no Painel Admin
             const floatBtn = document.getElementById('floating-cart-btn');
             if (tab === 'admin') floatBtn.classList.add('hidden');
             else floatBtn.classList.remove('hidden');
@@ -881,7 +954,6 @@
             document.getElementById('admin-stat-net').innerText = `R$ ${net.toFixed(2).replace('.', ',')}`;
         }
 
-        // BUSCA CORRIGIDA DOS BILHETES DO ADMIN
         async function loadAdminAllTickets() {
             const { data: tickets, error } = await supabaseClient
                 .from('tickets')
@@ -910,13 +982,18 @@
                 if (!matchSummary) matchSummary = "Aposta simples sem detalhes";
 
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-1">
-                        <div class="flex justify-between font-bold">
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2">
+                        <div class="flex justify-between items-center font-bold">
                             <span class="text-amber-400">#${t.code} - Cliente: ${t.profiles?.full_name || 'Usuário'}</span>
-                            <div>${badge}</div>
+                            <div class="flex items-center space-x-2">
+                                ${badge}
+                                <button onclick="adminDeleteTicket('${t.id}', '${t.user_id}', ${t.stake_amount})" class="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white px-2 py-1 rounded-lg text-[10px] font-bold transition">
+                                    <i class="fa-solid fa-trash"></i> Cancelar
+                                </button>
+                            </div>
                         </div>
                         <p class="text-slate-300 font-medium">${matchSummary}</p>
-                        <div class="flex justify-between text-slate-500 text-[11px] pt-1">
+                        <div class="flex justify-between text-slate-500 text-[11px] pt-1 border-t border-slate-800/80">
                             <span>Apostado: R$ ${t.stake_amount.toFixed(2)}</span>
                             <span>Retorno: R$ ${t.potential_payout.toFixed(2)}</span>
                         </div>
@@ -925,15 +1002,55 @@
             });
         }
 
+        async function adminDeleteTicket(ticketId, userId, stakeAmount) {
+            if (!confirm("Tem certeza que deseja cancelar e apagar este bilhete? O valor apostado será estornado ao cliente.")) return;
+
+            // Reembolsa o cliente
+            const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', userId).single();
+            if (user) {
+                await supabaseClient.from('profiles').update({ balance: user.balance + stakeAmount }).eq('id', userId);
+            }
+
+            // Exclui o bilhete
+            const { error } = await supabaseClient.from('tickets').delete().eq('id', ticketId);
+            if (error) return showNotify("Erro", "Erro ao apagar bilhete: " + error.message, "error");
+
+            showNotify("Bilhete Cancelado!", "O bilhete foi apagado e o valor estornado ao cliente.");
+            loadAdminAllTickets();
+            loadAdminDashboard();
+        }
+
+        // GESTÃO, LIQUIDAÇÃO E REVERSÃO DE PARTIDAS
         async function loadAdminMatches() {
-            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
+            const filter = document.getElementById('admin-matches-filter').value;
+            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', filter).order('match_time', { ascending: false });
             const container = document.getElementById('admin-matches-management');
             if (!matches || matches.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhuma partida aberta para encerramento.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhuma partida encontrada para este filtro.</p>`;
                 return;
             }
             container.innerHTML = '';
             matches.forEach(m => {
+                let actionControls = '';
+
+                if (filter === 'OPEN') {
+                    actionControls = `
+                        <input type="number" id="score-home-${m.id}" placeholder="Casa" class="w-14 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
+                        <span class="text-slate-500 font-bold">x</span>
+                        <input type="number" id="score-away-${m.id}" placeholder="Fora" class="w-14 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
+                        <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-2 rounded-xl transition shadow">
+                            Liquidar
+                        </button>
+                    `;
+                } else {
+                    actionControls = `
+                        <span class="text-emerald-400 font-bold mr-2">Placar: ${m.score_home} x ${m.score_away}</span>
+                        <button onclick="adminReopenMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 px-3 py-2 rounded-xl font-bold transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Reabrir / Desfazer
+                        </button>
+                    `;
+                }
+
                 container.innerHTML += `
                     <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center text-xs gap-3">
                         <div>
@@ -941,11 +1058,12 @@
                             <p class="text-slate-400 mt-0.5">Odds: Casa (${m.odd_home.toFixed(2)}) | Empate (${m.odd_draw.toFixed(2)}) | Fora (${m.odd_away.toFixed(2)})</p>
                         </div>
                         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                            <input type="number" id="score-home-${m.id}" placeholder="Casa" class="w-16 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
-                            <span class="text-slate-500 font-bold">x</span>
-                            <input type="number" id="score-away-${m.id}" placeholder="Fora" class="w-16 bg-slate-900 border border-slate-700 rounded-xl p-2 text-center text-white font-bold">
-                            <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl transition shadow">
-                                Liquidar
+                            ${actionControls}
+                            <button onclick='openEditMatchModal(${JSON.stringify(m)})' class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl transition border border-slate-700">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white p-2 rounded-xl transition border border-rose-500/30">
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
@@ -1012,13 +1130,89 @@
                 }
             }
 
-            showNotify("Sucesso!", "Partida encerrada. Bilhetes calculados e vencedores pagos!");
+            showNotify("Sucesso!", "Partida encerrada e bilhetes calculados!");
             loadAdminMatches();
             loadAdminDashboard();
-            loadAdminAllTickets();
+        }
+
+        // REVERTER LIQUIDAÇÃO
+        async function adminReopenMatch(matchId) {
+            if (!confirm("Deseja reabrir esta partida? O status dos bilhetes será redefinido para Em Andamento e prêmios pagos indevidamente serão ajustados.")) return;
+
+            // Reabre o jogo
+            await supabaseClient.from('matches').update({ status: 'OPEN', score_home: null, score_away: null }).eq('id', matchId);
+
+            // Reseta bilhetes que tinham este jogo
+            const { data: tickets } = await supabaseClient.from('tickets').select('*');
+            if (tickets) {
+                for (const t of tickets) {
+                    const items = t.selections_data || [];
+                    const containsMatch = items.some(i => i.matchId === matchId);
+                    if (containsMatch) {
+                        if (t.status === 'WON') {
+                            // Se o cliente tinha recebido o dinheiro, deduz do saldo
+                            const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', t.user_id).single();
+                            if (user) {
+                                const newBal = Math.max(0, user.balance - t.potential_payout);
+                                await supabaseClient.from('profiles').update({ balance: newBal }).eq('id', t.user_id);
+                            }
+                        }
+                        await supabaseClient.from('tickets').update({ status: 'ACTIVE' }).eq('id', t.id);
+                    }
+                }
+            }
+
+            showNotify("Partida Reaberta!", "A partida voltou ao status aberto e os bilhetes foram redefinidos.");
+            loadAdminMatches();
+            loadAdminDashboard();
+        }
+
+        function openEditMatchModal(m) {
+            selectedMatchForEdit = m;
+            document.getElementById('edit-match-home').value = m.home_team;
+            document.getElementById('edit-match-away').value = m.away_team;
+            document.getElementById('edit-match-odd-home').value = m.odd_home;
+            document.getElementById('edit-match-odd-draw').value = m.odd_draw;
+            document.getElementById('edit-match-odd-away').value = m.odd_away;
+            document.getElementById('edit-match-modal').classList.remove('hidden');
+        }
+
+        function closeEditMatchModal() {
+            selectedMatchForEdit = null;
+            document.getElementById('edit-match-modal').classList.add('hidden');
+        }
+
+        async function saveMatchEdit() {
+            if (!selectedMatchForEdit) return;
+            const home = document.getElementById('edit-match-home').value.trim();
+            const away = document.getElementById('edit-match-away').value.trim();
+            const oddHome = parseFloat(document.getElementById('edit-match-odd-home').value);
+            const oddDraw = parseFloat(document.getElementById('edit-match-odd-draw').value);
+            const oddAway = parseFloat(document.getElementById('edit-match-odd-away').value);
+
+            const { error } = await supabaseClient.from('matches').update({
+                home_team: home, away_team: away,
+                odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway
+            }).eq('id', selectedMatchForEdit.id);
+
+            if (error) return showNotify("Erro", "Falha ao editar partida: " + error.message, "error");
+
+            closeEditMatchModal();
+            showNotify("Sucesso!", "Partida atualizada com sucesso.");
+            loadAdminMatches();
             loadMatches();
         }
 
+        async function adminDeleteMatch(matchId) {
+            if (!confirm("Tem certeza que deseja excluir esta partida permanentemente?")) return;
+            const { error } = await supabaseClient.from('matches').delete().eq('id', matchId);
+            if (error) return showNotify("Erro", "Erro ao apagar partida: " + error.message, "error");
+            showNotify("Excluída!", "Partida removida com sucesso.");
+            loadAdminMatches();
+            loadMatches();
+        }
+
+        // GESTÃO DE CLIENTES (EDITAR E DELETAR)
         async function loadAdminUsers() {
             const { data: users } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-users-list');
@@ -1026,20 +1220,66 @@
 
             users.forEach(u => {
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
+                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center text-xs gap-3">
                         <div>
-                            <p class="font-bold text-white">${u.full_name} (${u.role})</p>
-                            <p class="text-slate-400">CPF: ${u.cpf || 'N/A'} | Tel: ${u.phone || 'N/A'}</p>
+                            <p class="font-bold text-white text-sm">${u.full_name} <span class="text-slate-500 font-normal">(${u.role})</span></p>
+                            <p class="text-slate-400 mt-0.5">CPF: <strong class="text-slate-200">${u.cpf || 'N/A'}</strong> | Tel: <strong class="text-slate-200">${u.phone || 'N/A'}</strong></p>
                             <p class="text-emerald-400 font-bold mt-1">Saldo Atual: R$ ${u.balance.toFixed(2)}</p>
                         </div>
-                        <div>
-                            <button onclick='openBalanceModal(${JSON.stringify(u)})' class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3.5 py-2 rounded-xl transition shadow">
-                                <i class="fa-solid fa-coins mr-1"></i> Alterar Saldo
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick='openBalanceModal(${JSON.stringify(u)})' class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl transition shadow">
+                                <i class="fa-solid fa-coins mr-1"></i> Saldo
+                            </button>
+                            <button onclick='openEditUserModal(${JSON.stringify(u)})' class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition">
+                                <i class="fa-solid fa-user-pen mr-1"></i> Editar Dados
+                            </button>
+                            <button onclick="adminDeleteUser('${u.id}', '${u.full_name}')" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-bold px-3 py-1.5 rounded-xl border border-rose-500/30 transition">
+                                <i class="fa-solid fa-trash mr-1"></i> Excluir
                             </button>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        function openEditUserModal(user) {
+            selectedUserForEdit = user;
+            document.getElementById('edit-user-name').value = user.full_name || '';
+            document.getElementById('edit-user-cpf').value = user.cpf || '';
+            document.getElementById('edit-user-phone').value = user.phone || '';
+            document.getElementById('edit-user-modal').classList.remove('hidden');
+        }
+
+        function closeEditUserModal() {
+            selectedUserForEdit = null;
+            document.getElementById('edit-user-modal').classList.add('hidden');
+        }
+
+        async function saveUserEdit() {
+            if (!selectedUserForEdit) return;
+            const name = document.getElementById('edit-user-name').value.trim();
+            const cpf = document.getElementById('edit-user-cpf').value.trim();
+            const phone = document.getElementById('edit-user-phone').value.trim();
+
+            const { error } = await supabaseClient.from('profiles').update({
+                full_name: name, cpf: cpf, phone: phone
+            }).eq('id', selectedUserForEdit.id);
+
+            if (error) return showNotify("Erro", "Falha ao atualizar dados: " + error.message, "error");
+
+            closeEditUserModal();
+            showNotify("Dados Salvos!", "Informações do cliente atualizadas.");
+            loadAdminUsers();
+        }
+
+        async function adminDeleteUser(userId, userName) {
+            if (!confirm(`Tem certeza que deseja excluir permanentemente a conta de ${userName}?`)) return;
+
+            const { error } = await supabaseClient.from('profiles').delete().eq('id', userId);
+            if (error) return showNotify("Erro", "Erro ao apagar perfil: " + error.message, "error");
+
+            showNotify("Cliente Removido!", `A conta de ${userName} foi excluída.`);
+            loadAdminUsers();
         }
 
         function openBalanceModal(user) {
