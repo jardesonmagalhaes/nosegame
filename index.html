@@ -351,7 +351,7 @@
             else modal.classList.add('hidden');
         }
 
-        // GERAR CÓDIGO PIN (USA TABELA TICKETS EXISTENTE)
+        // GERAR CÓDIGO PIN (USA TABELA TICKETS COM user_id NULL)
         async function generateBetPIN() {
             const name = document.getElementById('bettor-name-input').value.trim();
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
@@ -370,6 +370,7 @@
                 code: "BET-" + pinCode,
                 pin: pinCode,
                 bettor_name: name,
+                user_id: null, // Permite gravar sem usuário autenticado
                 selections_data: selectionsList,
                 stake_amount: stake,
                 total_odds: totalOdds,
