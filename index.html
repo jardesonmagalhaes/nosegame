@@ -182,10 +182,10 @@
             <!-- SUB-ABA 3: LIQUIDAR E REVERTER PARTIDAS -->
             <div id="admin-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                    <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciador de Partidas (Abertas e Encerradas)</h3>
+                    <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciador de Partidas</h3>
                     <select id="admin-matches-filter" onchange="loadAdminMatches()" class="bg-slate-950 border border-slate-700 text-xs rounded-xl p-2 text-white">
                         <option value="OPEN">Partidas Abertas</option>
-                        <option value="FINISHED">Partidas Encerradas (Reverter)</option>
+                        <option value="FINISHED">Partidas Encerradas (Reverter/Editar Placar)</option>
                     </select>
                 </div>
                 <div id="admin-matches-management" class="space-y-3">
@@ -245,13 +245,13 @@
         </div>
     </div>
 
-    <!-- MODAL DE EDIÇÃO DE PARTIDA (ADMIN) -->
+    <!-- MODAL DE EDIÇÃO E RE-LIQUIDAÇÃO DE PARTIDA (ADMIN) -->
     <div id="edit-match-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4 relative">
             <button onclick="closeEditMatchModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
-            <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Partida</h3>
+            <h3 class="text-base font-bold text-amber-400"><i class="fa-solid fa-pen-to-square mr-1"></i> Editar Partida e Recalcular Placar</h3>
             <div class="space-y-3 text-xs">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -263,6 +263,18 @@
                         <input type="text" id="edit-match-away" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white">
                     </div>
                 </div>
+
+                <div id="edit-score-section" class="grid grid-cols-2 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Placar Real Casa</label>
+                        <input type="number" id="edit-match-score-home" placeholder="Ex: 1" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Placar Real Fora</label>
+                        <input type="number" id="edit-match-score-away" placeholder="Ex: 0" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-white font-bold">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-slate-400 mb-1">Odd Casa</label>
@@ -278,7 +290,7 @@
                     </div>
                 </div>
                 <button onclick="saveMatchEdit()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold py-3 rounded-xl transition shadow-lg">
-                    Atualizar Partida
+                    Salvar e Recalcular Todos os Bilhetes
                 </button>
             </div>
         </div>
@@ -1005,19 +1017,75 @@
         async function adminDeleteTicket(ticketId, userId, stakeAmount) {
             if (!confirm("Tem certeza que deseja cancelar e apagar este bilhete? O valor apostado será estornado ao cliente.")) return;
 
-            // Reembolsa o cliente
             const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', userId).single();
             if (user) {
                 await supabaseClient.from('profiles').update({ balance: user.balance + stakeAmount }).eq('id', userId);
             }
 
-            // Exclui o bilhete
             const { error } = await supabaseClient.from('tickets').delete().eq('id', ticketId);
             if (error) return showNotify("Erro", "Erro ao apagar bilhete: " + error.message, "error");
 
             showNotify("Bilhete Cancelado!", "O bilhete foi apagado e o valor estornado ao cliente.");
             loadAdminAllTickets();
             loadAdminDashboard();
+        }
+
+        // FUNÇÃO CENTRALIZADA PARA RECALCULAR E RE-LIQUIDAR BILHETES
+        async function recalculateAllTickets() {
+            const { data: allTickets } = await supabaseClient.from('tickets').select('*');
+            const { data: allMatches } = await supabaseClient.from('matches').select('*');
+            
+            const matchesMap = {};
+            if (allMatches) allMatches.forEach(m => matchesMap[m.id] = m);
+
+            if (allTickets && allTickets.length > 0) {
+                for (const ticket of allTickets) {
+                    const selections = ticket.selections_data || [];
+                    let hasLost = false;
+                    let allFinishedAndWon = true;
+
+                    for (const sel of selections) {
+                        const match = matchesMap[sel.matchId];
+                        if (!match || match.status !== 'FINISHED') {
+                            allFinishedAndWon = false;
+                            continue;
+                        }
+
+                        let winningMarket = 'DRAW';
+                        if (match.score_home > match.score_away) winningMarket = 'HOME';
+                        if (match.score_away > match.score_home) winningMarket = 'AWAY';
+
+                        if (sel.marketType !== winningMarket) {
+                            hasLost = true;
+                            break;
+                        }
+                    }
+
+                    const prevStatus = ticket.status;
+
+                    if (hasLost) {
+                        // Se era WON antes e virou LOST por correção, deduz o prêmio pago indevidamente
+                        if (prevStatus === 'WON') {
+                            const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
+                            if (user) {
+                                const newBal = Math.max(0, user.balance - ticket.potential_payout);
+                                await supabaseClient.from('profiles').update({ balance: newBal }).eq('id', ticket.user_id);
+                            }
+                        }
+                        await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', ticket.id);
+                    } else if (allFinishedAndWon && selections.length > 0) {
+                        // Se virou WON após o ajuste do placar correto e antes não estava ganho
+                        if (prevStatus !== 'WON') {
+                            const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
+                            if (user) {
+                                const updatedBalance = user.balance + ticket.potential_payout;
+                                await supabaseClient.from('profiles').update({ balance: updatedBalance }).eq('id', ticket.user_id);
+                            }
+                        }
+                        await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
+                    }
+                }
+            }
         }
 
         // GESTÃO, LIQUIDAÇÃO E REVERSÃO DE PARTIDAS
@@ -1060,7 +1128,7 @@
                         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
                             ${actionControls}
                             <button onclick='openEditMatchModal(${JSON.stringify(m)})' class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl transition border border-slate-700">
-                                <i class="fa-solid fa-pen"></i>
+                                <i class="fa-solid fa-pen"></i> Editar
                             </button>
                             <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white p-2 rounded-xl transition border border-rose-500/30">
                                 <i class="fa-solid fa-trash"></i>
@@ -1088,61 +1156,18 @@
 
             if (matchErr) return showNotify("Erro", "Erro ao encerrar partida: " + matchErr.message, "error");
 
-            const { data: activeTickets } = await supabaseClient.from('tickets').select('*').eq('status', 'ACTIVE');
-            const { data: allMatches } = await supabaseClient.from('matches').select('*');
-            const matchesMap = {};
-            if (allMatches) allMatches.forEach(m => matchesMap[m.id] = m);
-
-            if (activeTickets && activeTickets.length > 0) {
-                for (const ticket of activeTickets) {
-                    const selections = ticket.selections_data || [];
-                    let hasLost = false;
-                    let allFinishedAndWon = true;
-
-                    for (const sel of selections) {
-                        const match = matchesMap[sel.matchId];
-                        if (!match || match.status !== 'FINISHED') {
-                            allFinishedAndWon = false;
-                            continue;
-                        }
-
-                        let winningMarket = 'DRAW';
-                        if (match.score_home > match.score_away) winningMarket = 'HOME';
-                        if (match.score_away > match.score_home) winningMarket = 'AWAY';
-
-                        if (sel.marketType !== winningMarket) {
-                            hasLost = true;
-                            break;
-                        }
-                    }
-
-                    if (hasLost) {
-                        await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', ticket.id);
-                    } else if (allFinishedAndWon && selections.length > 0) {
-                        await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
-                        
-                        const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
-                        if (user) {
-                            const updatedBalance = user.balance + ticket.potential_payout;
-                            await supabaseClient.from('profiles').update({ balance: updatedBalance }).eq('id', ticket.user_id);
-                        }
-                    }
-                }
-            }
+            await recalculateAllTickets();
 
             showNotify("Sucesso!", "Partida encerrada e bilhetes calculados!");
             loadAdminMatches();
             loadAdminDashboard();
         }
 
-        // REVERTER LIQUIDAÇÃO
         async function adminReopenMatch(matchId) {
-            if (!confirm("Deseja reabrir esta partida? O status dos bilhetes será redefinido para Em Andamento e prêmios pagos indevidamente serão ajustados.")) return;
+            if (!confirm("Deseja reabrir esta partida? O status dos bilhetes será redefinido para Em Andamento e prêmios pagos indevidamente serão estornados.")) return;
 
-            // Reabre o jogo
             await supabaseClient.from('matches').update({ status: 'OPEN', score_home: null, score_away: null }).eq('id', matchId);
 
-            // Reseta bilhetes que tinham este jogo
             const { data: tickets } = await supabaseClient.from('tickets').select('*');
             if (tickets) {
                 for (const t of tickets) {
@@ -1150,7 +1175,6 @@
                     const containsMatch = items.some(i => i.matchId === matchId);
                     if (containsMatch) {
                         if (t.status === 'WON') {
-                            // Se o cliente tinha recebido o dinheiro, deduz do saldo
                             const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', t.user_id).single();
                             if (user) {
                                 const newBal = Math.max(0, user.balance - t.potential_payout);
@@ -1171,6 +1195,8 @@
             selectedMatchForEdit = m;
             document.getElementById('edit-match-home').value = m.home_team;
             document.getElementById('edit-match-away').value = m.away_team;
+            document.getElementById('edit-match-score-home').value = m.score_home ?? '';
+            document.getElementById('edit-match-score-away').value = m.score_away ?? '';
             document.getElementById('edit-match-odd-home').value = m.odd_home;
             document.getElementById('edit-match-odd-draw').value = m.odd_draw;
             document.getElementById('edit-match-odd-away').value = m.odd_away;
@@ -1186,21 +1212,35 @@
             if (!selectedMatchForEdit) return;
             const home = document.getElementById('edit-match-home').value.trim();
             const away = document.getElementById('edit-match-away').value.trim();
+            const scoreHomeInput = document.getElementById('edit-match-score-home').value;
+            const scoreAwayInput = document.getElementById('edit-match-score-away').value;
             const oddHome = parseFloat(document.getElementById('edit-match-odd-home').value);
             const oddDraw = parseFloat(document.getElementById('edit-match-odd-draw').value);
             const oddAway = parseFloat(document.getElementById('edit-match-odd-away').value);
 
-            const { error } = await supabaseClient.from('matches').update({
+            let updatePayload = {
                 home_team: home, away_team: away,
                 odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway
-            }).eq('id', selectedMatchForEdit.id);
+            };
+
+            if (scoreHomeInput !== '' && scoreAwayInput !== '') {
+                updatePayload.score_home = parseInt(scoreHomeInput);
+                updatePayload.score_away = parseInt(scoreAwayInput);
+                updatePayload.status = 'FINISHED';
+            }
+
+            const { error } = await supabaseClient.from('matches').update(updatePayload).eq('id', selectedMatchForEdit.id);
 
             if (error) return showNotify("Erro", "Falha ao editar partida: " + error.message, "error");
 
+            // Recalcula todos os bilhetes após a alteração do placar correto
+            await recalculateAllTickets();
+
             closeEditMatchModal();
-            showNotify("Sucesso!", "Partida atualizada com sucesso.");
+            showNotify("Sucesso!", "Partida e bilhetes vinculados foram re-calculados com o novo placar!");
             loadAdminMatches();
             loadMatches();
+            loadAdminDashboard();
         }
 
         async function adminDeleteMatch(matchId) {
