@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArenaBet - Aposta Esportiva Privada</title>
+    <title>NOSEGAME - Aposta Esportiva Privada</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -15,12 +15,20 @@
         ::-webkit-scrollbar-track { background: #020617; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        .selected-odd {
+            background-color: #f59e0b !important;
+            color: #020617 !important;
+            border-color: #fbbf24 !important;
+        }
+        .selected-odd span {
+            color: #020617 !important;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950 pb-20 lg:pb-0">
 
     <script>
-        // CONFIGURAÇÕES REAIS
+        // CONFIGURAÇÕES
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
@@ -35,19 +43,20 @@
         let selections = {};
         let activeTab = 'client';
         let selectedUserForBalance = null;
+        let isCartOpen = false;
     </script>
 
-    <!-- Header Responsivo Estilo Betano -->
+    <!-- Header Responsivo NOSEGAME -->
     <header class="bg-slate-900/90 border-b border-slate-800/80 p-3 md:p-4 sticky top-0 z-40 backdrop-blur-md shadow-lg">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             
-            <!-- Logo ArenaBet -->
+            <!-- Logo NOSEGAME -->
             <div class="flex items-center space-x-2 cursor-pointer group" onclick="switchTab('client')">
                 <i class="fa-solid fa-trophy text-amber-400 text-xl md:text-2xl group-hover:scale-110 transition-transform"></i>
-                <h1 class="text-lg md:text-xl font-black tracking-widest text-amber-400 uppercase">Arena<span class="text-white">Bet</span></h1>
+                <h1 class="text-lg md:text-xl font-black tracking-widest text-amber-400 uppercase">NOSE<span class="text-white">GAME</span></h1>
             </div>
 
-            <!-- Área de Autenticação / Perfil e Carteira Integrada -->
+            <!-- Área de Autenticação -->
             <div id="nav-auth-section" class="flex items-center space-x-2">
                 <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-xl font-semibold border border-slate-700 transition">
                     Entrar
@@ -71,7 +80,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação de Abas -->
+    <!-- Barra de Navegação -->
     <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
             <div class="flex space-x-3 md:space-x-6 font-bold">
@@ -91,53 +100,17 @@
     <!-- Conteúdo Principal -->
     <main class="max-w-6xl mx-auto p-3 md:p-6 w-full flex-1">
 
-        <!-- TELA DO CLIENTE (JOGOS E CUPOM) -->
-        <section id="view-client" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 space-y-4">
-                <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center">
-                    <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
-                </h2>
-                <div id="matches-list" class="space-y-3">
-                    <p class="text-xs text-slate-500">Carregando partidas...</p>
-                </div>
-            </div>
-
-            <!-- Cupom de Aposta -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-5 shadow-2xl h-fit space-y-4">
-                <h3 class="text-sm md:text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex justify-between items-center">
-                    <span><i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Boletim de Aposta</span>
-                    <span id="items-count" class="text-xs bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full">0</span>
-                </h3>
-
-                <div id="cart-items" class="py-2 space-y-2 max-h-60 overflow-y-auto">
-                    <p class="text-xs text-slate-500 text-center">Nenhum palpite selecionado.</p>
-                </div>
-
-                <div class="border-t border-slate-800 pt-3 space-y-3">
-                    <div class="flex justify-between text-sm font-semibold">
-                        <span class="text-slate-400">Cotação Total:</span>
-                        <span id="total-odds" class="font-extrabold text-amber-400">1.00</span>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$)</label>
-                        <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" 
-                               class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none focus:border-amber-500 transition">
-                    </div>
-
-                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
-                        <span class="text-xs text-emerald-400 font-bold">Retorno Possível:</span>
-                        <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
-                    </div>
-
-                    <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/10">
-                        Confirmar Aposta
-                    </button>
-                </div>
+        <!-- TELA DO CLIENTE (JOGOS) -->
+        <section id="view-client" class="space-y-4">
+            <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center">
+                <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
+            </h2>
+            <div id="matches-list" class="space-y-3">
+                <p class="text-xs text-slate-500">Carregando partidas...</p>
             </div>
         </section>
 
-        <!-- MEUS BILHETES -->
+        <!-- MEUS BILHETES (COM DETALHES COMPLETOS) -->
         <section id="view-my-tickets" class="hidden space-y-4 max-w-2xl mx-auto">
             <h2 class="text-base font-bold text-slate-300">Meus Bilhetes</h2>
             <div id="user-tickets-list" class="space-y-3"></div>
@@ -185,7 +158,54 @@
 
     </main>
 
-    <!-- MODAL DE CARTEIRA E PERFIL PRÁTICO (NOVO) -->
+    <!-- BOTÃO E CUPOM DE APOSTAS OCULTO/FLUTUANTE (APARECE AO CLICAR) -->
+    <div id="floating-cart-btn" class="fixed bottom-4 right-4 z-40">
+        <button onclick="toggleCartModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-3 rounded-full shadow-2xl flex items-center space-x-2 transition border-2 border-slate-950">
+            <i class="fa-solid fa-receipt text-lg"></i>
+            <span class="text-xs uppercase tracking-wider">Cupom de Apostas</span>
+            <span id="floating-cart-count" class="bg-slate-950 text-amber-400 text-xs px-2 py-0.5 rounded-full font-extrabold">0</span>
+        </button>
+    </div>
+
+    <!-- MODAL/GAVETA DO CUPOM DE APOSTAS -->
+    <div id="cart-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="toggleCartModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex items-center">
+                <i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Boletim de Aposta
+            </h3>
+
+            <div id="cart-items" class="py-2 space-y-2 max-h-60 overflow-y-auto">
+                <p class="text-xs text-slate-500 text-center">Nenhum palpite selecionado.</p>
+            </div>
+
+            <div class="border-t border-slate-800 pt-3 space-y-3">
+                <div class="flex justify-between text-sm font-semibold">
+                    <span class="text-slate-400">Cotação Total:</span>
+                    <span id="total-odds" class="font-extrabold text-amber-400">1.00</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$)</label>
+                    <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none focus:border-amber-500 transition">
+                </div>
+
+                <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
+                    <span class="text-xs text-emerald-400 font-bold">Retorno Possível:</span>
+                    <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
+                </div>
+
+                <button onclick="submitBetWithBalance()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/10">
+                    Confirmar Aposta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CARTEIRA E PERFIL PRÁTICO -->
     <div id="user-wallet-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative space-y-4">
             <button onclick="closeWalletModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
@@ -271,7 +291,7 @@
 
             <!-- FORMULÁRIO DE LOGIN -->
             <div id="modal-login-form" class="space-y-4">
-                <h3 class="text-lg font-black text-amber-400">Entrar na ArenaBet</h3>
+                <h3 class="text-lg font-black text-amber-400">Entrar na NOSEGAME</h3>
                 <div id="login-error" class="hidden bg-rose-500/10 border border-rose-500/30 text-rose-400 p-2.5 rounded-xl text-xs font-semibold"></div>
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Seu E-mail</label>
@@ -363,6 +383,13 @@
 
             loadMatches();
         });
+
+        function toggleCartModal() {
+            isCartOpen = !isCartOpen;
+            const modal = document.getElementById('cart-modal');
+            if (isCartOpen) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
 
         function showNotify(title, message, type = 'success') {
             const modal = document.getElementById('notify-modal');
@@ -483,7 +510,7 @@
             }
 
             closeAuthModal();
-            showNotify("Conta Criada!", "Sua conta foi cadastrada com sucesso na ArenaBet!");
+            showNotify("Conta Criada!", "Sua conta foi cadastrada com sucesso na NOSEGAME!");
         }
 
         async function handleLogin() {
@@ -540,6 +567,11 @@
             container.innerHTML = '';
             matches.forEach(m => {
                 const date = new Date(m.match_time).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+
+                const homeSel = selections[m.id]?.marketType === 'HOME' ? 'selected-odd' : '';
+                const drawSel = selections[m.id]?.marketType === 'DRAW' ? 'selected-odd' : '';
+                const awaySel = selections[m.id]?.marketType === 'AWAY' ? 'selected-odd' : '';
+
                 container.innerHTML += `
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-slate-700/80 transition">
                         <div class="text-xs text-slate-400 mb-2"><i class="fa-regular fa-clock mr-1"></i> ${date}</div>
@@ -549,15 +581,15 @@
                             <span class="w-2/5 text-left">${m.away_team}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-3">
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group ${homeSel}">
                                 <span class="block text-xs text-slate-400 group-hover:text-amber-400">Casa</span>
                                 <span class="font-extrabold text-amber-400">${m.odd_home.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group ${drawSel}">
                                 <span class="block text-xs text-slate-400 group-hover:text-amber-400">Empate</span>
                                 <span class="font-extrabold text-amber-400">${m.odd_draw.toFixed(2)}</span>
                             </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 hover:bg-amber-500/10 p-2.5 rounded-xl text-center transition group ${awaySel}">
                                 <span class="block text-xs text-slate-400 group-hover:text-amber-400">Fora</span>
                                 <span class="font-extrabold text-amber-400">${m.odd_away.toFixed(2)}</span>
                             </button>
@@ -568,14 +600,19 @@
         }
 
         function addSelection(matchId, matchTitle, marketType, optionName, odd) {
-            selections[matchId] = { matchId, matchTitle, marketType, optionName, odd };
+            if (selections[matchId] && selections[matchId].marketType === marketType) {
+                delete selections[matchId];
+            } else {
+                selections[matchId] = { matchId, matchTitle, marketType, optionName, odd };
+            }
+            loadMatches();
             renderCart();
         }
 
         function renderCart() {
             const container = document.getElementById('cart-items');
             const keys = Object.keys(selections);
-            document.getElementById('items-count').innerText = keys.length;
+            document.getElementById('floating-cart-count').innerText = keys.length;
 
             if (keys.length === 0) {
                 container.innerHTML = '<p class="text-xs text-slate-500 text-center">Nenhum palpite selecionado.</p>';
@@ -595,7 +632,7 @@
                             <p class="font-semibold text-slate-200">${item.matchTitle}</p>
                             <p class="text-amber-400 font-bold">${item.optionName} @ ${item.odd.toFixed(2)}</p>
                         </div>
-                        <button onclick="delete selections['${id}']; renderCart();" class="text-slate-500 hover:text-rose-500 p-1"><i class="fa-solid fa-xmark"></i></button>
+                        <button onclick="delete selections['${id}']; loadMatches(); renderCart();" class="text-slate-500 hover:text-rose-500 p-1"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                 `;
             });
@@ -643,6 +680,8 @@
             if (ticketErr) return showNotify("Erro", "Falha ao registrar bilhete: " + ticketErr.message, "error");
 
             selections = {};
+            toggleCartModal();
+            loadMatches();
             renderCart();
             await checkUserProfile();
             showNotify("Aposta Confirmada!", `Bilhete #${ticketCode} gerado com sucesso. Boa sorte!`);
@@ -655,11 +694,12 @@
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
+        // CARREGAMENTO COMPLETO DE MEUS BILHETES COM DETALHES DAS PARTIDAS E ACERTOS/ERROS
         async function loadUserTickets() {
             if (!currentUser) return;
             const { data: tickets, error } = await supabaseClient
                 .from('tickets')
-                .select('*, matches(home_team, away_team)')
+                .select('*, matches(*)')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
 
@@ -670,7 +710,7 @@
             }
 
             if (!tickets || tickets.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete cadastrado ainda.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhum bilhete cadastrado ainda.</p>`;
                 return;
             }
 
@@ -680,18 +720,39 @@
                 if (t.status === 'WON') statusBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-check mr-1"></i> GANHOU</span>';
                 if (t.status === 'LOST') statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> PERDEU</span>';
 
-                let marketText = t.selected_market === 'HOME' ? 'Casa' : (t.selected_market === 'AWAY' ? 'Fora' : 'Empate');
+                let marketText = t.selected_market === 'HOME' ? `Casa (${t.matches?.home_team})` : (t.selected_market === 'AWAY' ? `Fora (${t.matches?.away_team})` : 'Empate');
+
+                let matchStatusIcon = '<i class="fa-solid fa-clock text-amber-400"></i> Aprovado';
+                if (t.matches?.status === 'FINISHED') {
+                    let scoreH = t.matches?.score_home ?? 0;
+                    let scoreA = t.matches?.score_away ?? 0;
+                    let winner = scoreH > scoreA ? 'HOME' : (scoreA > scoreH ? 'AWAY' : 'DRAW');
+
+                    if (t.selected_market === winner) {
+                        matchStatusIcon = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Acertou (${scoreH} x ${scoreA})</span>`;
+                    } else {
+                        matchStatusIcon = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-circle-xmark"></i> Errou (${scoreH} x ${scoreA})</span>`;
+                    }
+                }
 
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs space-y-2 shadow-xl">
-                        <div class="flex justify-between items-center font-bold">
-                            <span class="text-amber-400">#${t.code}</span>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs space-y-3 shadow-xl">
+                        <div class="flex justify-between items-center font-bold border-b border-slate-800 pb-2">
+                            <span class="text-amber-400 font-mono">#${t.code}</span>
                             <div>${statusBadge}</div>
                         </div>
-                        <p class="text-sm font-extrabold text-white">${t.matches?.home_team || 'Partida'} <span class="text-xs text-slate-500 font-normal">VS</span> ${t.matches?.away_team || ''}</p>
-                        <p class="text-slate-400">Palpite: <strong class="text-white">${marketText}</strong> @ Odd ${t.total_odds.toFixed(2)}</p>
-                        <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800/80">
-                            <span>Apostado: <strong>R$ ${t.stake_amount.toFixed(2)}</strong></span>
+
+                        <!-- Detalhes das Partidas do Bilhete -->
+                        <div class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                            <p class="text-xs font-extrabold text-white">${t.matches?.home_team || 'Partida'} <span class="text-slate-500 font-normal">VS</span> ${t.matches?.away_team || ''}</p>
+                            <div class="flex justify-between items-center text-[11px] text-slate-400">
+                                <span>Palpite: <strong class="text-amber-400">${marketText}</strong> @ Odd ${t.total_odds.toFixed(2)}</span>
+                                <div>${matchStatusIcon}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between text-slate-400 pt-1">
+                            <span>Apostado: <strong class="text-white">R$ ${t.stake_amount.toFixed(2)}</strong></span>
                             <span>Retorno Possível: <strong class="text-emerald-400">R$ ${t.potential_payout.toFixed(2)}</strong></span>
                         </div>
                     </div>
