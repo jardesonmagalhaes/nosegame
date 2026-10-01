@@ -42,6 +42,7 @@
         let userProfile = null;
         let selections = {};
         let activeTab = 'client';
+        let adminSubTab = 'overview';
         let selectedUserForBalance = null;
         let isCartOpen = false;
     </script>
@@ -66,7 +67,7 @@
                 </button>
             </div>
 
-            <!-- Perfil / Carteira (Exibido apenas quando logado) -->
+            <!-- Perfil / Carteira -->
             <div id="nav-user-section" class="hidden flex items-center space-x-2">
                 <div onclick="openWalletModal()" class="cursor-pointer bg-slate-950 border border-emerald-500/40 px-3 py-1.5 rounded-xl font-bold text-emerald-400 flex items-center shadow-inner hover:border-emerald-500 transition">
                     <i class="fa-solid fa-wallet mr-1.5 text-xs"></i>
@@ -80,7 +81,7 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação -->
+    <!-- Barra de Navegação de Abas Principal -->
     <nav id="app-nav" class="hidden bg-slate-900/60 border-b border-slate-800/80 px-4 py-2 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto flex justify-between items-center text-xs">
             <div id="client-nav-tabs" class="flex space-x-3 md:space-x-6 font-bold">
@@ -118,58 +119,81 @@
             <div id="user-tickets-list" class="space-y-4"></div>
         </section>
 
-        <!-- CENTRAL DE CONTROLE TOTAL DO ADMIN (SEM OPÇÃO DE APOSTAR) -->
+        <!-- CENTRAL DO DONO MODERNA COM SUB-ABAS -->
         <section id="view-admin" class="hidden space-y-6">
-            <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex justify-between items-center">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 class="text-lg font-bold text-rose-400"><i class="fa-solid fa-shield-halved mr-2"></i> Central do Administrador</h2>
-                    <p class="text-xs text-slate-400">Controle completo de movimentações, bilhetes, usuários e partidas.</p>
+                    <h2 class="text-lg font-bold text-rose-400 flex items-center">
+                        <i class="fa-solid fa-shield-halved mr-2"></i> Painel de Controle da Banca
+                    </h2>
+                    <p class="text-xs text-slate-400">Gestão financeira, bilhetes, usuários e controle de placares.</p>
+                </div>
+
+                <!-- Menu Interno do Admin -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="switchAdminSubTab('overview')" id="admin-sub-overview" class="admin-tab-btn bg-amber-500 text-slate-950 font-black px-3 py-2 rounded-xl transition">
+                        <i class="fa-solid fa-chart-line mr-1"></i> Visão Geral
+                    </button>
+                    <button onclick="switchAdminSubTab('tickets')" id="admin-sub-tickets" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-list-check mr-1"></i> Bilhetes
+                    </button>
+                    <button onclick="switchAdminSubTab('matches')" id="admin-sub-matches" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-trophy mr-1"></i> Liquidar Jogos
+                    </button>
+                    <button onclick="switchAdminSubTab('users')" id="admin-sub-users" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-users mr-1"></i> Clientes
+                    </button>
+                    <button onclick="switchAdminSubTab('create')" id="admin-sub-create" class="admin-tab-btn bg-slate-800 text-slate-300 hover:text-white font-bold px-3 py-2 rounded-xl border border-slate-700 transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Novo Jogo
+                    </button>
                 </div>
             </div>
 
-            <!-- DASHBOARD DE METRICAS FINANCEIRAS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1 shadow">
-                    <span class="text-xs text-slate-400">Entradas (Total Apostado)</span>
-                    <p id="admin-stat-in" class="text-lg font-black text-emerald-400">R$ 0,00</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1 shadow">
-                    <span class="text-xs text-slate-400">Saídas (Prêmios Pagos)</span>
-                    <p id="admin-stat-out" class="text-lg font-black text-rose-400">R$ 0,00</p>
-                </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-1 shadow">
-                    <span class="text-xs text-slate-400">Resultado Líquido</span>
-                    <p id="admin-stat-net" class="text-lg font-black text-amber-400">R$ 0,00</p>
+            <!-- SUB-ABA 1: VISÃO GERAL (DASHBOARD) -->
+            <div id="admin-panel-overview" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1 shadow-lg">
+                        <span class="text-xs text-slate-400 font-semibold uppercase">Total Apostado (Entradas)</span>
+                        <p id="admin-stat-in" class="text-2xl font-black text-emerald-400">R$ 0,00</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1 shadow-lg">
+                        <span class="text-xs text-slate-400 font-semibold uppercase">Prêmios Pagos (Saídas)</span>
+                        <p id="admin-stat-out" class="text-2xl font-black text-rose-400">R$ 0,00</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-1 shadow-lg">
+                        <span class="text-xs text-slate-400 font-semibold uppercase">Lucro Líquido da Banca</span>
+                        <p id="admin-stat-net" class="text-2xl font-black text-amber-400">R$ 0,00</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- TODOS OS BILHETES DA BANCA (VISÃO GERAL) -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+            <!-- SUB-ABA 2: TODOS OS BILHETES DO SISTEMA -->
+            <div id="admin-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                 <h3 class="text-sm font-bold text-amber-400 uppercase flex items-center">
-                    <i class="fa-solid fa-list-check mr-2"></i> Todos os Bilhetes Emitidos no Sistema
+                    <i class="fa-solid fa-list-check mr-2"></i> Histórico Completo de Apostas
                 </h3>
                 <div id="admin-all-tickets-list" class="space-y-3">
                     <p class="text-xs text-slate-500">Carregando movimentações de bilhetes...</p>
                 </div>
             </div>
 
-            <!-- ENCERRAMENTO DE PARTIDAS -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Partidas Abertas (Liquidar Placares)</h3>
+            <!-- SUB-ABA 3: LIQUIDAR PARTIDAS -->
+            <div id="admin-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Partidas Abertas (Definir Placar Real)</h3>
                 <div id="admin-matches-management" class="space-y-3">
                     <p class="text-xs text-slate-500">Carregando partidas abertas...</p>
                 </div>
             </div>
 
-            <!-- GESTÃO DE SALDO DOS CLIENTES -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Clientes Cadastrados & Saldos</h3>
+            <!-- SUB-ABA 4: CLIENTES E SALDOS -->
+            <div id="admin-panel-users" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-users mr-1"></i> Gestão de Clientes & Adicionar/Remover Saldo</h3>
                 <div id="admin-users-list" class="space-y-3"></div>
             </div>
 
-            <!-- CADASTRAR PARTIDA MANUALLMENTE -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Criar Partida Manualmente</h3>
+            <!-- SUB-ABA 5: CRIAR PARTIDA MANUALLMENTE -->
+            <div id="admin-panel-create" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <input type="text" id="admin-home" placeholder="Time Casa (ex: Flamengo)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-away" placeholder="Time Fora (ex: Fluminense)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
@@ -486,6 +510,11 @@
             });
             document.getElementById(`view-${tab}`).classList.remove('hidden');
 
+            // Oculta o botão flutuante de cupom se estiver no Painel Admin
+            const floatBtn = document.getElementById('floating-cart-btn');
+            if (tab === 'admin') floatBtn.classList.add('hidden');
+            else floatBtn.classList.remove('hidden');
+
             document.querySelectorAll('.nav-tab-btn').forEach(btn => {
                 btn.classList.remove('text-amber-400', 'border-b-2', 'border-amber-400');
                 btn.classList.add('text-slate-400');
@@ -500,11 +529,33 @@
             if (tab === 'client') loadMatches();
             if (tab === 'my-tickets') loadUserTickets();
             if (tab === 'admin') {
-                loadAdminDashboard();
-                loadAdminAllTickets();
-                loadAdminUsers();
-                loadAdminMatches();
+                switchAdminSubTab('overview');
             }
+        }
+
+        function switchAdminSubTab(sub) {
+            adminSubTab = sub;
+            ['overview', 'tickets', 'matches', 'users', 'create'].forEach(s => {
+                const p = document.getElementById(`admin-panel-${s}`);
+                if (p) p.classList.add('hidden');
+                const btn = document.getElementById(`admin-sub-${s}`);
+                if (btn) {
+                    btn.classList.remove('bg-amber-500', 'text-slate-950', 'font-black');
+                    btn.classList.add('bg-slate-800', 'text-slate-300');
+                }
+            });
+
+            document.getElementById(`admin-panel-${sub}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`admin-sub-${sub}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+                activeBtn.classList.add('bg-amber-500', 'text-slate-950', 'font-black');
+            }
+
+            if (sub === 'overview') loadAdminDashboard();
+            if (sub === 'tickets') loadAdminAllTickets();
+            if (sub === 'matches') loadAdminMatches();
+            if (sub === 'users') loadAdminUsers();
         }
 
         async function handleRegister() {
@@ -678,7 +729,6 @@
             document.getElementById('potential-payout').innerText = `R$ ${payout.toFixed(2).replace('.', ',')}`;
         }
 
-        // CONFIRMAÇÃO DE APOSTAS COM SUPORTE COMPLETO A MÚLTIPLAS
         async function submitBetWithBalance() {
             if (!currentUser) return openAuthModal('login');
             const keys = Object.keys(selections);
@@ -692,12 +742,10 @@
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
 
-            // Desconta o saldo do apostador
             const newBalance = userProfile.balance - stake;
             const { error: balErr } = await supabaseClient.from('profiles').update({ balance: newBalance }).eq('id', currentUser.id);
             if (balErr) return showNotify("Erro", "Falha ao atualizar saldo: " + balErr.message, "error");
 
-            // Grava o bilhete completo com TODOS os jogos dentro do campo JSONB selections_data
             const selectionsList = keys.map(k => selections[k]);
 
             const { error: ticketErr } = await supabaseClient.from('tickets').insert([{
@@ -727,11 +775,9 @@
             window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // EXIBIÇÃO DE BILHETES DO CLIENTE COM SUPORTE COMPLETO A MÚLTIPLAS
         async function loadUserTickets() {
             if (!currentUser) return;
 
-            // Busca os dados das partidas para atualizar os resultados em tempo real
             const { data: matches } = await supabaseClient.from('matches').select('*');
             const matchesMap = {};
             if (matches) matches.forEach(m => matchesMap[m.id] = m);
@@ -759,7 +805,6 @@
                 if (t.status === 'WON') statusBadge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-check mr-1"></i> GANHOU</span>';
                 if (t.status === 'LOST') statusBadge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> PERDEU</span>';
 
-                // Renderiza a lista de todos os palpites do bilhete
                 let itemsHTML = '';
                 const items = t.selections_data || [];
 
@@ -804,7 +849,6 @@
                             <div>${statusBadge}</div>
                         </div>
 
-                        <!-- Lista de todos os jogos da Múltipla -->
                         <div class="space-y-2">
                             ${itemsHTML}
                         </div>
@@ -819,7 +863,6 @@
             });
         }
 
-        // TELA DO ADMIN: DASHBOARD E EXIBIÇÃO DE TODOS OS BILHETES DA BANCA
         async function loadAdminDashboard() {
             const { data: tickets } = await supabaseClient.from('tickets').select('*');
             let totalIn = 0;
@@ -838,10 +881,11 @@
             document.getElementById('admin-stat-net').innerText = `R$ ${net.toFixed(2).replace('.', ',')}`;
         }
 
+        // BUSCA CORRIGIDA DOS BILHETES DO ADMIN
         async function loadAdminAllTickets() {
             const { data: tickets, error } = await supabaseClient
                 .from('tickets')
-                .select('*, profiles(full_name, email)')
+                .select('*, profiles(full_name)')
                 .order('created_at', { ascending: false });
 
             const container = document.getElementById('admin-all-tickets-list');
@@ -866,9 +910,9 @@
                 if (!matchSummary) matchSummary = "Aposta simples sem detalhes";
 
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-1">
                         <div class="flex justify-between font-bold">
-                            <span class="text-amber-400">#${t.code} - Cliente: ${t.profiles?.full_name || 'Desconhecido'}</span>
+                            <span class="text-amber-400">#${t.code} - Cliente: ${t.profiles?.full_name || 'Usuário'}</span>
                             <div>${badge}</div>
                         </div>
                         <p class="text-slate-300 font-medium">${matchSummary}</p>
@@ -881,7 +925,6 @@
             });
         }
 
-        // GESTÃO DE PARTIDAS E LIQUIDAÇÃO
         async function loadAdminMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('admin-matches-management');
@@ -910,7 +953,6 @@
             });
         }
 
-        // LIQUIDAÇÃO INTELIGENTE DE MÚLTIPLAS E SIMPLES
         async function adminFinishMatch(matchId) {
             const scoreHomeInput = document.getElementById(`score-home-${matchId}`).value;
             const scoreAwayInput = document.getElementById(`score-away-${matchId}`).value;
@@ -920,7 +962,6 @@
             const scoreHome = parseInt(scoreHomeInput);
             const scoreAway = parseInt(scoreAwayInput);
 
-            // Marca a partida como FINISHED no Supabase
             const { error: matchErr } = await supabaseClient.from('matches').update({
                 status: 'FINISHED',
                 score_home: scoreHome,
@@ -929,7 +970,6 @@
 
             if (matchErr) return showNotify("Erro", "Erro ao encerrar partida: " + matchErr.message, "error");
 
-            // Busca todos os bilhetes ativos
             const { data: activeTickets } = await supabaseClient.from('tickets').select('*').eq('status', 'ACTIVE');
             const { data: allMatches } = await supabaseClient.from('matches').select('*');
             const matchesMap = {};
@@ -959,10 +999,8 @@
                     }
 
                     if (hasLost) {
-                        // Se errou ao menos 1 jogo da múltipla, o bilhete é PERDEU
                         await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', ticket.id);
                     } else if (allFinishedAndWon && selections.length > 0) {
-                        // Se acertou TODOS os jogos do bilhete, o bilhete é GANHOU e deposita o prêmio
                         await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', ticket.id);
                         
                         const { data: user } = await supabaseClient.from('profiles').select('balance').eq('id', ticket.user_id).single();
@@ -974,7 +1012,7 @@
                 }
             }
 
-            showNotify("Sucesso!", "Partida encerrada. Bilhetes simples e múltiplos calculados e vencedores pagos!");
+            showNotify("Sucesso!", "Partida encerrada. Bilhetes calculados e vencedores pagos!");
             loadAdminMatches();
             loadAdminDashboard();
             loadAdminAllTickets();
