@@ -41,6 +41,7 @@
         let lastCreatedTicket = null;
         let activeMatchForMarkets = null;
         let allMatchesList = [];
+        let matchesMap = {};
     </script>
 
     <!-- Header Limpo -->
@@ -100,7 +101,7 @@
                 <div id="pin-result-area" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA TODOS OS BILHETES (COM EXPANSÃO SANFONA) -->
+            <!-- SUB-ABA TODOS OS BILHETES (COM EXPANSÃO SANFONA E DETALHAMENTO DE JOGOS) -->
             <div id="admin-sub-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-list-check mr-1"></i> Todos os Bilhetes do Sistema</h3>
                 <div id="admin-tickets-list" class="space-y-3"></div>
@@ -285,7 +286,8 @@
     <script>
         let currentValidatingTicket = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchAllMatchesMap();
             loadMatches();
 
             document.addEventListener('keydown', (e) => {
@@ -300,6 +302,15 @@
                 promptAdminAccess();
             }
         });
+
+        async function fetchAllMatchesMap() {
+            const { data: matches } = await supabaseClient.from('matches').select('*');
+            matchesMap = {};
+            if (matches) {
+                allMatchesList = matches;
+                matches.forEach(m => matchesMap[m.id] = m);
+            }
+        }
 
         function switchView(view) {
             document.getElementById('view-client').classList.add('hidden');
@@ -323,7 +334,6 @@
 
         async function loadMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
-            allMatchesList = matches || [];
             const container = document.getElementById('matches-list');
 
             if (!matches || matches.length === 0) {
@@ -379,7 +389,6 @@
 
             document.getElementById('modal-match-title').innerText = `${m.home_team} x ${m.away_team}`;
 
-            // Cálculo ou fallback para cotações adicionais
             const oOver15 = m.odd_over15 || 1.25;
             const oUnder15 = m.odd_under15 || 3.10;
             const oOver25 = m.odd_over25 || 1.85;
@@ -392,7 +401,6 @@
 
             const container = document.getElementById('modal-markets-container');
             container.innerHTML = `
-                <!-- DUPLA CHANCE -->
                 <div class="space-y-1.5">
                     <p class="text-xs font-bold text-amber-400 uppercase">Dupla Chance</p>
                     <div class="grid grid-cols-3 gap-2 text-xs">
@@ -411,7 +419,6 @@
                     </div>
                 </div>
 
-                <!-- TOTAL DE GOLS (OVER / UNDER) -->
                 <div class="space-y-1.5 pt-2 border-t border-slate-800">
                     <p class="text-xs font-bold text-amber-400 uppercase">Total de Gols</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -434,7 +441,6 @@
                     </div>
                 </div>
 
-                <!-- AMBAS MARCAM -->
                 <div class="space-y-1.5 pt-2 border-t border-slate-800">
                     <p class="text-xs font-bold text-amber-400 uppercase">Ambas as Equipes Marcam</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
@@ -591,7 +597,6 @@
             if (sub === 'matches') loadAdminMatches();
         }
 
-        // ALTERAÇÃO SANFONA / EXPANSÃO DE BILHETE
         function toggleTicketAccordion(ticketId) {
             const el = document.getElementById(`ticket-items-${ticketId}`);
             const arrow = document.getElementById(`ticket-arrow-${ticketId}`);
@@ -604,6 +609,42 @@
             }
         }
 
+        // FUNÇÃO DE AVALIAÇÃO DE CADA PALPITE INDIVIDUAL
+        function evaluateSelectionResult(item) {
+            const m = matchesMap[item.matchId];
+            if (!m || m.status !== 'FINISHED') {
+                return '<span class="text-amber-400 font-bold text-[11px]"><i class="fa-solid fa-clock"></i> Em Aberto</span>';
+            }
+
+            const scoreH = m.score_home ?? 0;
+            const scoreA = m.score_away ?? 0;
+            const totalGols = scoreH + scoreA;
+            const bothScored = scoreH > 0 && scoreA > 0;
+
+            let isWin = false;
+
+            switch (item.marketType) {
+                case 'HOME': isWin = scoreH > scoreA; break;
+                case 'AWAY': isWin = scoreA > scoreH; break;
+                case 'DRAW': isWin = scoreH === scoreA; break;
+                case 'DC_1X': isWin = scoreH >= scoreA; break;
+                case 'DC_X2': isWin = scoreA >= scoreH; break;
+                case 'DC_12': isWin = scoreH !== scoreA; break;
+                case 'OVER_15': isWin = totalGols > 1.5; break;
+                case 'UNDER_15': isWin = totalGols < 1.5; break;
+                case 'OVER_25': isWin = totalGols > 2.5; break;
+                case 'UNDER_25': isWin = totalGols < 2.5; break;
+                case 'BTTS_YES': isWin = bothScored; break;
+                case 'BTTS_NO': isWin = !bothScored; break;
+            }
+
+            if (isWin) {
+                return `<span class="text-emerald-400 font-bold text-[11px]"><i class="fa-solid fa-circle-check"></i> Acertou (${scoreH} x ${scoreA})</span>`;
+            } else {
+                return `<span class="text-rose-400 font-bold text-[11px]"><i class="fa-solid fa-circle-xmark"></i> Perdeu (${scoreH} x ${scoreA})</span>`;
+            }
+        }
+
         function renderTicketCardHTML(b, containerElement) {
             let badge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Aguardando Pagamento</span>';
             if (b.status === 'VALIDATED' || b.status === 'ACTIVE') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Validado</span>';
@@ -613,20 +654,23 @@
             const items = b.selections_data || [];
             let itemsHTML = '';
             items.forEach(i => {
+                const resultBadge = evaluateSelectionResult(i);
                 itemsHTML += `
-                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-[11px]">
-                        <div>
-                            <p class="font-bold text-white">${i.matchTitle}</p>
-                            <p class="text-amber-400 font-bold">${i.optionName}</p>
+                    <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-white">${i.matchTitle}</span>
+                            <span>${resultBadge}</span>
                         </div>
-                        <span class="font-extrabold text-white">@ ${i.odd.toFixed(2)}</span>
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span class="text-amber-400 font-bold">Palpite: ${i.optionName}</span>
+                            <span class="font-mono text-slate-400">@ ${i.odd.toFixed(2)}</span>
+                        </div>
                     </div>
                 `;
             });
 
             containerElement.innerHTML = `
                 <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-3 shadow-lg">
-                    <!-- Cabeçalho Clicável -->
                     <div onclick="toggleTicketAccordion('${b.id}')" class="cursor-pointer space-y-2">
                         <div class="flex justify-between items-center font-bold border-b border-slate-800 pb-2">
                             <div>
@@ -641,7 +685,6 @@
                         <p class="text-[10px] text-amber-400 font-bold">Clique para ver os (${items.length}) jogos do bilhete</p>
                     </div>
 
-                    <!-- Lista Expansível de Jogos -->
                     <div id="ticket-items-${b.id}" class="hidden space-y-2 pt-1 border-t border-slate-800">
                         ${itemsHTML}
                     </div>
@@ -667,7 +710,13 @@
             }
 
             currentValidatingTicket = bet;
-            let matchesText = (bet.selections_data || []).map(i => `${i.matchTitle} - <strong>${i.optionName}</strong> @ ${i.odd.toFixed(2)}`).join('<br>');
+            let matchesText = (bet.selections_data || []).map(i => {
+                const res = evaluateSelectionResult(i);
+                return `<div class="flex justify-between items-center my-1">
+                    <span>${i.matchTitle} (${i.optionName})</span>
+                    <span>${res}</span>
+                </div>`;
+            }).join('');
 
             area.innerHTML = `
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-3">
@@ -743,6 +792,7 @@
         }
 
         async function loadAdminTickets() {
+            await fetchAllMatchesMap();
             const { data: bets } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
             const container = document.getElementById('admin-tickets-list');
             if (!bets || bets.length === 0) {
@@ -759,13 +809,17 @@
                 const items = b.selections_data || [];
                 let itemsHTML = '';
                 items.forEach(i => {
+                    const resultBadge = evaluateSelectionResult(i);
                     itemsHTML += `
-                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-[11px]">
-                            <div>
-                                <p class="font-bold text-white">${i.matchTitle}</p>
-                                <p class="text-amber-400 font-bold">${i.optionName}</p>
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-white">${i.matchTitle}</span>
+                                <span>${resultBadge}</span>
                             </div>
-                            <span class="font-extrabold text-white">@ ${i.odd.toFixed(2)}</span>
+                            <div class="flex justify-between items-center text-[11px]">
+                                <span class="text-amber-400 font-bold">Palpite: ${i.optionName}</span>
+                                <span class="font-mono text-slate-400">@ ${i.odd.toFixed(2)}</span>
+                            </div>
                         </div>
                     `;
                 });
@@ -817,8 +871,8 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             ${m.status === 'OPEN' ? `
-                                <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white">
-                                <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white">
+                                <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
+                                <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
                                 <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2 py-1 rounded">Encerrar</button>
                             ` : `<span class="text-emerald-400 font-bold">${m.score_home} x${m.score_away}</span>`}
                             
@@ -836,6 +890,7 @@
             const { error } = await supabaseClient.from('matches').delete().eq('id', matchId);
             if (error) return alert("Erro ao apagar jogo: " + error.message);
             alert("Partida removida!");
+            await fetchAllMatchesMap();
             loadMatches();
             loadAdminMatches();
         }
@@ -846,22 +901,61 @@
             if (isNaN(scoreH) || isNaN(scoreA)) return alert("Preencha o placar.");
 
             await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
-            
+            await fetchAllMatchesMap();
+
+            // RECALCULA BILHETES AUTOMATICAMENTE
             const { data: bets } = await supabaseClient.from('tickets').select('*').or('status.eq.VALIDATED,status.eq.ACTIVE');
             if (bets) {
                 for (const b of bets) {
                     const items = b.selections_data || [];
-                    let containsMatch = items.some(i => i.matchId === matchId);
-                    if (containsMatch) {
-                        let winning = scoreH > scoreA ? 'HOME' : (scoreA > scoreH ? 'AWAY' : 'DRAW');
-                        let won = items.every(i => i.marketType === winning);
-                        await supabaseClient.from('tickets').update({ status: won ? 'WON' : 'LOST' }).eq('id', b.id);
+                    let hasLost = false;
+                    let allFinishedAndWon = true;
+
+                    for (const item of items) {
+                        const m = matchesMap[item.matchId];
+                        if (!m || m.status !== 'FINISHED') {
+                            allFinishedAndWon = false;
+                            continue;
+                        }
+
+                        const sH = m.score_home ?? 0;
+                        const sA = m.score_away ?? 0;
+                        const tot = sH + sA;
+                        const btts = sH > 0 && sA > 0;
+
+                        let itemWon = false;
+                        switch (item.marketType) {
+                            case 'HOME': itemWon = sH > sA; break;
+                            case 'AWAY': itemWon = sA > sH; break;
+                            case 'DRAW': itemWon = sH === sA; break;
+                            case 'DC_1X': itemWon = sH >= sA; break;
+                            case 'DC_X2': itemWon = sA >= sH; break;
+                            case 'DC_12': itemWon = sH !== sA; break;
+                            case 'OVER_15': itemWon = tot > 1.5; break;
+                            case 'UNDER_15': itemWon = tot < 1.5; break;
+                            case 'OVER_25': itemWon = tot > 2.5; break;
+                            case 'UNDER_25': itemWon = tot < 2.5; break;
+                            case 'BTTS_YES': itemWon = btts; break;
+                            case 'BTTS_NO': itemWon = !btts; break;
+                        }
+
+                        if (!itemWon) {
+                            hasLost = true;
+                            break;
+                        }
+                    }
+
+                    if (hasLost) {
+                        await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', b.id);
+                    } else if (allFinishedAndWon && items.length > 0) {
+                        await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', b.id);
                     }
                 }
             }
 
-            alert("Partida encerrada!");
+            alert("Partida encerrada e bilhetes re-calculados!");
             loadAdminMatches();
+            loadAdminTickets();
         }
 
         async function adminImportMatchesBulk() {
@@ -876,6 +970,7 @@
 
                 alert(`${matchesArray.length} jogo(s) cadastrado(s) com sucesso!`);
                 document.getElementById('admin-import-json').value = '';
+                await fetchAllMatchesMap();
                 loadMatches();
                 loadAdminMatches();
             } catch (err) {
@@ -899,6 +994,7 @@
             }]);
 
             alert("Partida criada com sucesso!");
+            await fetchAllMatchesMap();
             loadMatches();
             loadAdminMatches();
         }
