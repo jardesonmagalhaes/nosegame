@@ -72,7 +72,7 @@
         <!-- TELA DO CLIENTE (JOGOS) -->
         <section id="view-client" class="space-y-4">
             
-            <!-- BARRA DE FILTRO POR CAMPEONATOS (Scroll Tátil no Telemóvel) -->
+            <!-- BARRA DE FILTRO POR CAMPEONATOS -->
             <div class="flex items-center space-x-2 overflow-x-auto pb-2 no-scrollbar w-full" id="league-filter-bar">
                 <button onclick="filterByLeague('ALL')" id="league-btn-ALL" class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs whitespace-nowrap shadow-lg">
                     <i class="fa-solid fa-globe mr-1"></i> Todos os Jogos
@@ -225,7 +225,7 @@
         </div>
     </div>
 
-    <!-- BOTÃO E BOLETIM DE APOSTAS FLUTUANTE (Ajustado para telemóveis) -->
+    <!-- BOTÃO E BOLETIM DE APOSTAS FLUTUANTE -->
     <div id="floating-cart-btn" class="fixed bottom-4 right-4 z-40">
         <button onclick="toggleCartModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-3 sm:px-5 sm:py-3 rounded-full shadow-2xl flex items-center space-x-2 transition border-2 border-slate-950">
             <i class="fa-solid fa-receipt text-lg"></i>
@@ -234,7 +234,7 @@
         </button>
     </div>
 
-    <!-- MODAL DO BOLETIM DE APOSTAS (Gaveta Tátil para Telemóvel) -->
+    <!-- MODAL DO BOLETIM DE APOSTAS -->
     <div id="cart-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 relative max-h-[92vh] overflow-y-auto">
             <button onclick="toggleCartModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -404,16 +404,15 @@
             loadMatches();
         }
 
-        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATOS E DATA (Com Regra de 5 Minutos e Responsivo)
+        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATOS E DATA (Com Regra de 5 Minutos)
         async function loadMatches() {
-            // Calcula o limite de 5 minutos no futuro
             const cutoffTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
             const { data: matches } = await supabaseClient
                 .from('matches')
                 .select('*')
                 .eq('status', 'OPEN')
-                .gt('match_time', cutoffTime) // Só traz jogos que começam em mais de 5 minutos
+                .gt('match_time', cutoffTime)
                 .order('match_time', { ascending: true });
 
             const container = document.getElementById('matches-list');
@@ -424,7 +423,6 @@
                 return;
             }
 
-            // Descobre campeonatos únicos para a barra tátil
             const leaguesSet = new Set(matches.map(m => m.league || 'Brasileirão'));
             
             filterBar.innerHTML = `
@@ -442,7 +440,6 @@
                 `;
             });
 
-            // Filtra partidas se o usuário selecionou uma liga específica
             let filteredMatches = matches;
             if (selectedLeagueFilter !== 'ALL') {
                 filteredMatches = matches.filter(m => (m.league || 'Brasileirão') === selectedLeagueFilter);
@@ -450,7 +447,6 @@
 
             container.innerHTML = '';
 
-            // AGRUPAMENTO: LIGA -> DATA -> JOGOS
             const groupedByLeague = {};
             filteredMatches.forEach(m => {
                 const leg = m.league || 'Brasileirão';
@@ -461,7 +457,6 @@
             for (const leg in groupedByLeague) {
                 const leagueMatches = groupedByLeague[leg];
                 
-                // Agrupa por data dentro dessa liga
                 const groupedByDate = {};
                 leagueMatches.forEach(m => {
                     const dateObj = new Date(m.match_time);
@@ -472,7 +467,6 @@
 
                 let leagueHTML = `
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl space-y-0.5">
-                        <!-- Cabeçalho do Campeonato -->
                         <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 p-3.5 border-b border-slate-800 flex justify-between items-center">
                             <div class="flex items-center space-x-2">
                                 <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
@@ -687,7 +681,6 @@
             if (keys.length === 0) return alert("Selecione pelo menos um jogo.");
             if (stake < 2) return alert("Valor mínimo é R$ 2,00.");
 
-            // Validação de 5 Minutos antes de gerar o PIN
             for (const key of keys) {
                 const matchObj = matchesMap[key];
                 if (matchObj && matchObj.match_time) {
@@ -851,6 +844,21 @@
             }
         }
 
+        // FUNÇÃO PARA EXCLUIR UM BILHETE INDIVIDUALMENTE
+        async function adminDeleteTicket(ticketId, pin) {
+            if (!confirm(`Tem certeza que deseja APAGAR/CANCELAR o bilhete PIN #${pin}?`)) return;
+
+            const { error } = await supabaseClient.from('tickets').delete().eq('id', ticketId);
+            if (error) {
+                alert("Erro ao apagar bilhete: " + error.message);
+            } else {
+                alert(`Bilhete #${pin} foi apagado do sistema.`);
+                loadAdminTickets();
+                loadAdminCashier();
+                document.getElementById('pin-result-area').innerHTML = '';
+            }
+        }
+
         function filterTickets(status) {
             currentTicketFilter = status;
             ['ALL', 'WAITING_PAYMENT', 'VALIDATED', 'WON', 'LOST'].forEach(st => {
@@ -938,6 +946,8 @@
             if (b.status === 'WON') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">GANHOU</span>';
             if (b.status === 'LOST') badge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">PERDEU</span>';
 
+            const createdAtStr = b.created_at ? new Date(b.created_at).toLocaleString('pt-BR') : '';
+
             const items = b.selections_data || [];
             let itemsHTML = '';
             items.forEach(i => {
@@ -963,6 +973,7 @@
                             <div>
                                 <span class="font-mono text-amber-400 text-sm">PIN #${b.pin || b.code}</span>
                                 <span class="text-slate-300 ml-2">${b.bettor_name || 'Apostador'}</span>
+                                ${createdAtStr ? `<span class="block text-[10px] text-slate-500 font-normal">Criado em: ${createdAtStr}</span>` : ''}
                             </div>
                             <div class="flex items-center space-x-2">
                                 ${badge}
@@ -976,7 +987,7 @@
                         ${itemsHTML}
                     </div>
 
-                    <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800 text-[11px]">
+                    <div class="flex justify-between items-center text-slate-400 pt-2 border-t border-slate-800 text-[11px]">
                         <span>Apostado: <strong class="text-white">R$ ${b.stake_amount.toFixed(2)}</strong></span>
                         <span>Cotação: <strong class="text-amber-400">${b.total_odds.toFixed(2)}</strong></span>
                         <span>Retorno: <strong class="text-emerald-400">R$ ${b.potential_payout.toFixed(2)}</strong></span>
@@ -1008,8 +1019,13 @@
             area.innerHTML = `
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-3">
                     <div class="flex justify-between font-bold border-b border-slate-800 pb-2">
-                        <span class="text-amber-400 font-mono text-sm">PIN #${bet.pin}</span>
-                        <span class="text-slate-300">${bet.bettor_name || 'N/I'}</span>
+                        <div>
+                            <span class="text-amber-400 font-mono text-sm">PIN #${bet.pin}</span>
+                            <span class="text-slate-300 ml-2">${bet.bettor_name || 'N/I'}</span>
+                        </div>
+                        <button onclick="adminDeleteTicket('${bet.id}', '${bet.pin}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-500/20">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Apagar Bilhete
+                        </button>
                     </div>
                     <div class="space-y-1 text-slate-300">${matchesText}</div>
                     <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
@@ -1096,6 +1112,8 @@
                 if (b.status === 'WON') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">GANHOU</span>';
                 if (b.status === 'LOST') badge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">PERDEU</span>';
 
+                const createdAtStr = b.created_at ? new Date(b.created_at).toLocaleString('pt-BR') : '';
+
                 const items = b.selections_data || [];
                 let itemsHTML = '';
                 items.forEach(i => {
@@ -1116,21 +1134,22 @@
 
                 container.innerHTML += `
                     <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-3 shadow-lg">
-                        <div onclick="toggleTicketAccordion('${b.id}')" class="cursor-pointer space-y-2">
-                            <div class="flex justify-between items-center font-bold border-b border-slate-800 pb-2">
-                                <div>
-                                    <span class="font-mono text-amber-400 text-sm">PIN #${b.pin || b.code}</span>
-                                    <span class="text-slate-300 ml-2">${b.bettor_name || 'Apostador'}</span>
-                                </div>
+                        <div class="flex justify-between items-start border-b border-slate-800 pb-2">
+                            <div onclick="toggleTicketAccordion('${b.id}')" class="cursor-pointer space-y-1 flex-1">
                                 <div class="flex items-center space-x-2">
+                                    <span class="font-mono text-amber-400 text-sm font-bold">PIN #${b.pin || b.code}</span>
+                                    <span class="text-slate-300 font-bold">${b.bettor_name || 'Apostador'}</span>
                                     ${badge}
-                                    <i id="ticket-arrow-${b.id}" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200"></i>
                                 </div>
+                                ${createdAtStr ? `<p class="text-[10px] text-slate-500">Gerado em: ${createdAtStr}</p>` : ''}
+                                <p class="text-[10px] text-amber-400 font-bold pt-0.5">Clique para ver os (${items.length}) jogos do bilhete</p>
                             </div>
-                            <p class="text-[10px] text-amber-400 font-bold">Clique para ver os (${items.length}) jogos do bilhete</p>
+                            <button onclick="adminDeleteTicket('${b.id}', '${b.pin || b.code}')" class="text-rose-400 hover:text-rose-300 text-xs font-bold bg-rose-500/10 px-2.5 py-1.5 rounded-xl border border-rose-500/20 ml-2 transition" title="Excluir Bilhete">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
 
-                        <div id="ticket-items-${b.id}" class="hidden space-y-2 pt-1 border-t border-slate-800">
+                        <div id="ticket-items-${b.id}" class="hidden space-y-2 pt-1">
                             ${itemsHTML}
                         </div>
 
@@ -1145,7 +1164,7 @@
         }
 
         async function loadAdminMatches() {
-            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', currentMatchFilter).order('match_time', { ascending: false });
+            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', currentMatchFilter).order('created_at', { ascending: false });
             const container = document.getElementById('admin-matches-list');
             if (!matches || matches.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo nesta categoria.</p>`;
@@ -1153,18 +1172,25 @@
             }
             container.innerHTML = '';
             matches.forEach(m => {
+                const matchTimeStr = m.match_time ? new Date(m.match_time).toLocaleString('pt-BR') : 'N/I';
+                const createdTimeStr = m.created_at ? new Date(m.created_at).toLocaleString('pt-BR') : 'N/I';
+
                 container.innerHTML += `
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-2 text-xs">
                         <div>
-                            <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
-                            <p class="font-bold text-white">${m.home_team} VS ${m.away_team}</p>
-                            <p class="text-slate-400">Odds: ${m.odd_home.toFixed(2)} | ${m.odd_draw.toFixed(2)} | ${m.odd_away.toFixed(2)}</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
+                                <span class="text-[10px] text-slate-500">| Cadastrado em: ${createdTimeStr}</span>
+                            </div>
+                            <p class="font-bold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
+                            <p class="text-amber-400 font-semibold text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário do Jogo: ${matchTimeStr}</p>
+                            <p class="text-slate-400 text-[11px]">Odds: 1 (${m.odd_home.toFixed(2)}) | X (${m.odd_draw.toFixed(2)}) | 2 (${m.odd_away.toFixed(2)})</p>
                         </div>
                         <div class="flex items-center space-x-2">
                             ${m.status === 'OPEN' ? `
-                                <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
-                                <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
-                                <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2 py-1 rounded">Encerrar</button>
+                                <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
+                                <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
+                                <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg">Encerrar</button>
                             ` : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-xl font-black">${m.score_home} x${m.score_away}</span>`}
                             
                             <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
