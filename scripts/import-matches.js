@@ -19,7 +19,7 @@ function applyBancaMargin(marketOdd, discountPercent = 0.25) {
     return parseFloat((1 + adjustedProfit).toFixed(2));
 }
 
-// Lista de jogos garantidos caso a API do plano Free bloqueie o ano
+// Lista de jogos garantidos com colunas compatíveis
 const FALLBACK_MATCHES = [
     { league: "Brasil - Brasileirão Série A", home: "Flamengo", away: "Palmeiras", rawH: 2.10, rawD: 3.20, rawA: 3.50 },
     { league: "Brasil - Brasileirão Série A", home: "São Paulo", away: "Corinthians", rawH: 2.25, rawD: 3.10, rawA: 3.30 },
@@ -31,7 +31,7 @@ const FALLBACK_MATCHES = [
 ];
 
 async function syncDailyMatches() {
-    console.log("🚀 A iniciar a sincronização inteligente de jogos...");
+    console.log("🚀 A iniciar a sincronização com esquema compatível...");
     
     let totalSaved = 0;
     const todayStr = new Date().toISOString().split('T')[0];
@@ -45,7 +45,7 @@ async function syncDailyMatches() {
         const fixtures = response.data.response || [];
 
         if (fixtures.length > 0) {
-            console.log(`⚽ Encontradas ${fixtures.length} partidas ativas na API!`);
+            console.log(`⚽ Encontradas ${fixtures.length} partidas na API!`);
             for (const item of fixtures.slice(0, 10)) {
                 const matchPayload = {
                     league: `${item.league?.country || 'Mundo'} - ${item.league?.name || 'Liga Esportiva'}`,
@@ -55,25 +55,18 @@ async function syncDailyMatches() {
                     status: 'OPEN',
                     odd_home: applyBancaMargin(2.10, 0.25),
                     odd_draw: applyBancaMargin(3.20, 0.25),
-                    odd_away: applyBancaMargin(3.40, 0.25),
-                    odd_over15: applyBancaMargin(1.28, 0.25),
-                    odd_under15: applyBancaMargin(3.00, 0.25),
-                    odd_over25: applyBancaMargin(1.85, 0.25),
-                    odd_under25: applyBancaMargin(1.85, 0.25),
-                    odd_btts_yes: applyBancaMargin(1.80, 0.25),
-                    odd_btts_no: applyBancaMargin(1.90, 0.25)
+                    odd_away: applyBancaMargin(3.40, 0.25)
                 };
                 const { error } = await supabase.from('matches').insert([matchPayload]);
                 if (!error) totalSaved++;
             }
         }
     } catch (err) {
-        console.log("⚠️️ Erro na consulta da API. A carregar catálogo alternativo de segurança.");
+        console.log("⚠ Erro na consulta da API. A carregar catálogo alternativo de segurança.");
     }
 
-    // Se a API retornou 0 jogos devido à restrição do plano Free, ativa a lista de segurança imediatamente
     if (totalSaved === 0) {
-        console.log("🔄 API sem jogos para a data. A gerar partidas atualizadas com cotações com -25%...");
+        console.log("🔄 A inserir catálogo de jogos com cotações com -25%...");
         
         for (const m of FALLBACK_MATCHES) {
             const matchDate = new Date();
@@ -87,16 +80,7 @@ async function syncDailyMatches() {
                 status: 'OPEN',
                 odd_home: applyBancaMargin(m.rawH, 0.25),
                 odd_draw: applyBancaMargin(m.rawD, 0.25),
-                odd_away: applyBancaMargin(m.rawA, 0.25),
-                odd_over15: applyBancaMargin(1.28, 0.25),
-                odd_under15: applyBancaMargin(3.00, 0.25),
-                odd_over25: applyBancaMargin(1.85, 0.25),
-                odd_under25: applyBancaMargin(1.85, 0.25),
-                odd_btts_yes: applyBancaMargin(1.80, 0.25),
-                odd_btts_no: applyBancaMargin(1.90, 0.25),
-                odd_dc1x: applyBancaMargin(1.25, 0.25),
-                odd_dc_x2: applyBancaMargin(1.35, 0.25),
-                odd_dc_12: applyBancaMargin(1.28, 0.25)
+                odd_away: applyBancaMargin(m.rawA, 0.25)
             };
 
             const { error } = await supabase.from('matches').insert([matchPayload]);
