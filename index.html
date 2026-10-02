@@ -21,9 +21,7 @@
             color: #020617 !important;
             border-color: #fbbf24 !important;
         }
-        .selected-odd span {
-            color: #020617 !important;
-        }
+        .selected-odd span { color: #020617 !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -102,12 +100,12 @@
                     <button onclick="switchAdminSub('cashier')" id="sub-btn-cashier" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none"><i class="fa-solid fa-wallet mr-1"></i> Caixa</button>
                     <button onclick="switchAdminSub('tickets')" id="sub-btn-tickets" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none">Bilhetes</button>
                     <button onclick="switchAdminSub('matches')" id="sub-btn-matches" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none">Jogos</button>
-                    <button onclick="switchAdminSub('import')" id="sub-btn-import" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none">Importar</button>
+                    <button onclick="switchAdminSub('import')" id="sub-btn-import" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none">Importar / Bet365</button>
                     <button onclick="switchAdminSub('create')" id="sub-btn-create" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl flex-1 md:flex-none">Criar Jogo</button>
                 </div>
             </div>
 
-            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO COM FILTRO DE DATA -->
+            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO -->
             <div id="admin-sub-panel-cashier" class="hidden space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
                     <div class="flex items-center space-x-2">
@@ -154,7 +152,7 @@
                 <div id="pin-result-area" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA TODOS OS BILHETES COM FILTROS -->
+            <!-- SUB-ABA TODOS OS BILHETES -->
             <div id="admin-sub-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800 pb-3">
                     <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-list-check mr-1"></i> Bilhetes do Sistema</h3>
@@ -169,7 +167,7 @@
                 <div id="admin-tickets-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA GERENCIAR JOGOS SEPARADOS POR ABERTOS E ENCERRADOS -->
+            <!-- SUB-ABA GERENCIAR JOGOS COM EDICÃO -->
             <div id="admin-sub-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                     <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciamento de Partidas</h3>
@@ -181,13 +179,24 @@
                 <div id="admin-matches-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA IMPORTAR JOGOS EM BLOCO -->
+            <!-- SUB-ABA IMPORTAR JOGOS OU COPIAR DA BET365 / BETANO -->
             <div id="admin-sub-panel-import" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Cadastrar Vários Jogos de Uma Vez</h3>
-                <p class="text-xs text-slate-400">Cole aqui o código dos jogos gerado no chat:</p>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Importar Jogos Rápidos (Texto ou JSON)</h3>
+                
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <p class="text-xs font-bold text-amber-400"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Gerador Automático de Texto de Casas de Apostas</p>
+                    <p class="text-[11px] text-slate-400">Cole qualquer texto copiado de tabelas ou sites (Linha por linha: Time Casa, Time Fora, Odd Casa, Odd Empate, Odd Fora):</p>
+                    <textarea id="raw-text-importer" rows="4" placeholder="Exemplo:&#10;Flamengo&#10;Palmeiras&#10;2.10&#10;3.20&#10;3.50" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-mono"></textarea>
+                    <div class="flex gap-2">
+                        <input type="text" id="raw-league-name" placeholder="Nome da Liga (ex: Brasileirão)" value="UEFA - Liga das Nações C" class="bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white w-1/2">
+                        <button onclick="convertRawTextToJSON()" class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs w-1/2">Converter para JSON</button>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400">Código JSON gerado para salvar no banco:</p>
                 <textarea id="admin-import-json" rows="6" placeholder='[{"league":"Premier League","home_team":"Arsenal","away_team":"Chelsea","match_time":"2026-10-02T19:00:00Z","odd_home":1.85,"odd_draw":3.20,"odd_away":4.10}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
-                <button onclick="adminImportMatchesBulk()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs">
-                    Importar Todos os Jogos
+                <button onclick="adminImportMatchesBulk()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs">
+                    Salvar Todos os Jogos
                 </button>
             </div>
 
@@ -404,7 +413,6 @@
             loadMatches();
         }
 
-        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATOS E DATA (Com Regra de 5 Minutos)
         async function loadMatches() {
             const cutoffTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
@@ -767,7 +775,6 @@
             loadAdminCashier();
         }
 
-        // CARREGA O CAIXA DO DIA SELECIONADO
         async function loadAdminCashier() {
             const targetDate = cashierSelectedDate || new Date().toISOString().split('T')[0];
             const startOfDay = `${targetDate}T00:00:00.000Z`;
@@ -844,7 +851,6 @@
             }
         }
 
-        // FUNÇÃO PARA EXCLUIR UM BILHETE INDIVIDUALMENTE
         async function adminDeleteTicket(ticketId, pin) {
             if (!confirm(`Tem certeza que deseja APAGAR/CANCELAR o bilhete PIN #${pin}?`)) return;
 
@@ -1176,30 +1182,72 @@
                 const createdTimeStr = m.created_at ? new Date(m.created_at).toLocaleString('pt-BR') : 'N/I';
 
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-2 text-xs">
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
-                                <span class="text-[10px] text-slate-500">| Cadastrado em: ${createdTimeStr}</span>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center gap-2">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
+                                    <span class="text-[10px] text-slate-500">| Cadastrado em: ${createdTimeStr}</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
+                                <p class="text-amber-400 font-semibold text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário do Jogo: ${matchTimeStr}</p>
                             </div>
-                            <p class="font-bold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
-                            <p class="text-amber-400 font-semibold text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário do Jogo: ${matchTimeStr}</p>
-                            <p class="text-slate-400 text-[11px]">Odds: 1 (${m.odd_home.toFixed(2)}) | X (${m.odd_draw.toFixed(2)}) | 2 (${m.odd_away.toFixed(2)})</p>
+                            <div class="flex items-center space-x-2">
+                                ${m.status === 'OPEN' ? `
+                                    <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
+                                    <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
+                                    <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg">Encerrar</button>
+                                ` : `
+                                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-xl font-black">${m.score_home} x${m.score_away}</span>
+                                    <button onclick="reopenMatch('${m.id}')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 px-2 py-1 rounded-lg border border-amber-500/30 text-[10px] font-bold" title="Reabrir jogo para corrigir placar">
+                                        <i class="fa-solid fa-rotate-left mr-1"></i> Reabrir
+                                    </button>
+                                `}
+                                <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            ${m.status === 'OPEN' ? `
-                                <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
-                                <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
-                                <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg">Encerrar</button>
-                            ` : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-xl font-black">${m.score_home} x${m.score_away}</span>`}
-                            
-                            <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+
+                        <!-- PAINEL RÁPIDO DE EDIÇÃO DE ODDS -->
+                        <div class="pt-2 border-t border-slate-900 grid grid-cols-3 gap-2 text-[11px]">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block">Odd Casa</label>
+                                <input type="number" step="0.01" value="${m.odd_home}" onchange="updateMatchOdds('${m.id}', 'odd_home', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block">Odd Empate</label>
+                                <input type="number" step="0.01" value="${m.odd_draw}" onchange="updateMatchOdds('${m.id}', 'odd_draw', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block">Odd Fora</label>
+                                <input type="number" step="0.01" value="${m.odd_away}" onchange="updateMatchOdds('${m.id}', 'odd_away', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
+                            </div>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        async function updateMatchOdds(matchId, field, value) {
+            const valNum = parseFloat(value);
+            if (isNaN(valNum)) return;
+            const updateObj = {};
+            updateObj[field] = valNum;
+
+            await supabaseClient.from('matches').update(updateObj).eq('id', matchId);
+            await fetchAllMatchesMap();
+            loadMatches();
+        }
+
+        async function reopenMatch(matchId) {
+            if (!confirm("Deseja reabrir este jogo? Isso permitirá corrigir o placar ou odds.")) return;
+
+            await supabaseClient.from('matches').update({ status: 'OPEN', score_home: null, score_away: null }).eq('id', matchId);
+            await fetchAllMatchesMap();
+            reevaluateAllTickets();
+            loadAdminMatches();
+            loadMatches();
         }
 
         async function adminDeleteMatch(matchId) {
@@ -1219,59 +1267,109 @@
 
             await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
             await fetchAllMatchesMap();
+            await reevaluateAllTickets();
 
-            const { data: bets } = await supabaseClient.from('tickets').select('*').or('status.eq.VALIDATED,status.eq.ACTIVE');
-            if (bets) {
-                for (const b of bets) {
-                    const items = b.selections_data || [];
-                    let hasLost = false;
-                    let allFinishedAndWon = true;
+            alert("Partida encerrada e bilhetes reavaliados!");
+            loadAdminMatches();
+            loadAdminTickets();
+        }
 
-                    for (const item of items) {
-                        const m = matchesMap[item.matchId];
-                        if (!m || m.status !== 'FINISHED') {
-                            allFinishedAndWon = false;
-                            continue;
-                        }
+        // REAVALIA BILHETES CASO UM PLACAR SEJA CORRIGIDO
+        async function reevaluateAllTickets() {
+            const { data: bets } = await supabaseClient.from('tickets').select('*');
+            if (!bets) return;
 
-                        const sH = m.score_home ?? 0;
-                        const sA = m.score_away ?? 0;
-                        const tot = sH + sA;
-                        const btts = sH > 0 && sA > 0;
+            for (const b of bets) {
+                if (b.status === 'WAITING_PAYMENT') continue;
 
-                        let itemWon = false;
-                        switch (item.marketType) {
-                            case 'HOME': itemWon = sH > sA; break;
-                            case 'AWAY': itemWon = sA > sH; break;
-                            case 'DRAW': itemWon = sH === sA; break;
-                            case 'DC_1X': itemWon = sH >= sA; break;
-                            case 'DC_X2': itemWon = sA >= sH; break;
-                            case 'DC_12': itemWon = sH !== sA; break;
-                            case 'OVER_15': itemWon = tot > 1.5; break;
-                            case 'UNDER_15': itemWon = tot < 1.5; break;
-                            case 'OVER_25': itemWon = tot > 2.5; break;
-                            case 'UNDER_25': itemWon = tot < 2.5; break;
-                            case 'BTTS_YES': itemWon = btts; break;
-                            case 'BTTS_NO': itemWon = !btts; break;
-                        }
+                const items = b.selections_data || [];
+                let hasLost = false;
+                let allFinishedAndWon = true;
 
-                        if (!itemWon) {
-                            hasLost = true;
-                            break;
-                        }
+                for (const item of items) {
+                    const m = matchesMap[item.matchId];
+                    if (!m || m.status !== 'FINISHED') {
+                        allFinishedAndWon = false;
+                        continue;
                     }
 
-                    if (hasLost) {
-                        await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', b.id);
-                    } else if (allFinishedAndWon && items.length > 0) {
-                        await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', b.id);
+                    const sH = m.score_home ?? 0;
+                    const sA = m.score_away ?? 0;
+                    const tot = sH + sA;
+                    const btts = sH > 0 && sA > 0;
+
+                    let itemWon = false;
+                    switch (item.marketType) {
+                        case 'HOME': itemWon = sH > sA; break;
+                        case 'AWAY': itemWon = sA > sH; break;
+                        case 'DRAW': itemWon = sH === sA; break;
+                        case 'DC_1X': itemWon = sH >= sA; break;
+                        case 'DC_X2': itemWon = sA >= sH; break;
+                        case 'DC_12': itemWon = sH !== sA; break;
+                        case 'OVER_15': itemWon = tot > 1.5; break;
+                        case 'UNDER_15': itemWon = tot < 1.5; break;
+                        case 'OVER_25': itemWon = tot > 2.5; break;
+                        case 'UNDER_25': itemWon = tot < 2.5; break;
+                        case 'BTTS_YES': itemWon = btts; break;
+                        case 'BTTS_NO': itemWon = !btts; break;
+                    }
+
+                    if (!itemWon) {
+                        hasLost = true;
+                        break;
+                    }
+                }
+
+                if (hasLost) {
+                    await supabaseClient.from('tickets').update({ status: 'LOST' }).eq('id', b.id);
+                } else if (allFinishedAndWon && items.length > 0) {
+                    await supabaseClient.from('tickets').update({ status: 'WON' }).eq('id', b.id);
+                } else {
+                    await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', b.id);
+                }
+            }
+        }
+
+        // FERRAMENTA DE CONVERSÃO DE TEXTO DAS CASAS DE APOSTA
+        function convertRawTextToJSON() {
+            const rawText = document.getElementById('raw-text-importer').value.trim();
+            const league = document.getElementById('raw-league-name').value.trim() || 'Campeonato';
+
+            if (!rawText) return alert("Cole o texto copiado.");
+
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const matchesArr = [];
+
+            // Tenta processar em blocos de 5 linhas (Time 1, Time 2, Odd 1, Odd X, Odd 2)
+            for (let i = 0; i < lines.length; i += 5) {
+                if (i + 4 < lines.length) {
+                    const home = lines[i];
+                    const away = lines[i+1];
+                    const oHome = parseFloat(lines[i+2].replace(',', '.'));
+                    const oDraw = parseFloat(lines[i+3].replace(',', '.'));
+                    const oAway = parseFloat(lines[i+4].replace(',', '.'));
+
+                    if (!isNaN(oHome) && !isNaN(oDraw) && !isNaN(oAway)) {
+                        matchesArr.push({
+                            league: league,
+                            home_team: home,
+                            away_team: away,
+                            match_time: "2026-10-02T20:00:00-03:00",
+                            status: "OPEN",
+                            odd_home: oHome,
+                            odd_draw: oDraw,
+                            odd_away: oAway
+                        });
                     }
                 }
             }
 
-            alert("Partida encerrada!");
-            loadAdminMatches();
-            loadAdminTickets();
+            if (matchesArr.length === 0) {
+                return alert("Não foi possível ler as odds. Verifique se o texto tem o formato: Time Casa, Time Fora, Odd Casa, Odd Empate, Odd Fora (linha por linha).");
+            }
+
+            document.getElementById('admin-import-json').value = JSON.stringify(matchesArr, null, 2);
+            alert(`${matchesArr.length} jogo(s) gerado(s) com sucesso! Clique em 'Salvar Todos os Jogos'.`);
         }
 
         async function adminImportMatchesBulk() {
