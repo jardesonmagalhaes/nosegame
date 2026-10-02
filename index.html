@@ -259,7 +259,7 @@
                 </div>
 
                 <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
-                    <span class="text-xs text-emerald-400 font-bold">Retorno Possível (Máx R$ 200,00):</span>
+                    <span class="text-xs text-emerald-400 font-bold">Retorno Possível (Máx R$ 500,00):</span>
                     <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
                 </div>
 
@@ -536,118 +536,101 @@
             }
         }
 
+        // LEITURA DINÂMICA DE MERCADOS (SÓ EXIBE SE A API RETORNAR A ODD)
         function openMarketsModal(matchId) {
             const m = allMatchesList.find(x => x.id === matchId);
             if (!m) return;
             activeMatchForMarkets = m;
 
-            document.getElementById('modal-match-league').innerText = m.league || 'Brasileirão';
+            document.getElementById('modal-match-league').innerText = m.league || 'Futebol';
             document.getElementById('modal-match-title').innerText = `${m.home_team} x ${m.away_team}`;
 
-            const oOver25 = m.odd_over25 || 1.74;
-            const oUnder25 = m.odd_under25 || 1.41;
-            const oBttsYes = m.odd_btts_yes || 1.54;
-            const oBttsNo = m.odd_btts_no || 1.52;
-            const oDc1x = m.odd_dc1x || 1.03;
-            const oDc12 = m.odd_dc_12 || 1.07;
-            const oDcX2 = m.odd_dc_x2 || 1.53;
-            const oHtOver05 = m.odd_ht_over05 || 1.23;
-            const oHtUnder05 = m.odd_ht_under05 || 2.11;
-            const oCornOver105 = m.odd_corners_over105 || 1.60;
-            const oCornUnder105 = m.odd_corners_under105 || 1.48;
-            const oCardOver55 = m.odd_cards_over55 || 1.37;
-            const oCardUnder55 = m.odd_cards_under55 || 1.74;
-
             const container = document.getElementById('modal-markets-container');
-            container.innerHTML = `
-                <div class="space-y-1.5">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Dupla Chance</p>
-                    <div class="grid grid-cols-3 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_1X', 'Casa ou Empate (1X)', ${oDc1x}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">1X</span>
-                            <span class="font-bold text-amber-400">${oDc1x.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_12', 'Casa ou Fora (12)', ${oDc12}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">12</span>
-                            <span class="font-bold text-amber-400">${oDc12.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_X2', 'Empate ou Fora (X2)', ${oDcX2}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">X2</span>
-                            <span class="font-bold text-amber-400">${oDcX2.toFixed(2)}</span>
-                        </button>
-                    </div>
-                </div>
+            container.innerHTML = '';
 
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Gols na Partida (Mais/Menos 2.5)</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_25', '+ 2.5 Gols', ${oOver25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">+ 2.5 Gols</span>
-                            <span class="font-bold text-amber-400">${oOver25.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_25', '- 2.5 Gols', ${oUnder25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">- 2.5 Gols</span>
-                            <span class="font-bold text-amber-400">${oUnder25.toFixed(2)}</span>
-                        </button>
+            // DUPLA CHANCE
+            if (m.odd_dc1x && m.odd_dc_12 && m.odd_dc_x2) {
+                container.innerHTML += `
+                    <div class="space-y-1.5">
+                        <p class="text-xs font-bold text-amber-400 uppercase">Dupla Chance</p>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_1X', 'Casa ou Empate (1X)', ${m.odd_dc1x}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">1X</span>
+                                <span class="font-bold text-amber-400">${m.odd_dc1x.toFixed(2)}</span>
+                            </button>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_12', 'Casa ou Fora (12)', ${m.odd_dc_12}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">12</span>
+                                <span class="font-bold text-amber-400">${m.odd_dc_12.toFixed(2)}</span>
+                            </button>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_X2', 'Empate ou Fora (X2)', ${m.odd_dc_x2}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">X2</span>
+                                <span class="font-bold text-amber-400">${m.odd_dc_x2.toFixed(2)}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                `;
+            }
 
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Intervalo (Gols no 1º Tempo 0.5)</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_OVER05', '+ 0.5 Gols no 1ºT', ${oHtOver05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">+ 0.5 1ºT</span>
-                            <span class="font-bold text-amber-400">${oHtOver05.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_UNDER05', '- 0.5 Gols no 1ºT', ${oHtUnder05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">- 0.5 1ºT</span>
-                            <span class="font-bold text-amber-400">${oHtUnder05.toFixed(2)}</span>
-                        </button>
+            // GOLS OVER/UNDER 2.5
+            if (m.odd_over25 && m.odd_under25) {
+                container.innerHTML += `
+                    <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                        <p class="text-xs font-bold text-amber-400 uppercase">Gols na Partida (Mais/Menos 2.5)</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_25', '+ 2.5 Gols', ${m.odd_over25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">+ 2.5 Gols</span>
+                                <span class="font-bold text-amber-400">${m.odd_over25.toFixed(2)}</span>
+                            </button>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_25', '- 2.5 Gols', ${m.odd_under25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">- 2.5 Gols</span>
+                                <span class="font-bold text-amber-400">${m.odd_under25.toFixed(2)}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                `;
+            }
 
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Ambas as Equipes Marcam</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_YES', 'Ambas Marcam: SIM', ${oBttsYes}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">Sim</span>
-                            <span class="font-bold text-amber-400">${oBttsYes.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_NO', 'Ambas Marcam: NÃO', ${oBttsNo}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">Não</span>
-                            <span class="font-bold text-amber-400">${oBttsNo.toFixed(2)}</span>
-                        </button>
+            // AMBAS MARCAM
+            if (m.odd_btts_yes && m.odd_btts_no) {
+                container.innerHTML += `
+                    <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                        <p class="text-xs font-bold text-amber-400 uppercase">Ambas as Equipes Marcam</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_YES', 'Ambas Marcam: SIM', ${m.odd_btts_yes}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">Sim</span>
+                                <span class="font-bold text-amber-400">${m.odd_btts_yes.toFixed(2)}</span>
+                            </button>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_NO', 'Ambas Marcam: NÃO', ${m.odd_btts_no}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">Não</span>
+                                <span class="font-bold text-amber-400">${m.odd_btts_no.toFixed(2)}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                `;
+            }
 
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Escanteios (Mais/Menos 10.5)</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CORN_OVER105', '+ 10.5 Escanteios', ${oCornOver105}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">+ 10.5 Escanteios</span>
-                            <span class="font-bold text-amber-400">${oCornOver105.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CORN_UNDER105', '- 10.5 Escanteios', ${oCornUnder105}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">- 10.5 Escanteios</span>
-                            <span class="font-bold text-amber-400">${oCornUnder105.toFixed(2)}</span>
-                        </button>
+            // GOLS NO 1º TEMPO (0.5 HT)
+            if (m.odd_ht_over05 && m.odd_ht_under05) {
+                container.innerHTML += `
+                    <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                        <p class="text-xs font-bold text-amber-400 uppercase">Intervalo (Gols no 1º Tempo 0.5)</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_OVER05', '+ 0.5 Gols no 1ºT', ${m.odd_ht_over05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">+ 0.5 1ºT</span>
+                                <span class="font-bold text-amber-400">${m.odd_ht_over05.toFixed(2)}</span>
+                            </button>
+                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_UNDER05', '- 0.5 Gols no 1ºT', ${m.odd_ht_under05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                                <span class="block text-[11px] text-slate-400">- 0.5 1ºT</span>
+                                <span class="font-bold text-amber-400">${m.odd_ht_under05.toFixed(2)}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                `;
+            }
 
-                <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Cartões (Mais/Menos 5.5)</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CARD_OVER55', '+ 5.5 Cartões', ${oCardOver55}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">+ 5.5 Cartões</span>
-                            <span class="font-bold text-amber-400">${oCardOver55.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CARD_UNDER55', '- 5.5 Cartões', ${oCardUnder55}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">- 5.5 Cartões</span>
-                            <span class="font-bold text-amber-400">${oCardUnder55.toFixed(2)}</span>
-                        </button>
-                    </div>
-                </div>
-            `;
+            if (container.innerHTML === '') {
+                container.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Nenhum mercado secundário disponível para esta partida no momento.</p>';
+            }
 
             document.getElementById('markets-modal').classList.remove('hidden');
         }
@@ -701,8 +684,8 @@
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
             let payout = keys.length > 0 ? (stake * totalOdds) : 0;
             
-            // TETO MÁXIMO DE GANHO: R$ 200,00
-            if (payout > 200) payout = 200;
+            // LIMITE MÁXIMO DE GANHO R$ 500,00
+            if (payout > 500) payout = 500;
 
             document.getElementById('potential-payout').innerText = `R$ ${payout.toFixed(2).replace('.', ',')}`;
         }
@@ -740,9 +723,9 @@
             const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             
-            // REGRA 3: LIMITE MÁXIMO DE GANHO R$ 200,00
+            // REGRA 3: TETO MÁXIMO DE GANHO R$ 500,00
             let payout = stake * totalOdds;
-            if (payout > 200) payout = 200.00;
+            if (payout > 500) payout = 500.00;
 
             const selectionsList = keys.map(k => selections[k]);
 
