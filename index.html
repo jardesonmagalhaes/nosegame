@@ -4,23 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NOSEGAME - Aposta Esportiva</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #020617; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        .selected-odd {
-            background-color: #f59e0b !important;
-            color: #020617 !important;
-            border-color: #fbbf24 !important;
-        }
+        .selected-odd { background-color: #f59e0b !important; color: #020617 !important; border-color: #fbbf24 !important; }
         .selected-odd span { color: #020617 !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -29,7 +21,6 @@
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950 pb-24 lg:pb-0">
 
     <script>
-        // CONFIGURAÇÕES SUPABASE E WHATSAPP
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co"; 
         const SUPABASE_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
         const ADMIN_WHATSAPP = "5588997263753"; 
@@ -48,14 +39,12 @@
         let cashierSelectedDate = new Date().toISOString().split('T')[0];
     </script>
 
-    <!-- Header Limpo e Responsivo -->
     <header class="bg-slate-900/90 border-b border-slate-800 p-3 md:p-4 sticky top-0 z-40 backdrop-blur-md">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2 cursor-pointer" onclick="switchView('client')">
                 <i class="fa-solid fa-trophy text-amber-400 text-xl md:text-2xl"></i>
                 <h1 class="text-lg md:text-xl font-black tracking-widest text-amber-400 uppercase">NOSE<span class="text-white">GAME</span></h1>
             </div>
-
             <div>
                 <button onclick="openConsultModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs px-3 py-2 rounded-xl font-bold border border-slate-700 transition">
                     <i class="fa-solid fa-magnifying-glass mr-1"></i> <span class="hidden sm:inline">Consultar</span> Bilhete
@@ -64,13 +53,8 @@
         </div>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main class="max-w-6xl mx-auto p-3 md:p-6 w-full flex-1">
-
-        <!-- TELA DO CLIENTE (JOGOS) -->
         <section id="view-client" class="space-y-4">
-            
-            <!-- BARRA DE FILTRO POR CAMPEONATOS -->
             <div class="flex items-center space-x-2 overflow-x-auto pb-2 no-scrollbar w-full" id="league-filter-bar">
                 <button onclick="filterByLeague('ALL')" id="league-btn-ALL" class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs whitespace-nowrap shadow-lg">
                     <i class="fa-solid fa-globe mr-1"></i> Todos os Jogos
@@ -86,7 +70,6 @@
             </div>
         </section>
 
-        <!-- PAINEL OCULTO DO CAMBISTA / ADMIN -->
         <section id="view-admin" class="hidden space-y-6">
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -105,7 +88,7 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO -->
+            <!-- SUB-ABA CAIXA -->
             <div id="admin-sub-panel-cashier" class="hidden space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
                     <div class="flex items-center space-x-2">
@@ -122,17 +105,14 @@
                     <div class="bg-slate-900 border border-emerald-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Entradas (Validados)</span>
                         <h3 id="cashier-in" class="text-2xl font-black text-emerald-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Total arrecadado na data selecionada</p>
                     </div>
                     <div class="bg-slate-900 border border-rose-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Saídas (Prêmios)</span>
                         <h3 id="cashier-out" class="text-2xl font-black text-rose-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Total a pagar para bilhetes ganhos na data</p>
                     </div>
                     <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Lucro Líquido</span>
                         <h3 id="cashier-profit" class="text-2xl font-black text-amber-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Saldo da banca na data selecionada</p>
                     </div>
                 </div>
 
@@ -167,7 +147,7 @@
                 <div id="admin-tickets-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA GERENCIAR JOGOS COM EDICÃO -->
+            <!-- SUB-ABA GERENCIAR JOGOS COM ENCERRAMENTO COMPLETO -->
             <div id="admin-sub-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                     <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciamento de Partidas</h3>
@@ -179,22 +159,10 @@
                 <div id="admin-matches-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA IMPORTAR JOGOS OU COPIAR DA BET365 / BETANO -->
+            <!-- SUB-ABA IMPORTAR -->
             <div id="admin-sub-panel-import" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Importar Jogos Rápidos (Texto ou JSON)</h3>
-                
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <p class="text-xs font-bold text-amber-400"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Gerador Automático de Texto de Casas de Apostas</p>
-                    <p class="text-[11px] text-slate-400">Cole qualquer texto copiado de tabelas ou sites (Linha por linha: Time Casa, Time Fora, Odd Casa, Odd Empate, Odd Fora):</p>
-                    <textarea id="raw-text-importer" rows="4" placeholder="Exemplo:&#10;Flamengo&#10;Palmeiras&#10;2.10&#10;3.20&#10;3.50" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-mono"></textarea>
-                    <div class="flex gap-2">
-                        <input type="text" id="raw-league-name" placeholder="Nome da Liga (ex: Brasileirão)" value="UEFA - Liga das Nações C" class="bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white w-1/2">
-                        <button onclick="convertRawTextToJSON()" class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs w-1/2">Converter para JSON</button>
-                    </div>
-                </div>
-
-                <p class="text-xs text-slate-400">Código JSON gerado para salvar no banco:</p>
-                <textarea id="admin-import-json" rows="6" placeholder='[{"league":"Premier League","home_team":"Arsenal","away_team":"Chelsea","match_time":"2026-10-02T19:00:00Z","odd_home":1.85,"odd_draw":3.20,"odd_away":4.10}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
+                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Importar Jogos em Bloco (JSON)</h3>
+                <textarea id="admin-import-json" rows="8" placeholder="Cole o código JSON gerado..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
                 <button onclick="adminImportMatchesBulk()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs">
                     Salvar Todos os Jogos
                 </button>
@@ -204,7 +172,7 @@
             <div id="admin-sub-panel-create" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input type="text" id="admin-league" placeholder="Campeonato (ex: Premier League)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="text" id="admin-league" placeholder="Campeonato" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-home" placeholder="Time Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-away" placeholder="Time Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
@@ -217,7 +185,6 @@
                 <button onclick="adminCreateMatch()" class="bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs">Publicar Partida</button>
             </div>
         </section>
-
     </main>
 
     <!-- MODAL DE MAIS MERCADOS -->
@@ -234,7 +201,7 @@
         </div>
     </div>
 
-    <!-- BOTÃO E BOLETIM DE APOSTAS FLUTUANTE -->
+    <!-- BOLETIM FLUTUANTE -->
     <div id="floating-cart-btn" class="fixed bottom-4 right-4 z-40">
         <button onclick="toggleCartModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-3 sm:px-5 sm:py-3 rounded-full shadow-2xl flex items-center space-x-2 transition border-2 border-slate-950">
             <i class="fa-solid fa-receipt text-lg"></i>
@@ -243,7 +210,7 @@
         </button>
     </div>
 
-    <!-- MODAL DO BOLETIM DE APOSTAS -->
+    <!-- MODAL DO BOLETIM -->
     <div id="cart-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 relative max-h-[92vh] overflow-y-auto">
             <button onclick="toggleCartModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -265,12 +232,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$)</label>
-                    <input type="number" id="stake-input" min="2" value="10" oninput="calculatePayout()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none focus:border-amber-500">
+                    <label class="block text-xs text-slate-400 mb-1">Valor do Palpite (R$) - Mínimo R$ 5,00</label>
+                    <input type="number" id="stake-input" min="5" value="5" oninput="calculatePayout()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none focus:border-amber-500">
                 </div>
 
                 <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
-                    <span class="text-xs text-emerald-400 font-bold">Retorno Possível:</span>
+                    <span class="text-xs text-emerald-400 font-bold">Retorno Possível (Máx R$ 200,00):</span>
                     <span id="potential-payout" class="text-base font-black text-emerald-400">R$ 0,00</span>
                 </div>
 
@@ -288,7 +255,6 @@
                 <i class="fa-solid fa-ticket"></i>
             </div>
             <h3 class="text-sm text-slate-400 font-bold uppercase">Pré-Bilhete Gerado!</h3>
-            <p class="text-xs text-slate-300">Para validar a sua aposta, envie o código ao cambista:</p>
             
             <div class="bg-slate-950 border border-amber-500/40 p-4 rounded-xl">
                 <span class="block text-[10px] text-slate-500 uppercase tracking-widest">Código PIN</span>
@@ -298,54 +264,11 @@
             <button onclick="sendPINToWhatsApp()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center shadow-lg">
                 <i class="fa-brands fa-whatsapp text-lg mr-2"></i> Enviar Código no WhatsApp
             </button>
-            <button onclick="closePINModal()" class="w-full bg-slate-800 text-slate-400 hover:text-white py-2 rounded-xl text-xs font-bold">
-                Fechar
-            </button>
+            <button onclick="closePINModal()" class="w-full bg-slate-800 text-slate-400 hover:text-white py-2 rounded-xl text-xs font-bold">Fechar</button>
         </div>
     </div>
 
-    <!-- MODAL DO COMPROVANTE EM IMAGEM -->
-    <div id="ticket-receipt-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 text-center relative my-auto">
-            <button onclick="closeReceiptModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 class="text-sm font-extrabold text-amber-400 uppercase">Comprovante de Aposta</h3>
-
-            <div id="receipt-card" class="bg-slate-950 border border-amber-500/30 p-5 rounded-2xl text-left space-y-3 font-sans text-xs">
-                <div class="text-center border-b border-slate-800 pb-3">
-                    <h2 class="text-lg font-black tracking-widest text-amber-400 uppercase">NOSE<span class="text-white">GAME</span></h2>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">Bilhete Confirmado</p>
-                </div>
-
-                <div class="space-y-1 text-slate-300">
-                    <p><strong>Apostador:</strong> <span id="rec-name" class="text-white font-bold"></span></p>
-                    <p><strong>Código PIN:</strong> <span id="rec-pin" class="text-amber-400 font-mono font-bold"></span></p>
-                    <p><strong>Data/Hora:</strong> <span id="rec-date" class="text-slate-400"></span></p>
-                </div>
-
-                <div class="border-t border-slate-800 pt-2 space-y-2">
-                    <p class="text-[10px] font-bold text-amber-400 uppercase">Jogos Selecionados:</p>
-                    <div id="rec-selections" class="space-y-1 text-[11px]"></div>
-                </div>
-
-                <div class="border-t border-slate-800 pt-3 flex justify-between items-center text-xs">
-                    <div>
-                        <p class="text-slate-400">Apostado:</p>
-                        <p id="rec-stake" class="font-bold text-white"></p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-emerald-400">Retorno Possível:</p>
-                        <p id="rec-payout" class="font-black text-emerald-400 text-sm"></p>
-                    </div>
-                </div>
-            </div>
-
-            <button onclick="downloadReceiptImage()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3 rounded-xl text-xs flex items-center justify-center">
-                <i class="fa-solid fa-download mr-2"></i> Baixar Imagem (PNG)
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL CONSULTAR BILHETE -->
+    <!-- MODAL CONSULTA -->
     <div id="consult-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 relative">
             <button onclick="closeConsultModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -358,10 +281,7 @@
         </div>
     </div>
 
-    <!-- SCRIPTS DE LÓGICA -->
     <script>
-        let currentValidatingTicket = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchAllMatchesMap();
             loadMatches();
@@ -372,11 +292,6 @@
                     promptAdminAccess();
                 }
             });
-
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true') {
-                promptAdminAccess();
-            }
         });
 
         async function fetchAllMatchesMap() {
@@ -552,15 +467,19 @@
             document.getElementById('modal-match-league').innerText = m.league || 'Brasileirão';
             document.getElementById('modal-match-title').innerText = `${m.home_team} x ${m.away_team}`;
 
-            const oOver15 = m.odd_over15 || 1.25;
-            const oUnder15 = m.odd_under15 || 3.10;
-            const oOver25 = m.odd_over25 || 1.85;
-            const oUnder25 = m.odd_under25 || 1.85;
-            const oBttsYes = m.odd_btts_yes || 1.80;
-            const oBttsNo = m.odd_btts_no || 1.90;
-            const oDc1x = m.odd_dc1x || 1.25;
-            const oDcX2 = m.odd_dc_x2 || 1.35;
-            const oDc12 = m.odd_dc_12 || 1.28;
+            const oOver25 = m.odd_over25 || 1.74;
+            const oUnder25 = m.odd_under25 || 1.41;
+            const oBttsYes = m.odd_btts_yes || 1.54;
+            const oBttsNo = m.odd_btts_no || 1.52;
+            const oDc1x = m.odd_dc1x || 1.03;
+            const oDc12 = m.odd_dc_12 || 1.07;
+            const oDcX2 = m.odd_dc_x2 || 1.53;
+            const oHtOver05 = m.odd_ht_over05 || 1.23;
+            const oHtUnder05 = m.odd_ht_under05 || 2.11;
+            const oCornOver105 = m.odd_corners_over105 || 1.60;
+            const oCornUnder105 = m.odd_corners_under105 || 1.48;
+            const oCardOver55 = m.odd_cards_over55 || 1.37;
+            const oCardUnder55 = m.odd_cards_under55 || 1.74;
 
             const container = document.getElementById('modal-markets-container');
             container.innerHTML = `
@@ -583,16 +502,8 @@
                 </div>
 
                 <div class="space-y-1.5 pt-2 border-t border-slate-800">
-                    <p class="text-xs font-bold text-amber-400 uppercase">Total de Gols</p>
+                    <p class="text-xs font-bold text-amber-400 uppercase">Gols na Partida (Mais/Menos 2.5)</p>
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_15', '+ 1.5 Gols', ${oOver15}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">+ 1.5 Gols</span>
-                            <span class="font-bold text-amber-400">${oOver15.toFixed(2)}</span>
-                        </button>
-                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_15', '- 1.5 Gols', ${oUnder15}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
-                            <span class="block text-[11px] text-slate-400">- 1.5 Gols</span>
-                            <span class="font-bold text-amber-400">${oUnder15.toFixed(2)}</span>
-                        </button>
                         <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_25', '+ 2.5 Gols', ${oOver25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                             <span class="block text-[11px] text-slate-400">+ 2.5 Gols</span>
                             <span class="font-bold text-amber-400">${oOver25.toFixed(2)}</span>
@@ -600,6 +511,20 @@
                         <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_25', '- 2.5 Gols', ${oUnder25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                             <span class="block text-[11px] text-slate-400">- 2.5 Gols</span>
                             <span class="font-bold text-amber-400">${oUnder25.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Intervalo (Gols no 1º Tempo 0.5)</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_OVER05', '+ 0.5 Gols no 1ºT', ${oHtOver05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">+ 0.5 1ºT</span>
+                            <span class="font-bold text-amber-400">${oHtOver05.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_UNDER05', '- 0.5 Gols no 1ºT', ${oHtUnder05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">- 0.5 1ºT</span>
+                            <span class="font-bold text-amber-400">${oHtUnder05.toFixed(2)}</span>
                         </button>
                     </div>
                 </div>
@@ -614,6 +539,34 @@
                         <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_NO', 'Ambas Marcam: NÃO', ${oBttsNo}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                             <span class="block text-[11px] text-slate-400">Não</span>
                             <span class="font-bold text-amber-400">${oBttsNo.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Escanteios (Mais/Menos 10.5)</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CORN_OVER105', '+ 10.5 Escanteios', ${oCornOver105}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">+ 10.5 Escanteios</span>
+                            <span class="font-bold text-amber-400">${oCornOver105.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CORN_UNDER105', '- 10.5 Escanteios', ${oCornUnder105}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">- 10.5 Escanteios</span>
+                            <span class="font-bold text-amber-400">${oCornUnder105.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Cartões (Mais/Menos 5.5)</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CARD_OVER55', '+ 5.5 Cartões', ${oCardOver55}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">+ 5.5 Cartões</span>
+                            <span class="font-bold text-amber-400">${oCardOver55.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'CARD_UNDER55', '- 5.5 Cartões', ${oCardUnder55}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">- 5.5 Cartões</span>
+                            <span class="font-bold text-amber-400">${oCardUnder55.toFixed(2)}</span>
                         </button>
                     </div>
                 </div>
@@ -669,7 +622,11 @@
             const keys = Object.keys(selections);
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const stake = parseFloat(document.getElementById('stake-input').value) || 0;
-            const payout = keys.length > 0 ? (stake * totalOdds) : 0;
+            let payout = keys.length > 0 ? (stake * totalOdds) : 0;
+            
+            // LIMITE MÁXIMO DE GANHOS: R$ 200,00
+            if (payout > 200) payout = 200;
+
             document.getElementById('potential-payout').innerText = `R$ ${payout.toFixed(2).replace('.', ',')}`;
         }
 
@@ -686,22 +643,30 @@
             const keys = Object.keys(selections);
 
             if (!name) return alert("Por favor, digite seu nome.");
-            if (keys.length === 0) return alert("Selecione pelo menos um jogo.");
-            if (stake < 2) return alert("Valor mínimo é R$ 2,00.");
+            
+            // VALIDAÇÃO 1: MÍNIMO DE 3 JOGOS
+            if (keys.length < 3) return alert("É necessário selecionar no mínimo 3 partidas para realizar o bilhete.");
+            
+            // VALIDAÇÃO 2: VALOR MÍNIMO DE R$ 5,00
+            if (stake < 5) return alert("O valor mínimo por aposta é R$ 5,00.");
 
             for (const key of keys) {
                 const matchObj = matchesMap[key];
                 if (matchObj && matchObj.match_time) {
                     const matchTimeMs = new Date(matchObj.match_time).getTime();
                     if (matchTimeMs - Date.now() <= 5 * 60 * 1000) {
-                        return alert(`A partida "${matchObj.home_team} x ${matchObj.away_team}" encerra apostas em menos de 5 minutos e expirou. Remova-a do bilhete.`);
+                        return alert(`A partida "${matchObj.home_team} x ${matchObj.away_team}" encerra apostas em menos de 5 minutos e expirou.`);
                     }
                 }
             }
 
             const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
-            const payout = (stake * totalOdds);
+            
+            // VALIDAÇÃO 3: TETO MÁXIMO DE RETORNO R$ 200,00
+            let payout = stake * totalOdds;
+            if (payout > 200) payout = 200.00;
+
             const selectionsList = keys.map(k => selections[k]);
 
             const { data, error } = await supabaseClient.from('tickets').insert([{
@@ -852,13 +817,13 @@
         }
 
         async function adminDeleteTicket(ticketId, pin) {
-            if (!confirm(`Tem certeza que deseja APAGAR/CANCELAR o bilhete PIN #${pin}?`)) return;
+            if (!confirm(`Tem certeza que deseja APAGAR o bilhete PIN #${pin}?`)) return;
 
             const { error } = await supabaseClient.from('tickets').delete().eq('id', ticketId);
             if (error) {
                 alert("Erro ao apagar bilhete: " + error.message);
             } else {
-                alert(`Bilhete #${pin} foi apagado do sistema.`);
+                alert(`Bilhete #${pin} foi apagado.`);
                 loadAdminTickets();
                 loadAdminCashier();
                 document.getElementById('pin-result-area').innerHTML = '';
@@ -911,6 +876,7 @@
             }
         }
 
+        // AVALIAÇÃO AUTOMÁTICA DE TODOS OS MERCADOS (GOLS, ESCANTEIOS, CARTÕES, HT)
         function evaluateSelectionResult(item) {
             const m = matchesMap[item.matchId];
             if (!m || m.status !== 'FINISHED') {
@@ -921,6 +887,9 @@
             const scoreA = m.score_away ?? 0;
             const totalGols = scoreH + scoreA;
             const bothScored = scoreH > 0 && scoreA > 0;
+            const corners = m.corners_total ?? 0;
+            const cards = m.cards_total ?? 0;
+            const htGols = m.ht_score_total ?? 0;
 
             let isWin = false;
 
@@ -931,18 +900,22 @@
                 case 'DC_1X': isWin = scoreH >= scoreA; break;
                 case 'DC_X2': isWin = scoreA >= scoreH; break;
                 case 'DC_12': isWin = scoreH !== scoreA; break;
-                case 'OVER_15': isWin = totalGols > 1.5; break;
-                case 'UNDER_15': isWin = totalGols < 1.5; break;
                 case 'OVER_25': isWin = totalGols > 2.5; break;
                 case 'UNDER_25': isWin = totalGols < 2.5; break;
                 case 'BTTS_YES': isWin = bothScored; break;
                 case 'BTTS_NO': isWin = !bothScored; break;
+                case 'HT_OVER05': isWin = htGols > 0.5; break;
+                case 'HT_UNDER05': isWin = htGols < 0.5; break;
+                case 'CORN_OVER105': isWin = corners > 10.5; break;
+                case 'CORN_UNDER105': isWin = corners < 10.5; break;
+                case 'CARD_OVER55': isWin = cards > 5.5; break;
+                case 'CARD_UNDER55': isWin = cards < 5.5; break;
             }
 
             if (isWin) {
-                return `<span class="text-emerald-400 font-bold text-[11px]"><i class="fa-solid fa-circle-check"></i> Acertou (${scoreH} x ${scoreA})</span>`;
+                return `<span class="text-emerald-400 font-bold text-[11px]"><i class="fa-solid fa-circle-check"></i> Acertou</span>`;
             } else {
-                return `<span class="text-rose-400 font-bold text-[11px]"><i class="fa-solid fa-circle-xmark"></i> Perdeu (${scoreH} x ${scoreA})</span>`;
+                return `<span class="text-rose-400 font-bold text-[11px]"><i class="fa-solid fa-circle-xmark"></i> Perdeu</span>`;
             }
         }
 
@@ -1045,9 +1018,6 @@
                     ` : `
                         <div class="space-y-2">
                             <p class="text-center font-bold text-emerald-400 uppercase">Aposta já Validada!</p>
-                            <button onclick="openReceiptModal(currentValidatingTicket)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2 rounded-xl text-xs">
-                                <i class="fa-solid fa-image mr-1"></i> Gerar Imagem do Comprovante
-                            </button>
                         </div>
                     `}
                 </div>
@@ -1057,45 +1027,7 @@
         async function confirmValidateBet(betId) {
             const { error } = await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', betId);
             if (error) return alert("Erro ao validar: " + error.message);
-            
-            if (currentValidatingTicket) {
-                currentValidatingTicket.status = 'VALIDATED';
-                openReceiptModal(currentValidatingTicket);
-            }
             searchAndValidatePIN();
-        }
-
-        function openReceiptModal(bet) {
-            document.getElementById('rec-name').innerText = bet.bettor_name;
-            document.getElementById('rec-pin').innerText = `#${bet.pin}`;
-            document.getElementById('rec-date').innerText = new Date(bet.created_at || Date.now()).toLocaleString('pt-BR');
-            document.getElementById('rec-stake').innerText = `R$ ${bet.stake_amount.toFixed(2)}`;
-            document.getElementById('rec-payout').innerText = `R$ ${bet.potential_payout.toFixed(2)}`;
-
-            const container = document.getElementById('rec-selections');
-            container.innerHTML = '';
-            (bet.selections_data || []).forEach(s => {
-                container.innerHTML += `
-                    <div class="flex justify-between border-b border-slate-900 pb-1">
-                        <span class="text-slate-300">${s.matchTitle}</span>
-                        <span class="text-amber-400 font-bold">${s.optionName} @ ${s.odd.toFixed(2)}</span>
-                    </div>
-                `;
-            });
-
-            document.getElementById('ticket-receipt-modal').classList.remove('hidden');
-        }
-
-        function closeReceiptModal() { document.getElementById('ticket-receipt-modal').classList.add('hidden'); }
-
-        function downloadReceiptImage() {
-            const card = document.getElementById('receipt-card');
-            html2canvas(card, { backgroundColor: '#020617', scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `bilhete-${document.getElementById('rec-pin').innerText}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
         }
 
         async function loadAdminTickets() {
@@ -1169,6 +1101,7 @@
             });
         }
 
+        // CARREGA PAINEL DE JOGOS COM ENCERRAMENTO DETALHADO (GOLS, ESCANTEIOS, CARTÕES)
         async function loadAdminMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', currentMatchFilter).order('created_at', { ascending: false });
             const container = document.getElementById('admin-matches-list');
@@ -1179,73 +1112,68 @@
             container.innerHTML = '';
             matches.forEach(m => {
                 const matchTimeStr = m.match_time ? new Date(m.match_time).toLocaleString('pt-BR') : 'N/I';
-                const createdTimeStr = m.created_at ? new Date(m.created_at).toLocaleString('pt-BR') : 'N/I';
 
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs">
-                        <div class="flex flex-col md:flex-row justify-between md:items-center gap-2">
+                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center gap-2 border-b border-slate-900 pb-2">
                             <div>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
-                                    <span class="text-[10px] text-slate-500">| Cadastrado em: ${createdTimeStr}</span>
-                                </div>
+                                <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
                                 <p class="font-bold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
-                                <p class="text-amber-400 font-semibold text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário do Jogo: ${matchTimeStr}</p>
+                                <p class="text-slate-400 text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário: ${matchTimeStr}</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                ${m.status === 'OPEN' ? `
-                                    <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
-                                    <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold rounded-lg">
-                                    <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg">Encerrar</button>
-                                ` : `
-                                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-xl font-black">${m.score_home} x${m.score_away}</span>
-                                    <button onclick="reopenMatch('${m.id}')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 px-2 py-1 rounded-lg border border-amber-500/30 text-[10px] font-bold" title="Reabrir jogo para corrigir placar">
-                                        <i class="fa-solid fa-rotate-left mr-1"></i> Reabrir
-                                    </button>
-                                `}
-                                <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
+                            <button onclick="adminDeleteMatch('${m.id}')" class="text-rose-400 hover:text-rose-300 p-1 rounded-xl transition self-start md:self-auto">
+                                <i class="fa-solid fa-trash-can"></i> Excluir
+                            </button>
                         </div>
 
-                        <!-- PAINEL RÁPIDO DE EDIÇÃO DE ODDS -->
-                        <div class="pt-2 border-t border-slate-900 grid grid-cols-3 gap-2 text-[11px]">
-                            <div>
-                                <label class="text-[10px] text-slate-500 block">Odd Casa</label>
-                                <input type="number" step="0.01" value="${m.odd_home}" onchange="updateMatchOdds('${m.id}', 'odd_home', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
+                        ${m.status === 'OPEN' ? `
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-2">
+                                <p class="text-[10px] font-bold text-amber-400 uppercase">Lançar Resultado Final do Jogo:</p>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <div>
+                                        <label class="text-[9px] text-slate-400 block">Placar Casa</label>
+                                        <input type="number" id="score-h-${m.id}" placeholder="0" class="w-full bg-slate-950 border border-slate-700 p-1.5 text-center text-white font-bold rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] text-slate-400 block">Placar Fora</label>
+                                        <input type="number" id="score-a-${m.id}" placeholder="0" class="w-full bg-slate-950 border border-slate-700 p-1.5 text-center text-white font-bold rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] text-slate-400 block">Total Escanteios</label>
+                                        <input type="number" id="corners-${m.id}" placeholder="10" class="w-full bg-slate-950 border border-slate-700 p-1.5 text-center text-white font-bold rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] text-slate-400 block">Total Cartões</label>
+                                        <input type="number" id="cards-${m.id}" placeholder="5" class="w-full bg-slate-950 border border-slate-700 p-1.5 text-center text-white font-bold rounded-lg">
+                                    </div>
+                                </div>
+                                <button onclick="adminFinishMatch('${m.id}')" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2 rounded-xl text-xs uppercase tracking-wider">
+                                    Encerrar Partida e Processar Bilhetes
+                                </button>
                             </div>
-                            <div>
-                                <label class="text-[10px] text-slate-500 block">Odd Empate</label>
-                                <input type="number" step="0.01" value="${m.odd_draw}" onchange="updateMatchOdds('${m.id}', 'odd_draw', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
+                        ` : `
+                            <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                                <div class="text-[11px] space-x-3">
+                                    <span class="text-emerald-400 font-bold">Placar: ${m.score_home} x${m.score_away}</span>
+                                    <span class="text-slate-400">Escanteios: ${m.corners_total ?? 0}</span>
+                                    <span class="text-slate-400">Cartões: ${m.cards_total ?? 0}</span>
+                                </div>
+                                <button onclick="reopenMatch('${m.id}')" class="bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30 text-[10px] font-bold">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reabrir
+                                </button>
                             </div>
-                            <div>
-                                <label class="text-[10px] text-slate-500 block">Odd Fora</label>
-                                <input type="number" step="0.01" value="${m.odd_away}" onchange="updateMatchOdds('${m.id}', 'odd_away', this.value)" class="bg-slate-900 border border-slate-800 text-amber-400 p-1 rounded w-full font-bold">
-                            </div>
-                        </div>
+                        `}
                     </div>
                 `;
             });
         }
 
-        async function updateMatchOdds(matchId, field, value) {
-            const valNum = parseFloat(value);
-            if (isNaN(valNum)) return;
-            const updateObj = {};
-            updateObj[field] = valNum;
-
-            await supabaseClient.from('matches').update(updateObj).eq('id', matchId);
-            await fetchAllMatchesMap();
-            loadMatches();
-        }
-
         async function reopenMatch(matchId) {
-            if (!confirm("Deseja reabrir este jogo? Isso permitirá corrigir o placar ou odds.")) return;
+            if (!confirm("Deseja reabrir este jogo para corrigir os resultados?")) return;
 
-            await supabaseClient.from('matches').update({ status: 'OPEN', score_home: null, score_away: null }).eq('id', matchId);
+            await supabaseClient.from('matches').update({ status: 'OPEN', score_home: null, score_away: null, corners_total: null, cards_total: null }).eq('id', matchId);
             await fetchAllMatchesMap();
-            reevaluateAllTickets();
+            await reevaluateAllTickets();
             loadAdminMatches();
             loadMatches();
         }
@@ -1263,18 +1191,27 @@
         async function adminFinishMatch(matchId) {
             const scoreH = parseInt(document.getElementById(`score-h-${matchId}`).value);
             const scoreA = parseInt(document.getElementById(`score-a-${matchId}`).value);
-            if (isNaN(scoreH) || isNaN(scoreA)) return alert("Preencha o placar.");
+            const corners = parseInt(document.getElementById(`corners-${matchId}`).value) || 0;
+            const cards = parseInt(document.getElementById(`cards-${matchId}`).value) || 0;
 
-            await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
+            if (isNaN(scoreH) || isNaN(scoreA)) return alert("Preencha o placar do jogo.");
+
+            await supabaseClient.from('matches').update({ 
+                status: 'FINISHED', 
+                score_home: scoreH, 
+                score_away: scoreA,
+                corners_total: corners,
+                cards_total: cards
+            }).eq('id', matchId);
+
             await fetchAllMatchesMap();
             await reevaluateAllTickets();
 
-            alert("Partida encerrada e bilhetes reavaliados!");
+            alert("Partida encerrada e bilhetes reavaliados com sucesso!");
             loadAdminMatches();
             loadAdminTickets();
         }
 
-        // REAVALIA BILHETES CASO UM PLACAR SEJA CORRIGIDO
         async function reevaluateAllTickets() {
             const { data: bets } = await supabaseClient.from('tickets').select('*');
             if (!bets) return;
@@ -1296,7 +1233,10 @@
                     const sH = m.score_home ?? 0;
                     const sA = m.score_away ?? 0;
                     const tot = sH + sA;
-                    const btts = sH > 0 && sA > 0;
+                    const bothScored = sH > 0 && sA > 0;
+                    const corners = m.corners_total ?? 0;
+                    const cards = m.cards_total ?? 0;
+                    const htGols = m.ht_score_total ?? 0;
 
                     let itemWon = false;
                     switch (item.marketType) {
@@ -1306,12 +1246,16 @@
                         case 'DC_1X': itemWon = sH >= sA; break;
                         case 'DC_X2': itemWon = sA >= sH; break;
                         case 'DC_12': itemWon = sH !== sA; break;
-                        case 'OVER_15': itemWon = tot > 1.5; break;
-                        case 'UNDER_15': itemWon = tot < 1.5; break;
                         case 'OVER_25': itemWon = tot > 2.5; break;
                         case 'UNDER_25': itemWon = tot < 2.5; break;
-                        case 'BTTS_YES': itemWon = btts; break;
-                        case 'BTTS_NO': itemWon = !btts; break;
+                        case 'BTTS_YES': itemWon = bothScored; break;
+                        case 'BTTS_NO': itemWon = !bothScored; break;
+                        case 'HT_OVER05': itemWon = htGols > 0.5; break;
+                        case 'HT_UNDER05': itemWon = htGols < 0.5; break;
+                        case 'CORN_OVER105': itemWon = corners > 10.5; break;
+                        case 'CORN_UNDER105': itemWon = corners < 10.5; break;
+                        case 'CARD_OVER55': itemWon = cards > 5.5; break;
+                        case 'CARD_UNDER55': itemWon = cards < 5.5; break;
                     }
 
                     if (!itemWon) {
@@ -1330,51 +1274,9 @@
             }
         }
 
-        // FERRAMENTA DE CONVERSÃO DE TEXTO DAS CASAS DE APOSTA
-        function convertRawTextToJSON() {
-            const rawText = document.getElementById('raw-text-importer').value.trim();
-            const league = document.getElementById('raw-league-name').value.trim() || 'Campeonato';
-
-            if (!rawText) return alert("Cole o texto copiado.");
-
-            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const matchesArr = [];
-
-            // Tenta processar em blocos de 5 linhas (Time 1, Time 2, Odd 1, Odd X, Odd 2)
-            for (let i = 0; i < lines.length; i += 5) {
-                if (i + 4 < lines.length) {
-                    const home = lines[i];
-                    const away = lines[i+1];
-                    const oHome = parseFloat(lines[i+2].replace(',', '.'));
-                    const oDraw = parseFloat(lines[i+3].replace(',', '.'));
-                    const oAway = parseFloat(lines[i+4].replace(',', '.'));
-
-                    if (!isNaN(oHome) && !isNaN(oDraw) && !isNaN(oAway)) {
-                        matchesArr.push({
-                            league: league,
-                            home_team: home,
-                            away_team: away,
-                            match_time: "2026-10-02T20:00:00-03:00",
-                            status: "OPEN",
-                            odd_home: oHome,
-                            odd_draw: oDraw,
-                            odd_away: oAway
-                        });
-                    }
-                }
-            }
-
-            if (matchesArr.length === 0) {
-                return alert("Não foi possível ler as odds. Verifique se o texto tem o formato: Time Casa, Time Fora, Odd Casa, Odd Empate, Odd Fora (linha por linha).");
-            }
-
-            document.getElementById('admin-import-json').value = JSON.stringify(matchesArr, null, 2);
-            alert(`${matchesArr.length} jogo(s) gerado(s) com sucesso! Clique em 'Salvar Todos os Jogos'.`);
-        }
-
         async function adminImportMatchesBulk() {
             const jsonText = document.getElementById('admin-import-json').value.trim();
-            if (!jsonText) return alert("Cole o código dos jogos.");
+            if (!jsonText) return alert("Cole o código JSON dos jogos.");
 
             try {
                 const matchesArray = JSON.parse(jsonText);
