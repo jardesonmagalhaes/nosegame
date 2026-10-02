@@ -45,6 +45,7 @@
         let currentTicketFilter = 'ALL';
         let currentMatchFilter = 'OPEN';
         let selectedLeagueFilter = 'ALL';
+        let cashierSelectedDate = new Date().toISOString().split('T')[0];
     </script>
 
     <!-- Header Limpo -->
@@ -104,28 +105,39 @@
                 </div>
             </div>
 
-            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO -->
+            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO COM FILTRO DE DATA -->
             <div id="admin-sub-panel-cashier" class="hidden space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-regular fa-calendar text-amber-400 text-sm"></i>
+                        <label class="text-xs font-bold text-slate-300">Data do Caixa:</label>
+                        <input type="date" id="cashier-date-input" onchange="changeCashierDate(this.value)" class="bg-slate-950 border border-slate-700 text-amber-400 text-xs rounded-xl px-3 py-1.5 font-bold focus:outline-none">
+                    </div>
+                    <button onclick="clearOldTicketsBeforeToday()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs px-3 py-1.5 rounded-xl font-bold transition flex items-center">
+                        <i class="fa-solid fa-trash-can mr-1.5"></i> Apagar Bilhetes Anteriores
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-slate-900 border border-emerald-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Entradas (Validados)</span>
                         <h3 id="cashier-in" class="text-2xl font-black text-emerald-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Total arrecadado em apostas validadas</p>
+                        <p class="text-[10px] text-slate-500">Total arrecadado na data selecionada</p>
                     </div>
                     <div class="bg-slate-900 border border-rose-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Saídas (Prêmios)</span>
                         <h3 id="cashier-out" class="text-2xl font-black text-rose-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Total a pagar para bilhetes ganhos</p>
+                        <p class="text-[10px] text-slate-500">Total a pagar para bilhetes ganhos na data</p>
                     </div>
                     <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-2xl space-y-1">
                         <span class="text-xs text-slate-400 font-bold uppercase">Lucro Líquido</span>
                         <h3 id="cashier-profit" class="text-2xl font-black text-amber-400">R$ 0,00</h3>
-                        <p class="text-[10px] text-slate-500">Saldo atual da sua banca</p>
+                        <p class="text-[10px] text-slate-500">Saldo da banca na data selecionada</p>
                     </div>
                 </div>
 
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-                    <h3 class="text-xs font-bold text-slate-300 uppercase">Resumo por Status de Bilhetes</h3>
+                    <h3 class="text-xs font-bold text-slate-300 uppercase">Resumo do Dia Selecionado</h3>
                     <div id="cashier-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                 </div>
             </div>
@@ -390,9 +402,18 @@
             loadMatches();
         }
 
-        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATO E DATA
+        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATOS E DATA (Com Regra de 5 Minutos)
         async function loadMatches() {
-            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
+            // Calcula o limite de 5 minutos antes de agora
+            const cutoffTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+            const { data: matches } = await supabaseClient
+                .from('matches')
+                .select('*')
+                .eq('status', 'OPEN')
+                .gt('match_time', cutoffTime) // Só busca partidas que começam em mais de 5 min
+                .order('match_time', { ascending: true });
+
             const container = document.getElementById('matches-list');
             const filterBar = document.getElementById('league-filter-bar');
 
@@ -666,6 +687,17 @@
             if (keys.length === 0) return alert("Selecione pelo menos um jogo.");
             if (stake < 2) return alert("Valor mínimo é R$ 2,00.");
 
+            // Validação de 5 Minutos antes de gerar o PIN
+            for (const key of keys) {
+                const matchObj = matchesMap[key];
+                if (matchObj && matchObj.match_time) {
+                    const matchTimeMs = new Date(matchObj.match_time).getTime();
+                    if (matchTimeMs - Date.now() <= 5 * 60 * 1000) {
+                        return alert(`A partida "${matchObj.home_team} x ${matchObj.away_team}" encerra apostas em menos de 5 minutos e expirou. Remova-a do bilhete.`);
+                    }
+                }
+            }
+
             const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
             const payout = (stake * totalOdds);
@@ -729,13 +761,31 @@
             document.getElementById(`admin-sub-panel-${sub}`).classList.remove('hidden');
             document.getElementById(`sub-btn-${sub}`).classList.add('bg-amber-500', 'text-slate-950');
 
-            if (sub === 'cashier') loadAdminCashier();
+            if (sub === 'cashier') {
+                document.getElementById('cashier-date-input').value = cashierSelectedDate;
+                loadAdminCashier();
+            }
             if (sub === 'tickets') loadAdminTickets();
             if (sub === 'matches') loadAdminMatches();
         }
 
+        function changeCashierDate(val) {
+            cashierSelectedDate = val || new Date().toISOString().split('T')[0];
+            loadAdminCashier();
+        }
+
+        // CARREGA O CAIXA DO DIA SELECIONADO
         async function loadAdminCashier() {
-            const { data: bets } = await supabaseClient.from('tickets').select('*');
+            const targetDate = cashierSelectedDate || new Date().toISOString().split('T')[0];
+            const startOfDay = `${targetDate}T00:00:00.000Z`;
+            const endOfDay = `${targetDate}T23:59:59.999Z`;
+
+            const { data: bets } = await supabaseClient
+                .from('tickets')
+                .select('*')
+                .gte('created_at', startOfDay)
+                .lte('created_at', endOfDay);
+
             if (!bets) return;
 
             let totalIn = 0;
@@ -782,6 +832,23 @@
                     <strong class="text-rose-400 text-sm">${countLost}</strong>
                 </div>
             `;
+        }
+
+        async function clearOldTicketsBeforeToday() {
+            if (!confirm("Atenção: Deseja apagar todos os bilhetes criados antes de HOJE?")) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            const { error } = await supabaseClient
+                .from('tickets')
+                .delete()
+                .lt('created_at', `${todayStr}T00:00:00.000Z`);
+
+            if (!error) {
+                alert("Bilhetes anteriores a hoje foram apagados com sucesso!");
+                loadAdminCashier();
+            } else {
+                alert("Erro ao apagar bilhetes: " + error.message);
+            }
         }
 
         function filterTickets(status) {
