@@ -1,0 +1,27 @@
+name: Sincronizar Jogos Diarios NOSEGAME
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Roda automaticamente todos os dias as 06:00 UTC
+  workflow_dispatch: # Permite disparar manualmente pelo botao do GitHub
+
+jobs:
+  import-matches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Instalar Dependencias
+        run: npm install @supabase/supabase-js axios
+
+      - name: Executar Importador de Jogos
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: node scripts/import-matches.js
