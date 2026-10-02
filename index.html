@@ -42,6 +42,9 @@
         let activeMatchForMarkets = null;
         let allMatchesList = [];
         let matchesMap = {};
+        let currentTicketFilter = 'ALL';
+        let currentMatchFilter = 'OPEN';
+        let selectedLeagueFilter = 'ALL';
     </script>
 
     <!-- Header Limpo -->
@@ -65,10 +68,19 @@
 
         <!-- TELA DO CLIENTE (JOGOS) -->
         <section id="view-client" class="space-y-4">
-            <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center">
-                <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos & Mercados Disponíveis
+            
+            <!-- BARRA DE FILTRO POR CAMPEONATOS -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none" id="league-filter-bar">
+                <button onclick="filterByLeague('ALL')" id="league-btn-ALL" class="bg-amber-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs whitespace-nowrap shadow-lg">
+                    <i class="fa-solid fa-globe mr-1"></i> Todos os Jogos
+                </button>
+            </div>
+
+            <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center pt-2">
+                <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Partidas Disponíveis
             </h2>
-            <div id="matches-list" class="space-y-3">
+            
+            <div id="matches-list" class="space-y-6">
                 <p class="text-xs text-slate-500">Carregando partidas...</p>
             </div>
         </section>
@@ -80,14 +92,41 @@
                     <h2 class="text-lg font-bold text-rose-400 flex items-center">
                         <i class="fa-solid fa-shield-halved mr-2"></i> Painel do Cambista
                     </h2>
-                    <p class="text-xs text-slate-400">Valide pré-bilhetes via PIN, crie comprovantes e gerencie os jogos.</p>
+                    <p class="text-xs text-slate-400">Valide bilhetes, acompanhe o caixa e gerencie partidas com facilidade.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
                     <button onclick="switchAdminSub('validate')" id="sub-btn-validate" class="bg-amber-500 text-slate-950 font-black px-3 py-2 rounded-xl">Validar PIN</button>
+                    <button onclick="switchAdminSub('cashier')" id="sub-btn-cashier" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-wallet mr-1"></i> Caixa</button>
                     <button onclick="switchAdminSub('tickets')" id="sub-btn-tickets" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Bilhetes</button>
                     <button onclick="switchAdminSub('matches')" id="sub-btn-matches" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Jogos & Placar</button>
                     <button onclick="switchAdminSub('import')" id="sub-btn-import" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-file-import mr-1"></i> Importar em Bloco</button>
                     <button onclick="switchAdminSub('create')" id="sub-btn-create" class="bg-slate-800 text-slate-300 font-bold px-3 py-2 rounded-xl">Criar Jogo</button>
+                </div>
+            </div>
+
+            <!-- SUB-ABA CAIXA / RESUMO FINANCEIRO -->
+            <div id="admin-sub-panel-cashier" class="hidden space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 border border-emerald-500/30 p-5 rounded-2xl space-y-1">
+                        <span class="text-xs text-slate-400 font-bold uppercase">Entradas (Validados)</span>
+                        <h3 id="cashier-in" class="text-2xl font-black text-emerald-400">R$ 0,00</h3>
+                        <p class="text-[10px] text-slate-500">Total arrecadado em apostas validadas</p>
+                    </div>
+                    <div class="bg-slate-900 border border-rose-500/30 p-5 rounded-2xl space-y-1">
+                        <span class="text-xs text-slate-400 font-bold uppercase">Saídas (Prêmios)</span>
+                        <h3 id="cashier-out" class="text-2xl font-black text-rose-400">R$ 0,00</h3>
+                        <p class="text-[10px] text-slate-500">Total a pagar para bilhetes ganhos</p>
+                    </div>
+                    <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-2xl space-y-1">
+                        <span class="text-xs text-slate-400 font-bold uppercase">Lucro Líquido</span>
+                        <h3 id="cashier-profit" class="text-2xl font-black text-amber-400">R$ 0,00</h3>
+                        <p class="text-[10px] text-slate-500">Saldo atual da sua banca</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase">Resumo por Status de Bilhetes</h3>
+                    <div id="cashier-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"></div>
                 </div>
             </div>
 
@@ -101,15 +140,30 @@
                 <div id="pin-result-area" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA TODOS OS BILHETES (COM EXPANSÃO SANFONA E DETALHAMENTO DE JOGOS) -->
+            <!-- SUB-ABA TODOS OS BILHETES COM FILTROS -->
             <div id="admin-sub-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-list-check mr-1"></i> Todos os Bilhetes do Sistema</h3>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-list-check mr-1"></i> Bilhetes do Sistema</h3>
+                    <div class="flex flex-wrap gap-1.5 text-[11px]">
+                        <button onclick="filterTickets('ALL')" id="t-flt-ALL" class="bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded-lg">Todos</button>
+                        <button onclick="filterTickets('WAITING_PAYMENT')" id="t-flt-WAITING_PAYMENT" class="bg-slate-800 text-slate-300 font-bold px-2.5 py-1 rounded-lg">Aguardando</button>
+                        <button onclick="filterTickets('VALIDATED')" id="t-flt-VALIDATED" class="bg-slate-800 text-slate-300 font-bold px-2.5 py-1 rounded-lg">Validados</button>
+                        <button onclick="filterTickets('WON')" id="t-flt-WON" class="bg-slate-800 text-slate-300 font-bold px-2.5 py-1 rounded-lg">Ganhos</button>
+                        <button onclick="filterTickets('LOST')" id="t-flt-LOST" class="bg-slate-800 text-slate-300 font-bold px-2.5 py-1 rounded-lg">Perdidos</button>
+                    </div>
+                </div>
                 <div id="admin-tickets-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA GERENCIAR JOGOS -->
+            <!-- SUB-ABA GERENCIAR JOGOS SEPARADOS POR ABERTOS E ENCERRADOS -->
             <div id="admin-sub-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciar Jogos e Encerrar Placares</h3>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciamento de Partidas</h3>
+                    <div class="flex space-x-2 text-xs">
+                        <button onclick="filterMatchesTab('OPEN')" id="m-flt-OPEN" class="bg-amber-500 text-slate-950 font-bold px-3 py-1 rounded-lg">Jogos Abertos</button>
+                        <button onclick="filterMatchesTab('FINISHED')" id="m-flt-FINISHED" class="bg-slate-800 text-slate-300 font-bold px-3 py-1 rounded-lg">Jogos Encerrados</button>
+                    </div>
+                </div>
                 <div id="admin-matches-list" class="space-y-3"></div>
             </div>
 
@@ -117,7 +171,7 @@
             <div id="admin-sub-panel-import" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Cadastrar Vários Jogos de Uma Vez</h3>
                 <p class="text-xs text-slate-400">Cole aqui o código dos jogos gerado no chat:</p>
-                <textarea id="admin-import-json" rows="6" placeholder='[{"home_team":"Flamengo","away_team":"São Paulo","match_time":"2026-10-02T19:00:00Z","odd_home":1.85,"odd_draw":3.20,"odd_away":4.10}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
+                <textarea id="admin-import-json" rows="6" placeholder='[{"league":"Premier League","home_team":"Arsenal","away_team":"Chelsea","match_time":"2026-10-02T19:00:00Z","odd_home":1.85,"odd_draw":3.20,"odd_away":4.10}]' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono"></textarea>
                 <button onclick="adminImportMatchesBulk()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl text-xs">
                     Importar Todos os Jogos
                 </button>
@@ -126,7 +180,8 @@
             <!-- SUB-ABA CRIAR JOGO MANUALLMENTE -->
             <div id="admin-sub-panel-create" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Nova Partida</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text" id="admin-league" placeholder="Campeonato (ex: Premier League)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-home" placeholder="Time Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-away" placeholder="Time Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
@@ -142,13 +197,13 @@
 
     </main>
 
-    <!-- MODAL DE MAIS MERCADOS (+1.5, +2.5, AMBAS, DUPLA CHANCE) -->
+    <!-- MODAL DE MAIS MERCADOS -->
     <div id="markets-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeMarketsModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             
             <div class="border-b border-slate-800 pb-3">
-                <span class="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Todos os Mercados</span>
+                <span id="modal-match-league" class="text-[10px] text-amber-400 font-bold uppercase tracking-widest"></span>
                 <h3 id="modal-match-title" class="text-base font-black text-white"></h3>
             </div>
 
@@ -168,9 +223,7 @@
     <!-- MODAL DO BOLETIM DE APOSTAS -->
     <div id="cart-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-md shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
-            <button onclick="toggleCartModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
+            <button onclick="toggleCartModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-800 pb-3 flex items-center">
                 <i class="fa-solid fa-receipt text-amber-400 mr-2"></i> Finalizar Palpite
             </h3>
@@ -205,7 +258,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE PIN GERADO COM SUCESSO -->
+    <!-- MODAL DE PIN GERADO -->
     <div id="pin-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
             <div class="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl border border-amber-500/30">
@@ -332,54 +385,140 @@
             }
         }
 
+        function filterByLeague(league) {
+            selectedLeagueFilter = league;
+            loadMatches();
+        }
+
+        // CARREGA E ORGANIZA OS JOGOS POR CAMPEONATO E DATA
         async function loadMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
             const container = document.getElementById('matches-list');
+            const filterBar = document.getElementById('league-filter-bar');
 
             if (!matches || matches.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto no momento.</p>`;
                 return;
             }
-            container.innerHTML = '';
-            matches.forEach(m => {
-                const date = new Date(m.match_time).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
-                const homeSel = selections[m.id]?.marketType === 'HOME' ? 'selected-odd' : '';
-                const drawSel = selections[m.id]?.marketType === 'DRAW' ? 'selected-odd' : '';
-                const awaySel = selections[m.id]?.marketType === 'AWAY' ? 'selected-odd' : '';
+            // Descobre todos os campeonatos únicos para criar os botões no topo
+            const leaguesSet = new Set(matches.map(m => m.league || 'Brasileirão'));
+            
+            filterBar.innerHTML = `
+                <button onclick="filterByLeague('ALL')" class="${selectedLeagueFilter === 'ALL' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-900 text-slate-300 font-bold border border-slate-800'} px-4 py-2 rounded-xl text-xs whitespace-nowrap transition">
+                    <i class="fa-solid fa-globe mr-1"></i> Todos os Jogos
+                </button>
+            `;
 
-                container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
-                        <div class="flex justify-between items-center text-xs text-slate-400">
-                            <span><i class="fa-regular fa-clock mr-1"></i> ${date}</span>
-                            <button onclick="openMarketsModal('${m.id}')" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-950 font-extrabold px-3 py-1 rounded-xl transition text-[11px]">
-                                + Mercados (+1.5, +2.5, Ambas)
-                            </button>
-                        </div>
-                        
-                        <div class="flex justify-between items-center my-2 text-sm font-bold">
-                            <span class="w-2/5 text-right">${m.home_team}</span>
-                            <span class="text-xs text-slate-500 font-normal px-2">VS</span>
-                            <span class="w-2/5 text-left">${m.away_team}</span>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 p-2.5 rounded-xl text-center transition ${homeSel}">
-                                <span class="block text-xs text-slate-400">Casa</span>
-                                <span class="font-extrabold text-amber-400">${m.odd_home.toFixed(2)}</span>
-                            </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 p-2.5 rounded-xl text-center transition ${drawSel}">
-                                <span class="block text-xs text-slate-400">Empate</span>
-                                <span class="font-extrabold text-amber-400">${m.odd_draw.toFixed(2)}</span>
-                            </button>
-                            <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 p-2.5 rounded-xl text-center transition ${awaySel}">
-                                <span class="block text-xs text-slate-400">Fora</span>
-                                <span class="font-extrabold text-amber-400">${m.odd_away.toFixed(2)}</span>
-                            </button>
-                        </div>
-                    </div>
+            leaguesSet.forEach(leg => {
+                const isSel = selectedLeagueFilter === leg;
+                filterBar.innerHTML += `
+                    <button onclick="filterByLeague('${leg}')" class="${isSel ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-900 text-slate-300 font-bold border border-slate-800'} px-4 py-2 rounded-xl text-xs whitespace-nowrap transition">
+                        <i class="fa-solid fa-trophy mr-1 text-amber-400"></i> ${leg}
+                    </button>
                 `;
             });
+
+            // Filtra partidas se o usuário selecionou uma liga específica
+            let filteredMatches = matches;
+            if (selectedLeagueFilter !== 'ALL') {
+                filteredMatches = matches.filter(m => (m.league || 'Brasileirão') === selectedLeagueFilter);
+            }
+
+            container.innerHTML = '';
+
+            // AGRUPAMENTO: LIGA -> DATA -> JOGOS
+            const groupedByLeague = {};
+            filteredMatches.forEach(m => {
+                const leg = m.league || 'Brasileirão';
+                if (!groupedByLeague[leg]) groupedByLeague[leg] = [];
+                groupedByLeague[leg].push(m);
+            });
+
+            for (const leg in groupedByLeague) {
+                const leagueMatches = groupedByLeague[leg];
+                
+                // Agrupa por data dentro dessa liga
+                const groupedByDate = {};
+                leagueMatches.forEach(m => {
+                    const dateObj = new Date(m.match_time);
+                    const dayLabel = dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' }).replace('.', '');
+                    if (!groupedByDate[dayLabel]) groupedByDate[dayLabel] = [];
+                    groupedByDate[dayLabel].push(m);
+                });
+
+                let leagueHTML = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl space-y-0.5">
+                        <!-- Cabeçalho do Campeonato -->
+                        <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 p-3.5 border-b border-slate-800 flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                                    <i class="fa-solid fa-trophy text-sm"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-white uppercase tracking-wider">${leg}</h3>
+                                    <span class="text-[10px] text-slate-400 font-bold">${leagueMatches.length} jogo(s) disponível(is)</span>
+                                </div>
+                            </div>
+                            <div class="hidden sm:grid grid-cols-3 w-48 text-center text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                                <span>Casa (1)</span><span>Empate (X)</span><span>Fora (2)</span>
+                            </div>
+                        </div>
+                `;
+
+                for (const day in groupedByDate) {
+                    leagueHTML += `
+                        <div class="bg-slate-950/70 px-4 py-1.5 border-y border-slate-800/60 text-[10px] font-black text-amber-400/90 uppercase tracking-widest flex items-center">
+                            <i class="fa-regular fa-calendar mr-1.5"></i> ${day}
+                        </div>
+                    `;
+
+                    groupedByDate[day].forEach(m => {
+                        const timeStr = new Date(m.match_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                        const homeSel = selections[m.id]?.marketType === 'HOME' ? 'selected-odd' : '';
+                        const drawSel = selections[m.id]?.marketType === 'DRAW' ? 'selected-odd' : '';
+                        const awaySel = selections[m.id]?.marketType === 'AWAY' ? 'selected-odd' : '';
+
+                        leagueHTML += `
+                            <div class="p-3 border-b border-slate-800/40 hover:bg-slate-800/30 transition flex flex-col md:flex-row justify-between md:items-center gap-3">
+                                <div class="flex items-center space-x-3 w-full md:w-1/2">
+                                    <span class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">${timeStr}</span>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-white flex justify-between">
+                                            <span>${m.home_team}</span>
+                                        </div>
+                                        <div class="text-xs font-bold text-white flex justify-between mt-1">
+                                            <span>${m.away_team}</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="openMarketsModal('${m.id}')" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-950 text-amber-400 font-black px-2.5 py-1 rounded-xl text-[10px] transition">
+                                        + Mercados
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2 w-full md:w-1/2">
+                                    <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${homeSel}">
+                                        <span class="block text-[10px] text-slate-400 md:hidden">1</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_home.toFixed(2)}</span>
+                                    </button>
+                                    <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${drawSel}">
+                                        <span class="block text-[10px] text-slate-400 md:hidden">X</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_draw.toFixed(2)}</span>
+                                    </button>
+                                    <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${awaySel}">
+                                        <span class="block text-[10px] text-slate-400 md:hidden">2</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_away.toFixed(2)}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                leagueHTML += `</div>`;
+                container.innerHTML += leagueHTML;
+            }
         }
 
         function openMarketsModal(matchId) {
@@ -387,6 +526,7 @@
             if (!m) return;
             activeMatchForMarkets = m;
 
+            document.getElementById('modal-match-league').innerText = m.league || 'Brasileirão';
             document.getElementById('modal-match-title').innerText = `${m.home_team} x ${m.away_team}`;
 
             const oOver15 = m.odd_over15 || 1.25;
@@ -459,9 +599,7 @@
             document.getElementById('markets-modal').classList.remove('hidden');
         }
 
-        function closeMarketsModal() {
-            document.getElementById('markets-modal').classList.add('hidden');
-        }
+        function closeMarketsModal() { document.getElementById('markets-modal').classList.add('hidden'); }
 
         function addSelection(matchId, matchTitle, marketType, optionName, odd) {
             if (selections[matchId] && selections[matchId].marketType === marketType) {
@@ -556,9 +694,7 @@
             document.getElementById('pin-modal').classList.remove('hidden');
         }
 
-        function closePINModal() {
-            document.getElementById('pin-modal').classList.add('hidden');
-        }
+        function closePINModal() { document.getElementById('pin-modal').classList.add('hidden'); }
 
         function sendPINToWhatsApp() {
             if (!lastCreatedTicket) return;
@@ -584,7 +720,7 @@
         }
 
         function switchAdminSub(sub) {
-            ['validate', 'tickets', 'matches', 'import', 'create'].forEach(s => {
+            ['validate', 'cashier', 'tickets', 'matches', 'import', 'create'].forEach(s => {
                 document.getElementById(`admin-sub-panel-${s}`).classList.add('hidden');
                 document.getElementById(`sub-btn-${s}`).classList.remove('bg-amber-500', 'text-slate-950');
                 document.getElementById(`sub-btn-${s}`).classList.add('bg-slate-800', 'text-slate-300');
@@ -593,8 +729,93 @@
             document.getElementById(`admin-sub-panel-${sub}`).classList.remove('hidden');
             document.getElementById(`sub-btn-${sub}`).classList.add('bg-amber-500', 'text-slate-950');
 
+            if (sub === 'cashier') loadAdminCashier();
             if (sub === 'tickets') loadAdminTickets();
             if (sub === 'matches') loadAdminMatches();
+        }
+
+        async function loadAdminCashier() {
+            const { data: bets } = await supabaseClient.from('tickets').select('*');
+            if (!bets) return;
+
+            let totalIn = 0;
+            let totalOut = 0;
+            let countWaiting = 0, countValidated = 0, countWon = 0, countLost = 0;
+
+            bets.forEach(b => {
+                if (b.status === 'VALIDATED' || b.status === 'ACTIVE' || b.status === 'WON' || b.status === 'LOST') {
+                    totalIn += (b.stake_amount || 0);
+                }
+                if (b.status === 'WON') {
+                    totalOut += (b.potential_payout || 0);
+                    countWon++;
+                } else if (b.status === 'LOST') {
+                    countLost++;
+                } else if (b.status === 'VALIDATED' || b.status === 'ACTIVE') {
+                    countValidated++;
+                } else {
+                    countWaiting++;
+                }
+            });
+
+            const profit = totalIn - totalOut;
+
+            document.getElementById('cashier-in').innerText = `R$ ${totalIn.toFixed(2).replace('.', ',')}`;
+            document.getElementById('cashier-out').innerText = `R$ ${totalOut.toFixed(2).replace('.', ',')}`;
+            document.getElementById('cashier-profit').innerText = `R$ ${profit.toFixed(2).replace('.', ',')}`;
+
+            document.getElementById('cashier-stats').innerHTML = `
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block">Aguardando:</span>
+                    <strong class="text-amber-400 text-sm">${countWaiting}</strong>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block">Em Andamento:</span>
+                    <strong class="text-emerald-400 text-sm">${countValidated}</strong>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block">Ganhos:</span>
+                    <strong class="text-emerald-400 text-sm">${countWon}</strong>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <span class="text-slate-400 block">Perdidos:</span>
+                    <strong class="text-rose-400 text-sm">${countLost}</strong>
+                </div>
+            `;
+        }
+
+        function filterTickets(status) {
+            currentTicketFilter = status;
+            ['ALL', 'WAITING_PAYMENT', 'VALIDATED', 'WON', 'LOST'].forEach(st => {
+                const btn = document.getElementById(`t-flt-${st}`);
+                if (st === status) {
+                    btn.classList.add('bg-amber-500', 'text-slate-950');
+                    btn.classList.remove('bg-slate-800', 'text-slate-300');
+                } else {
+                    btn.classList.remove('bg-amber-500', 'text-slate-950');
+                    btn.classList.add('bg-slate-800', 'text-slate-300');
+                }
+            });
+            loadAdminTickets();
+        }
+
+        function filterMatchesTab(status) {
+            currentMatchFilter = status;
+            const btnOpen = document.getElementById('m-flt-OPEN');
+            const btnFinished = document.getElementById('m-flt-FINISHED');
+
+            if (status === 'OPEN') {
+                btnOpen.classList.add('bg-amber-500', 'text-slate-950');
+                btnOpen.classList.remove('bg-slate-800', 'text-slate-300');
+                btnFinished.classList.remove('bg-amber-500', 'text-slate-950');
+                btnFinished.classList.add('bg-slate-800', 'text-slate-300');
+            } else {
+                btnFinished.classList.add('bg-amber-500', 'text-slate-950');
+                btnFinished.classList.remove('bg-slate-800', 'text-slate-300');
+                btnOpen.classList.remove('bg-amber-500', 'text-slate-950');
+                btnOpen.classList.add('bg-slate-800', 'text-slate-300');
+            }
+            loadAdminMatches();
         }
 
         function toggleTicketAccordion(ticketId) {
@@ -609,7 +830,6 @@
             }
         }
 
-        // FUNÇÃO DE AVALIAÇÃO DE CADA PALPITE INDIVIDUAL
         function evaluateSelectionResult(item) {
             const m = matchesMap[item.matchId];
             if (!m || m.status !== 'FINISHED') {
@@ -777,9 +997,7 @@
             document.getElementById('ticket-receipt-modal').classList.remove('hidden');
         }
 
-        function closeReceiptModal() {
-            document.getElementById('ticket-receipt-modal').classList.add('hidden');
-        }
+        function closeReceiptModal() { document.getElementById('ticket-receipt-modal').classList.add('hidden'); }
 
         function downloadReceiptImage() {
             const card = document.getElementById('receipt-card');
@@ -793,10 +1011,15 @@
 
         async function loadAdminTickets() {
             await fetchAllMatchesMap();
-            const { data: bets } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
+            if (currentTicketFilter !== 'ALL') {
+                query = query.eq('status', currentTicketFilter);
+            }
+
+            const { data: bets } = await query;
             const container = document.getElementById('admin-tickets-list');
             if (!bets || bets.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete no sistema.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum bilhete encontrado nesta categoria.</p>`;
                 return;
             }
             container.innerHTML = '';
@@ -855,10 +1078,10 @@
         }
 
         async function loadAdminMatches() {
-            const { data: matches } = await supabaseClient.from('matches').select('*').order('match_time', { ascending: false });
+            const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', currentMatchFilter).order('match_time', { ascending: false });
             const container = document.getElementById('admin-matches-list');
             if (!matches || matches.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo cadastrado.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo nesta categoria.</p>`;
                 return;
             }
             container.innerHTML = '';
@@ -866,6 +1089,7 @@
                 container.innerHTML += `
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-2 text-xs">
                         <div>
+                            <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
                             <p class="font-bold text-white">${m.home_team} VS ${m.away_team}</p>
                             <p class="text-slate-400">Odds: ${m.odd_home.toFixed(2)} | ${m.odd_draw.toFixed(2)} | ${m.odd_away.toFixed(2)}</p>
                         </div>
@@ -874,7 +1098,7 @@
                                 <input type="number" id="score-h-${m.id}" placeholder="H" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
                                 <input type="number" id="score-a-${m.id}" placeholder="A" class="w-10 bg-slate-900 border border-slate-700 p-1 text-center text-white font-bold">
                                 <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2 py-1 rounded">Encerrar</button>
-                            ` : `<span class="text-emerald-400 font-bold">${m.score_home} x${m.score_away}</span>`}
+                            ` : `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-xl font-black">${m.score_home} x${m.score_away}</span>`}
                             
                             <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -903,7 +1127,6 @@
             await supabaseClient.from('matches').update({ status: 'FINISHED', score_home: scoreH, score_away: scoreA }).eq('id', matchId);
             await fetchAllMatchesMap();
 
-            // RECALCULA BILHETES AUTOMATICAMENTE
             const { data: bets } = await supabaseClient.from('tickets').select('*').or('status.eq.VALIDATED,status.eq.ACTIVE');
             if (bets) {
                 for (const b of bets) {
@@ -953,7 +1176,7 @@
                 }
             }
 
-            alert("Partida encerrada e bilhetes re-calculados!");
+            alert("Partida encerrada!");
             loadAdminMatches();
             loadAdminTickets();
         }
@@ -979,6 +1202,7 @@
         }
 
         async function adminCreateMatch() {
+            const league = document.getElementById('admin-league').value.trim() || 'Premier League';
             const home = document.getElementById('admin-home').value.trim();
             const away = document.getElementById('admin-away').value.trim();
             const time = document.getElementById('admin-time').value;
@@ -989,7 +1213,7 @@
             if (!home || !away || !time || !oddHome || !oddDraw || !oddAway) return alert("Preencha todos os campos.");
 
             await supabaseClient.from('matches').insert([{
-                home_team: home, away_team: away, match_time: time,
+                league: league, home_team: home, away_team: away, match_time: time,
                 odd_home: oddHome, odd_draw: oddDraw, odd_away: oddAway, status: 'OPEN'
             }]);
 
