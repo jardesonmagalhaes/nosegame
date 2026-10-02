@@ -15,7 +15,7 @@ function applyBancaMargin(marketOdd, discountPercent = 0.25) {
 }
 
 async function syncDailyMatches() {
-    console.log("🚀 A iniciar a sincronização automática de jogos...");
+    console.log("🚀 A iniciar a sincronização de jogos...");
     const today = new Date().toISOString().split('T')[0];
 
     try {
@@ -24,9 +24,14 @@ async function syncDailyMatches() {
         });
 
         const fixtures = response.data.response || [];
-        console.log(`⚽ Encontrados ${fixtures.length} jogos para hoje.`);
+        console.log(`⚽ Encontrados ${fixtures.length} jogos na API para hoje.`);
 
-        const sampleFixtures = fixtures.slice(0, 20);
+        if (fixtures.length === 0) {
+            console.log("Nenhum jogo encontrado para a data de hoje.");
+            return;
+        }
+
+        const sampleFixtures = fixtures.slice(0, 15);
 
         for (const item of sampleFixtures) {
             const fixtureId = item.fixture.id;
@@ -44,7 +49,7 @@ async function syncDailyMatches() {
                 });
 
                 const oddsData = oddsResponse.data.response[0];
-                if (oddsData && oddsData.bookmakers.length > 0) {
+                if (oddsData && oddsData.bookmakers && oddsData.bookmakers.length > 0) {
                     const bets = oddsData.bookmakers[0].bets;
                     const matchWinner = bets.find(b => b.id === 1);
                     if (matchWinner) {
@@ -54,11 +59,11 @@ async function syncDailyMatches() {
                     }
                 }
             } catch (errOdds) {
-                console.log(`Odds não encontradas para ${homeTeam} x ${awayTeam}, a usar padrão.`);
+                console.log(`Odds padrão aplicadas para ${homeTeam} x ${awayTeam}`);
             }
 
+            // Removido o campo 'id' para permitir que o Supabase gere o UUID nativo
             const matchPayload = {
-                id: fixtureId.toString(),
                 league: `${countryName} - ${leagueName}`,
                 home_team: homeTeam,
                 away_team: awayTeam,
@@ -73,13 +78,17 @@ async function syncDailyMatches() {
                 odd_btts_no: applyBancaMargin(1.85, 0.25)
             };
 
-            await supabase.from('matches').upsert(matchPayload);
-            console.log(`✅ Jogo inserido/atualizado: ${homeTeam} x ${awayTeam}`);
+            const { error } = await supabase.from('matches').insert([matchPayload]);
+            if (error) {
+                console.error(`❌ Erro ao inserir ${homeTeam} x ${awayTeam}:`, error.message);
+            } else {
+                console.log(`✅ Jogo inserido com sucesso: ${homeTeam} x ${awayTeam}`);
+            }
         }
 
-        console.log("✨ Sincronização concluída com sucesso!");
+        console.log("✨ Processo de importação finalizado!");
     } catch (err) {
-        console.error("❌ Erro:", err.message);
+        console.error("❌ Erro geral:", err.message);
         process.exit(1);
     }
 }
