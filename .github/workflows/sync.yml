@@ -1,27 +1,29 @@
-name: Sincronizar Jogos Diarios NOSEGAME
+name: Sincronizador BetsAPI - NOSEGAME
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Roda automaticamente todos os dias as 06:00 UTC
-  workflow_dispatch: # Permite disparar manualmente pelo botao do GitHub
+    # Roda automaticamente a cada 30 minutos
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # Permite rodar manualmente com 1 clique no GitHub
 
 jobs:
-  import-matches:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do codigo
+      - name: Baixar Código
         uses: actions/checkout@v3
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v3
         with:
           node-version: '18'
 
-      - name: Instalar Dependencias
-        run: npm install @supabase/supabase-js axios
+      - name: Instalar Dependências
+        run: npm install @supabase/supabase-js node-fetch
 
-      - name: Executar Importador de Jogos
+      - name: Executar Sincronizador
+        run: node sync.js
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-        run: node scripts/import-matches.js
+          BETSAPI_TOKEN: ${{ secrets.BETSAPI_TOKEN }}
