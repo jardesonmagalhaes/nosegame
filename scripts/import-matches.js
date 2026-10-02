@@ -19,15 +19,12 @@ function applyBancaMargin(marketOdd, discountPercent = 0.25) {
     return parseFloat((1 + adjustedProfit).toFixed(2));
 }
 
-// Ligas Principais (IDs da API-Football: 71=Brasileirão A, 39=Premier League, 140=La Liga, 135=Serie A, 2=Champions)
-const MAIN_LEAGUES = [71, 39, 140, 135, 2];
-
 async function syncDailyMatches() {
-    console.log("🚀 A iniciar a sincronização de jogos por Ligas e Datas...");
-    
-    // Gerar datas para hoje, amanhã e depois de amanhã
+    console.log("🚀 A iniciar a sincronização geral de jogos...");
+
+    // Gerar datas para hoje e os próximos 3 dias
     const datesToTest = [];
-    for (let i = 0; i <= 2; i++) {
+    for (let i = 0; i <= 3; i++) {
         const d = new Date();
         d.setDate(d.getDate() + i);
         datesToTest.push(d.toISOString().split('T')[0]);
@@ -36,64 +33,66 @@ async function syncDailyMatches() {
     let totalSaved = 0;
 
     for (const dateStr of datesToTest) {
-        console.log(`🔍 Procurando partidas para a data: ${dateStr}...`);
+        console.log(`🔍 Procurando partidas gerais para a data: ${dateStr}...`);
 
-        for (const leagueId of MAIN_LEAGUES) {
-            try {
-                const response = await axios.get(`https://v3.football.api-sports.io/fixtures?date=${dateStr}&league=${leagueId}&season=2026`, {
-                    headers: { 'x-apisports-key': API_FOOTBALL_KEY }
-                });
+        try {
+            // Chamada direta de todos os jogos da data sem filtro restritivo de época/liga
+            const response = await axios.get(`https://v3.football.api-sports.io/fixtures?date=${dateStr}`, {
+                headers: { 'x-apisports-key': API_FOOTBALL_KEY }
+            });
 
-                const fixtures = response.data.response || [];
-                if (fixtures.length > 0) {
-                    console.log(`⚽ Encontrados ${fixtures.length} jogos para a liga ID ${leagueId} em ${dateStr}.`);
+            const fixtures = response.data.response || [];
+            console.log(`⚽ Partidas retornadas pela API para ${dateStr}: ${fixtures.length}`);
 
-                    for (const item of fixtures.slice(0, 5)) {
-                        const leagueName = item.league?.name || 'Liga Esportiva';
-                        const countryName = item.league?.country || 'Mundo';
-                        const homeTeam = item.teams?.home?.name || 'Time Casa';
-                        const awayTeam = item.teams?.away?.name || 'Time Fora';
-                        const matchTime = item.fixture?.date || new Date().toISOString();
+            if (fixtures.length > 0) {
+                // Selecionar até 15 jogos dessa data
+                const sampleFixtures = fixtures.slice(0, 15);
 
-                        const matchPayload = {
-                            league: `${countryName} - ${leagueName}`,
-                            home_team: homeTeam,
-                            away_team: awayTeam,
-                            match_time: matchTime,
-                            status: 'OPEN',
-                            odd_home: applyBancaMargin(2.10, 0.25),
-                            odd_draw: applyBancaMargin(3.20, 0.25),
-                            odd_away: applyBancaMargin(3.40, 0.25),
-                            odd_over15: applyBancaMargin(1.28, 0.25),
-                            odd_under15: applyBancaMargin(3.00, 0.25),
-                            odd_over25: applyBancaMargin(1.85, 0.25),
-                            odd_under25: applyBancaMargin(1.85, 0.25),
-                            odd_btts_yes: applyBancaMargin(1.80, 0.25),
-                            odd_btts_no: applyBancaMargin(1.90, 0.25),
-                            odd_dc1x: applyBancaMargin(1.25, 0.25),
-                            odd_dc_x2: applyBancaMargin(1.35, 0.25),
-                            odd_dc_12: applyBancaMargin(1.28, 0.25)
-                        };
+                for (const item of sampleFixtures) {
+                    const leagueName = item.league?.name || 'Liga Geral';
+                    const countryName = item.league?.country || 'Mundo';
+                    const homeTeam = item.teams?.home?.name || 'Time Casa';
+                    const awayTeam = item.teams?.away?.name || 'Time Fora';
+                    const matchTime = item.fixture?.date || new Date().toISOString();
 
-                        const { data, error } = await supabase.from('matches').insert([matchPayload]).select();
+                    const matchPayload = {
+                        league: `${countryName} - ${leagueName}`,
+                        home_team: homeTeam,
+                        away_team: awayTeam,
+                        match_time: matchTime,
+                        status: 'OPEN',
+                        odd_home: applyBancaMargin(2.10, 0.25),
+                        odd_draw: applyBancaMargin(3.20, 0.25),
+                        odd_away: applyBancaMargin(3.40, 0.25),
+                        odd_over15: applyBancaMargin(1.28, 0.25),
+                        odd_under15: applyBancaMargin(3.00, 0.25),
+                        odd_over25: applyBancaMargin(1.85, 0.25),
+                        odd_under25: applyBancaMargin(1.85, 0.25),
+                        odd_btts_yes: applyBancaMargin(1.80, 0.25),
+                        odd_btts_no: applyBancaMargin(1.90, 0.25),
+                        odd_dc1x: applyBancaMargin(1.25, 0.25),
+                        odd_dc_x2: applyBancaMargin(1.35, 0.25),
+                        odd_dc_12: applyBancaMargin(1.28, 0.25)
+                    };
 
-                        if (error) {
-                            console.error(`❌ Erro em [${homeTeam} x ${awayTeam}]: ${error.message}`);
-                        } else {
-                            console.log(`✅ Salvo: ${homeTeam} x ${awayTeam}`);
-                            totalSaved++;
-                        }
+                    const { data, error } = await supabase.from('matches').insert([matchPayload]).select();
+
+                    if (error) {
+                        console.error(`❌ Erro [${homeTeam} x ${awayTeam}]: ${error.message}`);
+                    } else {
+                        console.log(`✅ Guardado no Supabase: ${countryName} - ${homeTeam} x ${awayTeam}`);
+                        totalSaved++;
                     }
                 }
-            } catch (err) {
-                // Continua se a requisição de uma liga específica falhar
             }
+        } catch (err) {
+            console.error(`❌ Erro na requisição da data ${dateStr}:`, err.message);
         }
 
-        if (totalSaved >= 10) break; // Garante uma boa quantidade sem estourar a cota
+        if (totalSaved >= 15) break; // Limite de jogos por execução
     }
 
-    console.log(`✨ Processo concluído! Total de jogos guardados no Supabase: ${totalSaved}`);
+    console.log(`✨ Sincronização concluída! Total de jogos guardados: ${totalSaved}`);
 }
 
 syncDailyMatches();
