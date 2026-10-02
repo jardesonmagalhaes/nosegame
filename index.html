@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- html2canvas para gerar a imagem do bilhete -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; }
@@ -39,6 +39,8 @@
         let selections = {};
         let isCartOpen = false;
         let lastCreatedTicket = null;
+        let activeMatchForMarkets = null;
+        let allMatchesList = [];
     </script>
 
     <!-- Header Limpo -->
@@ -63,7 +65,7 @@
         <!-- TELA DO CLIENTE (JOGOS) -->
         <section id="view-client" class="space-y-4">
             <h2 class="text-sm md:text-base font-bold text-slate-300 flex items-center">
-                <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos Disponíveis
+                <i class="fa-solid fa-fire text-amber-400 mr-2"></i> Jogos & Mercados Disponíveis
             </h2>
             <div id="matches-list" class="space-y-3">
                 <p class="text-xs text-slate-500">Carregando partidas...</p>
@@ -98,13 +100,13 @@
                 <div id="pin-result-area" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA TODOS OS BILHETES -->
+            <!-- SUB-ABA TODOS OS BILHETES (COM EXPANSÃO SANFONA) -->
             <div id="admin-sub-panel-tickets" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-list-check mr-1"></i> Todos os Bilhetes do Sistema</h3>
                 <div id="admin-tickets-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA GERENCIAR JOGOS COM OPÇÃO DE EXCLUIR -->
+            <!-- SUB-ABA GERENCIAR JOGOS -->
             <div id="admin-sub-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciar Jogos e Encerrar Placares</h3>
                 <div id="admin-matches-list" class="space-y-3"></div>
@@ -138,6 +140,20 @@
         </section>
 
     </main>
+
+    <!-- MODAL DE MAIS MERCADOS (+1.5, +2.5, AMBAS, DUPLA CHANCE) -->
+    <div id="markets-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeMarketsModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            
+            <div class="border-b border-slate-800 pb-3">
+                <span class="text-[10px] text-amber-400 font-bold uppercase tracking-widest">Todos os Mercados</span>
+                <h3 id="modal-match-title" class="text-base font-black text-white"></h3>
+            </div>
+
+            <div id="modal-markets-container" class="space-y-4"></div>
+        </div>
+    </div>
 
     <!-- BOTÃO E BOLETIM DE APOSTAS FLUTUANTE -->
     <div id="floating-cart-btn" class="fixed bottom-4 right-4 z-40">
@@ -214,12 +230,9 @@
     <!-- MODAL DO COMPROVANTE EM IMAGEM -->
     <div id="ticket-receipt-modal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 text-center relative">
-            <button onclick="closeReceiptModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
+            <button onclick="closeReceiptModal()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             <h3 class="text-sm font-extrabold text-amber-400 uppercase">Comprovante de Aposta</h3>
 
-            <!-- ÁREA QUE VIRA IMAGEM -->
             <div id="receipt-card" class="bg-slate-950 border border-amber-500/30 p-5 rounded-2xl text-left space-y-3 font-sans text-xs">
                 <div class="text-center border-b border-slate-800 pb-3">
                     <h2 class="text-lg font-black tracking-widest text-amber-400 uppercase">NOSE<span class="text-white">GAME</span></h2>
@@ -310,7 +323,9 @@
 
         async function loadMatches() {
             const { data: matches } = await supabaseClient.from('matches').select('*').eq('status', 'OPEN').order('match_time', { ascending: true });
+            allMatchesList = matches || [];
             const container = document.getElementById('matches-list');
+
             if (!matches || matches.length === 0) {
                 container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto no momento.</p>`;
                 return;
@@ -324,14 +339,21 @@
                 const awaySel = selections[m.id]?.marketType === 'AWAY' ? 'selected-odd' : '';
 
                 container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
-                        <div class="text-xs text-slate-400 mb-2"><i class="fa-regular fa-clock mr-1"></i> ${date}</div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
+                        <div class="flex justify-between items-center text-xs text-slate-400">
+                            <span><i class="fa-regular fa-clock mr-1"></i> ${date}</span>
+                            <button onclick="openMarketsModal('${m.id}')" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-950 font-extrabold px-3 py-1 rounded-xl transition text-[11px]">
+                                + Mercados (+1.5, +2.5, Ambas)
+                            </button>
+                        </div>
+                        
                         <div class="flex justify-between items-center my-2 text-sm font-bold">
                             <span class="w-2/5 text-right">${m.home_team}</span>
                             <span class="text-xs text-slate-500 font-normal px-2">VS</span>
                             <span class="w-2/5 text-left">${m.away_team}</span>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 mt-3">
+
+                        <div class="grid grid-cols-3 gap-2">
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 p-2.5 rounded-xl text-center transition ${homeSel}">
                                 <span class="block text-xs text-slate-400">Casa</span>
                                 <span class="font-extrabold text-amber-400">${m.odd_home.toFixed(2)}</span>
@@ -348,6 +370,91 @@
                     </div>
                 `;
             });
+        }
+
+        function openMarketsModal(matchId) {
+            const m = allMatchesList.find(x => x.id === matchId);
+            if (!m) return;
+            activeMatchForMarkets = m;
+
+            document.getElementById('modal-match-title').innerText = `${m.home_team} x ${m.away_team}`;
+
+            // Cálculo ou fallback para cotações adicionais
+            const oOver15 = m.odd_over15 || 1.25;
+            const oUnder15 = m.odd_under15 || 3.10;
+            const oOver25 = m.odd_over25 || 1.85;
+            const oUnder25 = m.odd_under25 || 1.85;
+            const oBttsYes = m.odd_btts_yes || 1.80;
+            const oBttsNo = m.odd_btts_no || 1.90;
+            const oDc1x = m.odd_dc1x || 1.25;
+            const oDcX2 = m.odd_dc_x2 || 1.35;
+            const oDc12 = m.odd_dc_12 || 1.28;
+
+            const container = document.getElementById('modal-markets-container');
+            container.innerHTML = `
+                <!-- DUPLA CHANCE -->
+                <div class="space-y-1.5">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Dupla Chance</p>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_1X', 'Casa ou Empate (1X)', ${oDc1x}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">1X</span>
+                            <span class="font-bold text-amber-400">${oDc1x.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_12', 'Casa ou Fora (12)', ${oDc12}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">12</span>
+                            <span class="font-bold text-amber-400">${oDc12.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_X2', 'Empate ou Fora (X2)', ${oDcX2}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">X2</span>
+                            <span class="font-bold text-amber-400">${oDcX2.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TOTAL DE GOLS (OVER / UNDER) -->
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Total de Gols</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_15', '+ 1.5 Gols', ${oOver15}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">+ 1.5 Gols</span>
+                            <span class="font-bold text-amber-400">${oOver15.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_15', '- 1.5 Gols', ${oUnder15}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">- 1.5 Gols</span>
+                            <span class="font-bold text-amber-400">${oUnder15.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_25', '+ 2.5 Gols', ${oOver25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">+ 2.5 Gols</span>
+                            <span class="font-bold text-amber-400">${oOver25.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_25', '- 2.5 Gols', ${oUnder25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">- 2.5 Gols</span>
+                            <span class="font-bold text-amber-400">${oUnder25.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AMBAS MARCAM -->
+                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                    <p class="text-xs font-bold text-amber-400 uppercase">Ambas as Equipes Marcam</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_YES', 'Ambas Marcam: SIM', ${oBttsYes}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">Sim</span>
+                            <span class="font-bold text-amber-400">${oBttsYes.toFixed(2)}</span>
+                        </button>
+                        <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_NO', 'Ambas Marcam: NÃO', ${oBttsNo}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
+                            <span class="block text-[11px] text-slate-400">Não</span>
+                            <span class="font-bold text-amber-400">${oBttsNo.toFixed(2)}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('markets-modal').classList.remove('hidden');
+        }
+
+        function closeMarketsModal() {
+            document.getElementById('markets-modal').classList.add('hidden');
         }
 
         function addSelection(matchId, matchTitle, marketType, optionName, odd) {
@@ -467,19 +574,7 @@
                 return;
             }
 
-            let statusText = '<span class="text-amber-400 font-bold">Aguardando Pagamento/Validação</span>';
-            if (bet.status === 'VALIDATED' || bet.status === 'ACTIVE') statusText = '<span class="text-emerald-400 font-bold">Validado / Em Andamento</span>';
-            if (bet.status === 'WON') statusText = '<span class="text-emerald-400 font-bold">GANHOU</span>';
-            if (bet.status === 'LOST') statusText = '<span class="text-rose-400 font-bold">PERDEU</span>';
-
-            area.innerHTML = `
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <p><strong>Apostador:</strong> ${bet.bettor_name || 'N/I'}</p>
-                    <p><strong>Status:</strong> ${statusText}</p>
-                    <p><strong>Apostado:</strong> R$ ${bet.stake_amount.toFixed(2)}</p>
-                    <p><strong>Retorno:</strong> R$ ${bet.potential_payout.toFixed(2)}</p>
-                </div>
-            `;
+            renderTicketCardHTML(bet, area);
         }
 
         function switchAdminSub(sub) {
@@ -496,6 +591,70 @@
             if (sub === 'matches') loadAdminMatches();
         }
 
+        // ALTERAÇÃO SANFONA / EXPANSÃO DE BILHETE
+        function toggleTicketAccordion(ticketId) {
+            const el = document.getElementById(`ticket-items-${ticketId}`);
+            const arrow = document.getElementById(`ticket-arrow-${ticketId}`);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                el.classList.add('hidden');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function renderTicketCardHTML(b, containerElement) {
+            let badge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Aguardando Pagamento</span>';
+            if (b.status === 'VALIDATED' || b.status === 'ACTIVE') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Validado</span>';
+            if (b.status === 'WON') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">GANHOU</span>';
+            if (b.status === 'LOST') badge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">PERDEU</span>';
+
+            const items = b.selections_data || [];
+            let itemsHTML = '';
+            items.forEach(i => {
+                itemsHTML += `
+                    <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-[11px]">
+                        <div>
+                            <p class="font-bold text-white">${i.matchTitle}</p>
+                            <p class="text-amber-400 font-bold">${i.optionName}</p>
+                        </div>
+                        <span class="font-extrabold text-white">@ ${i.odd.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            containerElement.innerHTML = `
+                <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-3 shadow-lg">
+                    <!-- Cabeçalho Clicável -->
+                    <div onclick="toggleTicketAccordion('${b.id}')" class="cursor-pointer space-y-2">
+                        <div class="flex justify-between items-center font-bold border-b border-slate-800 pb-2">
+                            <div>
+                                <span class="font-mono text-amber-400 text-sm">PIN #${b.pin || b.code}</span>
+                                <span class="text-slate-300 ml-2">${b.bettor_name || 'Apostador'}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                ${badge}
+                                <i id="ticket-arrow-${b.id}" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200"></i>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-amber-400 font-bold">Clique para ver os (${items.length}) jogos do bilhete</p>
+                    </div>
+
+                    <!-- Lista Expansível de Jogos -->
+                    <div id="ticket-items-${b.id}" class="hidden space-y-2 pt-1 border-t border-slate-800">
+                        ${itemsHTML}
+                    </div>
+
+                    <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800 text-[11px]">
+                        <span>Apostado: <strong class="text-white">R$ ${b.stake_amount.toFixed(2)}</strong></span>
+                        <span>Cotação: <strong class="text-amber-400">${b.total_odds.toFixed(2)}</strong></span>
+                        <span>Retorno: <strong class="text-emerald-400">R$ ${b.potential_payout.toFixed(2)}</strong></span>
+                    </div>
+                </div>
+            `;
+        }
+
         async function searchAndValidatePIN() {
             const pin = document.getElementById('admin-pin-input').value.trim();
             const area = document.getElementById('pin-result-area');
@@ -508,7 +667,7 @@
             }
 
             currentValidatingTicket = bet;
-            let matchesText = (bet.selections_data || []).map(i => `${i.matchTitle} - <strong>${i.optionName}</strong>`).join('<br>');
+            let matchesText = (bet.selections_data || []).map(i => `${i.matchTitle} - <strong>${i.optionName}</strong> @ ${i.odd.toFixed(2)}`).join('<br>');
 
             area.innerHTML = `
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs space-y-3">
@@ -541,7 +700,6 @@
             const { error } = await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', betId);
             if (error) return alert("Erro ao validar: " + error.message);
             
-            // Atualiza objeto local e abre modal do comprovante
             if (currentValidatingTicket) {
                 currentValidatingTicket.status = 'VALIDATED';
                 openReceiptModal(currentValidatingTicket);
@@ -593,18 +751,50 @@
             }
             container.innerHTML = '';
             bets.forEach(b => {
-                let badge = '<span class="text-amber-400 font-bold">Aguardando Pagamento</span>';
-                if (b.status === 'VALIDATED' || b.status === 'ACTIVE') badge = '<span class="text-emerald-400 font-bold">Validado</span>';
-                if (b.status === 'WON') badge = '<span class="text-emerald-400 font-bold">GANHOU</span>';
-                if (b.status === 'LOST') badge = '<span class="text-rose-400 font-bold">PERDEU</span>';
+                let badge = '<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Aguardando Pagamento</span>';
+                if (b.status === 'VALIDATED' || b.status === 'ACTIVE') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">Validado</span>';
+                if (b.status === 'WON') badge = '<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">GANHOU</span>';
+                if (b.status === 'LOST') badge = '<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">PERDEU</span>';
+
+                const items = b.selections_data || [];
+                let itemsHTML = '';
+                items.forEach(i => {
+                    itemsHTML += `
+                        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-[11px]">
+                            <div>
+                                <p class="font-bold text-white">${i.matchTitle}</p>
+                                <p class="text-amber-400 font-bold">${i.optionName}</p>
+                            </div>
+                            <span class="font-extrabold text-white">@ ${i.odd.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
 
                 container.innerHTML += `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs flex justify-between items-center">
-                        <div>
-                            <span class="font-mono text-amber-400 font-bold">PIN #${b.pin || b.code}</span> - <strong>${b.bettor_name || 'Usuário'}</strong>
-                            <p class="text-slate-400">Valor: R$ ${b.stake_amount.toFixed(2)} | Retorno: R$ ${b.potential_payout.toFixed(2)}</p>
+                    <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-3 shadow-lg">
+                        <div onclick="toggleTicketAccordion('${b.id}')" class="cursor-pointer space-y-2">
+                            <div class="flex justify-between items-center font-bold border-b border-slate-800 pb-2">
+                                <div>
+                                    <span class="font-mono text-amber-400 text-sm">PIN #${b.pin || b.code}</span>
+                                    <span class="text-slate-300 ml-2">${b.bettor_name || 'Apostador'}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    ${badge}
+                                    <i id="ticket-arrow-${b.id}" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200"></i>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-amber-400 font-bold">Clique para ver os (${items.length}) jogos do bilhete</p>
                         </div>
-                        <div>${badge}</div>
+
+                        <div id="ticket-items-${b.id}" class="hidden space-y-2 pt-1 border-t border-slate-800">
+                            ${itemsHTML}
+                        </div>
+
+                        <div class="flex justify-between text-slate-400 pt-2 border-t border-slate-800 text-[11px]">
+                            <span>Apostado: <strong class="text-white">R$ ${b.stake_amount.toFixed(2)}</strong></span>
+                            <span>Cotação: <strong class="text-amber-400">${b.total_odds.toFixed(2)}</strong></span>
+                            <span>Retorno: <strong class="text-emerald-400">R$ ${b.potential_payout.toFixed(2)}</strong></span>
+                        </div>
                     </div>
                 `;
             });
@@ -632,7 +822,6 @@
                                 <button onclick="adminFinishMatch('${m.id}')" class="bg-amber-500 text-slate-950 font-bold px-2 py-1 rounded">Encerrar</button>
                             ` : `<span class="text-emerald-400 font-bold">${m.score_home} x${m.score_away}</span>`}
                             
-                            <!-- BOTÃO PARA APAGAR JOGO -->
                             <button onclick="adminDeleteMatch('${m.id}')" class="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 p-2 rounded-xl transition" title="Excluir partida">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
