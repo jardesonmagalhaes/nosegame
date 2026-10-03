@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
 
       - name: Instalar Dependências
-        run: npm install @supabase/supabase-js node-fetch
+        run: npm install
 
       - name: Executar Sincronizador
         run: node sync.js
