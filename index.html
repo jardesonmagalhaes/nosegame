@@ -167,7 +167,7 @@
                 <div id="admin-tickets-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA GERENCIAR JOGOS COM EDICÃO/ENCERRAMENTO -->
+            <!-- SUB-ABA GERENCIAR JOGOS -->
             <div id="admin-sub-panel-matches" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                     <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-trophy mr-1"></i> Gerenciamento de Partidas</h3>
@@ -179,7 +179,7 @@
                 <div id="admin-matches-list" class="space-y-3"></div>
             </div>
 
-            <!-- SUB-ABA IMPORTAR JOGOS OU COPIAR DA BET365 / BETANO -->
+            <!-- SUB-ABA IMPORTAR JSON -->
             <div id="admin-sub-panel-import" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-file-import mr-1"></i> Importar Jogos Rápidos (JSON)</h3>
                 <p class="text-xs text-slate-400">Cole o código JSON com as partidas para cadastrar em bloco:</p>
@@ -193,7 +193,7 @@
             <div id="admin-sub-panel-create" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <h3 class="text-sm font-bold text-amber-400 uppercase"><i class="fa-solid fa-plus-circle mr-1"></i> Cadastrar Nova Partida</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input type="text" id="admin-league" placeholder="Campeonato (ex: Premier League)" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
+                    <input type="text" id="admin-league" placeholder="Campeonato" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-home" placeholder="Time Casa" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="text" id="admin-away" placeholder="Time Fora" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
                     <input type="datetime-local" id="admin-time" class="bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white">
@@ -406,13 +406,11 @@
         }
 
         async function loadMatches() {
-            const cutoffTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
+            // Busca os jogos abertos no Supabase sem travar por pequenas diferenças de fuso horário
             const { data: matches } = await supabaseClient
                 .from('matches')
                 .select('*')
                 .eq('status', 'OPEN')
-                .gt('match_time', cutoffTime)
                 .order('match_time', { ascending: true });
 
             const container = document.getElementById('matches-list');
@@ -423,7 +421,16 @@
                 return;
             }
 
-            const leaguesSet = new Set(matches.map(m => m.league || 'Brasileirão'));
+            // Oculta jogos cujo horário já passou há mais de 10 minutos
+            const nowMs = Date.now() - (10 * 60 * 1000);
+            const validMatches = matches.filter(m => new Date(m.match_time).getTime() > nowMs);
+
+            if (validMatches.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Nenhum jogo aberto no momento.</p>`;
+                return;
+            }
+
+            const leaguesSet = new Set(validMatches.map(m => m.league || 'Futebol'));
             
             filterBar.innerHTML = `
                 <button onclick="filterByLeague('ALL')" class="${selectedLeagueFilter === 'ALL' ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-900 text-slate-300 font-bold border border-slate-800'} px-4 py-2 rounded-xl text-xs whitespace-nowrap transition">
@@ -440,16 +447,16 @@
                 `;
             });
 
-            let filteredMatches = matches;
+            let filteredMatches = validMatches;
             if (selectedLeagueFilter !== 'ALL') {
-                filteredMatches = matches.filter(m => (m.league || 'Brasileirão') === selectedLeagueFilter);
+                filteredMatches = validMatches.filter(m => (m.league || 'Futebol') === selectedLeagueFilter);
             }
 
             container.innerHTML = '';
 
             const groupedByLeague = {};
             filteredMatches.forEach(m => {
-                const leg = m.league || 'Brasileirão';
+                const leg = m.league || 'Futebol';
                 if (!groupedByLeague[leg]) groupedByLeague[leg] = [];
                 groupedByLeague[leg].push(m);
             });
@@ -497,6 +504,10 @@
                         const drawSel = selections[m.id]?.marketType === 'DRAW' ? 'selected-odd' : '';
                         const awaySel = selections[m.id]?.marketType === 'AWAY' ? 'selected-odd' : '';
 
+                        const oddH = m.odd_home ? Number(m.odd_home).toFixed(2) : '-';
+                        const oddD = m.odd_draw ? Number(m.odd_draw).toFixed(2) : '-';
+                        const oddA = m.odd_away ? Number(m.odd_away).toFixed(2) : '-';
+
                         leagueHTML += `
                             <div class="p-3 border-b border-slate-800/40 hover:bg-slate-800/30 transition flex flex-col sm:flex-row justify-between sm:items-center gap-2.5">
                                 <div class="flex items-center space-x-2.5 w-full sm:w-1/2 justify-between">
@@ -515,15 +526,15 @@
                                 <div class="grid grid-cols-3 gap-1.5 w-full sm:w-1/2">
                                     <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HOME', 'Casa (${m.home_team})', ${m.odd_home})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${homeSel}">
                                         <span class="block text-[9px] text-slate-400 sm:hidden">CASA (1)</span>
-                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_home.toFixed(2)}</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${oddH}</span>
                                     </button>
                                     <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DRAW', 'Empate', ${m.odd_draw})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${drawSel}">
                                         <span class="block text-[9px] text-slate-400 sm:hidden">EMPATE (X)</span>
-                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_draw.toFixed(2)}</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${oddD}</span>
                                     </button>
                                     <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'AWAY', 'Fora (${m.away_team})', ${m.odd_away})" class="bg-slate-950 border border-slate-800 hover:border-amber-500 py-2 rounded-xl text-center transition ${awaySel}">
                                         <span class="block text-[9px] text-slate-400 sm:hidden">FORA (2)</span>
-                                        <span class="font-extrabold text-amber-400 text-xs">${m.odd_away.toFixed(2)}</span>
+                                        <span class="font-extrabold text-amber-400 text-xs">${oddA}</span>
                                     </button>
                                 </div>
                             </div>
@@ -556,15 +567,15 @@
                         <div class="grid grid-cols-3 gap-2 text-xs">
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_1X', 'Casa ou Empate (1X)', ${m.odd_dc1x}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">1X</span>
-                                <span class="font-bold text-amber-400">${m.odd_dc1x.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_dc1x).toFixed(2)}</span>
                             </button>
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_12', 'Casa ou Fora (12)', ${m.odd_dc_12}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">12</span>
-                                <span class="font-bold text-amber-400">${m.odd_dc_12.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_dc_12).toFixed(2)}</span>
                             </button>
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'DC_X2', 'Empate ou Fora (X2)', ${m.odd_dc_x2}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">X2</span>
-                                <span class="font-bold text-amber-400">${m.odd_dc_x2.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_dc_x2).toFixed(2)}</span>
                             </button>
                         </div>
                     </div>
@@ -579,11 +590,11 @@
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'OVER_25', '+ 2.5 Gols', ${m.odd_over25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">+ 2.5 Gols</span>
-                                <span class="font-bold text-amber-400">${m.odd_over25.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_over25).toFixed(2)}</span>
                             </button>
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'UNDER_25', '- 2.5 Gols', ${m.odd_under25}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">- 2.5 Gols</span>
-                                <span class="font-bold text-amber-400">${m.odd_under25.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_under25).toFixed(2)}</span>
                             </button>
                         </div>
                     </div>
@@ -598,11 +609,11 @@
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_YES', 'Ambas Marcam: SIM', ${m.odd_btts_yes}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">Sim</span>
-                                <span class="font-bold text-amber-400">${m.odd_btts_yes.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_btts_yes).toFixed(2)}</span>
                             </button>
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'BTTS_NO', 'Ambas Marcam: NÃO', ${m.odd_btts_no}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">Não</span>
-                                <span class="font-bold text-amber-400">${m.odd_btts_no.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_btts_no).toFixed(2)}</span>
                             </button>
                         </div>
                     </div>
@@ -617,11 +628,11 @@
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_OVER05', '+ 0.5 Gols no 1ºT', ${m.odd_ht_over05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">+ 0.5 1ºT</span>
-                                <span class="font-bold text-amber-400">${m.odd_ht_over05.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_ht_over05).toFixed(2)}</span>
                             </button>
                             <button onclick="addSelection('${m.id}', '${m.home_team} x ${m.away_team}', 'HT_UNDER05', '- 0.5 Gols no 1ºT', ${m.odd_ht_under05}); closeMarketsModal();" class="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center hover:border-amber-500">
                                 <span class="block text-[11px] text-slate-400">- 0.5 1ºT</span>
-                                <span class="font-bold text-amber-400">${m.odd_ht_under05.toFixed(2)}</span>
+                                <span class="font-bold text-amber-400">${Number(m.odd_ht_under05).toFixed(2)}</span>
                             </button>
                         </div>
                     </div>
@@ -638,10 +649,11 @@
         function closeMarketsModal() { document.getElementById('markets-modal').classList.add('hidden'); }
 
         function addSelection(matchId, matchTitle, marketType, optionName, odd) {
+            if (!odd || odd <= 1) return;
             if (selections[matchId] && selections[matchId].marketType === marketType) {
                 delete selections[matchId];
             } else {
-                selections[matchId] = { matchId, matchTitle, marketType, optionName, odd };
+                selections[matchId] = { matchId, matchTitle, marketType, optionName, odd: Number(odd) };
             }
             loadMatches();
             renderCart();
@@ -709,16 +721,6 @@
             
             // REGRA 2: VALOR MÍNIMO R$ 5,00
             if (stake < 5) return alert("O valor mínimo por aposta é R$ 5,00.");
-
-            for (const key of keys) {
-                const matchObj = matchesMap[key];
-                if (matchObj && matchObj.match_time) {
-                    const matchTimeMs = new Date(matchObj.match_time).getTime();
-                    if (matchTimeMs - Date.now() <= 5 * 60 * 1000) {
-                        return alert(`A partida "${matchObj.home_team} x ${matchObj.away_team}" encerra apostas em menos de 5 minutos e expirou.`);
-                    }
-                }
-            }
 
             const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
             let totalOdds = keys.reduce((acc, id) => acc * selections[id].odd, 1.0);
@@ -1216,7 +1218,7 @@
                     <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 space-y-3 text-xs">
                         <div class="flex flex-col md:flex-row justify-between md:items-center gap-2 border-b border-slate-900 pb-2">
                             <div>
-                                <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Brasileirão'}</span>
+                                <span class="text-[10px] text-amber-400 font-bold uppercase">${m.league || 'Futebol'}</span>
                                 <p class="font-bold text-white text-sm">${m.home_team} VS ${m.away_team}</p>
                                 <p class="text-slate-400 text-[11px]"><i class="fa-regular fa-clock mr-1"></i> Horário: ${matchTimeStr}</p>
                             </div>
