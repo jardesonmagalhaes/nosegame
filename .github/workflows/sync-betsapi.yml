@@ -2,20 +2,20 @@ name: Sincronizador BetsAPI - NOSEGAME
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Roda a cada 30 minutos automaticamente
-  workflow_dispatch: # Botão para disparar manualmente a qualquer momento
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - name: Baixar Código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Instalar Dependências
         run: npm install @supabase/supabase-js node-fetch
