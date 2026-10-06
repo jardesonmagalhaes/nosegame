@@ -848,7 +848,15 @@
                 const oddD = parseFloat((rawDraw * MARGEM_LUCRO).toFixed(2));
                 const oddA = parseFloat((rawAway * MARGEM_LUCRO).toFixed(2));
 
-                let matchTime = partes[5] ? new Date(partes[5]).toISOString() : new Date(Date.now() + 3600000 * 4).toISOString();
+                let matchTime;
+if (partes[5]) {
+    matchTime = new Date(partes[5]).toISOString();
+} else {
+    const amanha = new Date();
+    amanha.setDate(amanha.getDate() + 1);
+    amanha.setHours(20, 0, 0, 0); // Define para amanhã às 20:00
+    matchTime = amanha.toISOString();
+}
 
                 // Fórmulas dos mercados
                 const probH = (1 / rawHome);
