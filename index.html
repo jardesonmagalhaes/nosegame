@@ -445,7 +445,7 @@
             `;
         }
 
-        // MAIS MERCADOS (CALCULADOS EM TEMPO REAL)
+        // MAIS MERCADOS (Ajustados rigorosamente com margem de segurança)
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -460,24 +460,56 @@
             const oD = parseFloat(match.odd_draw);
             const oA = parseFloat(match.odd_away);
 
-            const pH = 1 / oH;
-            const pD = 1 / oD;
-            const pA = 1 / oA;
+            // Probabilidades brutas
+            const rawH = 1 / oH;
+            const rawD = 1 / oD;
+            const rawA = 1 / oA;
+            const totalProb = rawH + rawD + rawA;
 
-            const calcSafe = (val) => val < 1.01 ? 1.01 : parseFloat(val.toFixed(2));
+            // Probabilidades normalizadas (100%)
+            const pH = rawH / totalProb;
+            const pD = rawD / totalProb;
+            const pA = rawA / totalProb;
 
-            const odd1X = calcSafe(1 / (pH + pD));
-            const oddX2 = calcSafe(1 / (pD + pA));
-            const odd12 = calcSafe(1 / (pH + pA));
+            const calcSafe = (odd, margem = 0.88) => {
+                const finalOdd = odd * margem;
+                return finalOdd < 1.01 ? 1.01 : parseFloat(finalOdd.toFixed(2));
+            };
 
-            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)));
-            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)));
+            // 1. Dupla Chance comercial
+            const odd1X = calcSafe(1 / (pH + pD), 0.88);
+            const oddX2 = calcSafe(1 / (pD + pA), 0.88);
+            const odd12 = calcSafe(1 / (pH + pA), 0.88);
 
-            const bttsSim = calcSafe(Math.min(oH, oA) * 0.90);
-            const bttsNao = calcSafe(bttsSim * 1.15);
+            // 2. Empate Anula Aposta (DNB)
+            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)), 0.88);
+            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)), 0.88);
 
-            const over25 = calcSafe((oH + oA) / 2.3);
-            const under25 = calcSafe(over25 * 1.05);
+            // 3. Modelo Realista para Over/Under 2.5
+            // Estimativa de gols esperados do jogo baseada no total de odds
+            let pOver25, pUnder25;
+            
+            // Jogos truncados/equilibrados (ex: Sport x São Bernardo com odds como 1.68/3.70/4.75)
+            // A probabilidade de over 2.5 na Série B ronda em torno de 40%-45%
+            const minOdd = Math.min(oH, oA);
+            if (minOdd >= 1.60 && oD >= 3.20) {
+                pOver25 = 0.45; 
+                pUnder25 = 0.55;
+            } else if (minOdd < 1.30) { // Jogos muito desiguais (ex: Inglaterra x Tcheca)
+                pOver25 = 0.65;
+                pUnder25 = 0.35;
+            } else {
+                pOver25 = 0.50;
+                pUnder25 = 0.50;
+            }
+
+            const over25 = calcSafe(1 / pOver25, 0.85); // Puxa odd de over para baixo (~1.80 a 1.85)
+            const under25 = calcSafe(1 / pUnder25, 0.85);
+
+            // 4. Ambas Marcam (BTTS)
+            const pBttsSim = (pH > 0.6 || pA > 0.6) ? 0.42 : 0.48;
+            const bttsSim = calcSafe(1 / pBttsSim, 0.88);
+            const bttsNao = calcSafe(1 / (1 - pBttsSim), 0.88);
 
             let html = `
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
@@ -803,7 +835,7 @@
             });
         }
 
-        // IMPORTAÇÃO DE JOGOS (TRAVA GARANTIDA EM 1.01)
+        // IMPORTAÇÃO DE JOGOS (TRAVA MÍNIMA DE 1.01)
         async function importarJogosEmLote() {
             const textoEntrada = document.getElementById('importInput').value.trim();
             if (!textoEntrada) {
@@ -829,7 +861,6 @@
                 const rawDraw = parseFloat(partes[3]);
                 const rawAway = parseFloat(partes[4]);
 
-                // Aplica 15% de margem com TRAVA MÍNIMA GARANTIDA de 1.01
                 const calcOdd = (raw) => {
                     const comMargem = raw * MARGEM_LUCRO;
                     return comMargem < 1.01 ? 1.01 : parseFloat(comMargem.toFixed(2));
