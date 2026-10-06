@@ -222,7 +222,7 @@
                         <input type="date" id="caixaData" onchange="carregarCaixa()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white font-bold mt-1">
                     </div>
                     <button onclick="limparBilhetesAntigos()" class="bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-700/50 px-3 py-2 rounded-lg text-[11px]">
-                        Apagar Bilhetes Antigos
+                        Apagar Bilhetes Pendentes
                     </button>
                 </div>
                 <div id="caixaMetrics" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
@@ -252,7 +252,7 @@
                         <code class="text-amber-400 font-mono">Campeonato | TimeCasa x TimeFora | OddCasa | OddEmpate | OddFora</code><br>
                         <em>A margem de -15% e os 14 mercados secundários serão calculados automaticamente!</em>
                     </p>
-                    <textarea id="importInput" rows="6" placeholder="Brasileirão | Flamengo x Palmeiras | 2.10 | 3.20 | 3.40&#10;Premier League | Arsenal x Chelsea | 1.80 | 3.60 | 4.20" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-400"></textarea>
+                    <textarea id="importInput" rows="6" placeholder="Brasileirão Série B | Sport x São Bernardo | 1.68 | 3.70 | 4.75&#10;MLS | Chicago Fire x Vancouver Whitecaps | 2.85 | 4.10 | 2.10" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-400"></textarea>
                     <button onclick="importarJogosEmLote()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl w-full">
                         PROCESSAR E CADASTRAR JOGOS
                     </button>
@@ -306,18 +306,19 @@
 
     <!-- SCRIPT PRINCIPAL JAVASCRIPT -->
     <script>
-        // CONFIGURAÇÃO SUPABASE
+        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_-VzQcbllZ-6pYbxrYz-DpQ_VgNGRA..."; // Insira sua anon key se necessário
+        // IMPORTANTE: Insira abaixo a sua chave 'anon' 'public' obtida em Project Settings > API no Supabase
+        const SUPABASE_ANON_KEY = "SUA_CHAVE_ANON_PUBLIC_AQUI"; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ESTADO GLOBAL DA APLICAÇÃO
+        // ESTADO GLOBAL
         let matchesData = [];
         let selectedLiga = 'ALL';
         let cartItems = [];
         let matchMaisMercadosAtual = null;
 
-        // INICIALIZAÇÃO DA PÁGINA
+        // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', () => {
             carregarJogos();
             checkAdminParam();
@@ -328,7 +329,7 @@
             });
         });
 
-        // CARREGAR JOGOS DO SUPABASE (EXCLUSÃO AUTOMÁTICA DE JOGOS PASSADOS HÁ +10 MINUTOS)
+        // CARREGAR JOGOS (REGRA: OCULTA FALTANDO 5 MINUTOS OU MAIS ANTIGOS)
         async function carregarJogos() {
             const container = document.getElementById('matchesContainer');
             
@@ -344,19 +345,19 @@
             }
 
             const agora = new Date();
-            // Filtra jogos que começaram há no máximo 10 minutos atrás
+            // Mostra APENAS se faltarem MAIS de 5 minutos para o jogo começar
             matchesData = (data || []).filter(m => {
                 const tempoJogo = new Date(m.match_time);
-                const diffMinutos = (agora - tempoJogo) / (1000 * 60);
-                return diffMinutos <= 10;
+                const minutosParaInicio = (tempoJogo - agora) / (1000 * 60);
+                return minutosParaInicio > 5;
             });
 
-            renderizarFiltrosLigas();
+            renderizerFiltrosLigas();
             renderizarJogos();
         }
 
         // RENDERIZAR BOTOES DE LIGAS
-        function renderizarFiltrosLigas() {
+        function renderizerFiltrosLigas() {
             const container = document.getElementById('leagueFilters');
             const ligasUnicas = [...new Set(matchesData.map(m => m.league))];
             
@@ -371,17 +372,17 @@
 
         function filtrarPorLiga(liga) {
             selectedLiga = liga;
-            renderizarFiltrosLigas();
+            renderizerFiltrosLigas();
             renderizarJogos();
         }
 
         function limparFiltroEEstado() {
             selectedLiga = 'ALL';
-            renderizarFiltrosLigas();
+            renderizerFiltrosLigas();
             renderizarJogos();
         }
 
-        // RENDERIZAR LISTA DE JOGOS NA TELA
+        // RENDERIZAR LISTA DE JOGOS
         function renderizarJogos() {
             const container = document.getElementById('matchesContainer');
             const jogosFiltrados = selectedLiga === 'ALL' ? matchesData : matchesData.filter(m => m.league === selectedLiga);
@@ -425,7 +426,6 @@
                                 <div class="text-xs font-bold text-white flex-1 text-right">${m.away_team}</div>
                             </div>
 
-                            <!-- BOTOES ODD PRINCIPAL 1X2 -->
                             <div class="grid grid-cols-3 gap-1.5 mb-2">
                                 ${renderButtonOdd(m.id, 'Casa (1)', m.odd_home, '1X2', 'Casa')}
                                 ${renderButtonOdd(m.id, 'Empate (X)', m.odd_draw, '1X2', 'Empate')}
@@ -445,7 +445,7 @@
             container.innerHTML = html;
         }
 
-        // RENDERIZAR BOTÃO DE ODD INDIVIDUAL
+        // RENDERIZAR BOTÃO DE ODD
         function renderButtonOdd(matchId, label, oddVal, mercadoNome, selecaoNome) {
             if (!oddVal) return `<div class="bg-slate-950/30 rounded p-2 text-center text-slate-600 text-[10px]">-</div>`;
             
@@ -460,7 +460,7 @@
             `;
         }
 
-        // LOGICA DE ADICIONAR / SUBSTUIR PALPITE NO CARRINHO
+        // SELEÇÃO / SUBSTITUIÇÃO DE PALPITE
         function selecionarPalpite(matchId, mercadoNome, selecaoNome, oddVal) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -468,11 +468,9 @@
             const indexExistente = cartItems.findIndex(i => i.matchId === matchId);
 
             if (indexExistente >= 0) {
-                // Se for a mesma seleção do mesmo jogo, remove
                 if (cartItems[indexExistente].selecaoNome === selecaoNome && cartItems[indexExistente].mercadoNome === mercadoNome) {
                     cartItems.splice(indexExistente, 1);
                 } else {
-                    // Substitui o palpite anterior pelo novo no mesmo jogo
                     cartItems[indexExistente] = { matchId, match, mercadoNome, selecaoNome, oddVal: parseFloat(oddVal) };
                 }
             } else {
@@ -484,7 +482,7 @@
             if (matchMaisMercadosAtual) abrirMaisMercados(matchMaisMercadosAtual.id);
         }
 
-        // ATUALIZAR VALORES DO BOLETIM
+        // ATUALIZAR BOLETIM
         function atualizarCalculosBoletim() {
             document.getElementById('cartCount').innerText = cartItems.length;
 
@@ -496,7 +494,7 @@
             const valInput = parseFloat(document.getElementById('apostadorValor').value) || 5.00;
             let retornoBruto = valInput * totalOdd;
             
-            // Trava de Ganho Máximo de R$ 500
+            // Trava de Ganho Máximo R$ 500
             if (retornoBruto > 500) retornoBruto = 500.00;
 
             const retornoFormatted = "R$ " + retornoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -538,11 +536,10 @@
         }
 
         function toggleBoletimModal() {
-            const modal = document.getElementById('boletimModal');
-            modal.classList.toggle('hidden');
+            document.getElementById('boletimModal').classList.toggle('hidden');
         }
 
-        // GERAR PRÉ-BILHETE COM PIN
+        // GERAR PIN
         async function gerarPréBilhetePIN() {
             const nome = document.getElementById('apostadorNome').value.trim();
             const valor = parseFloat(document.getElementById('apostadorValor').value) || 0;
@@ -560,7 +557,6 @@
                 return;
             }
 
-            // Gerar PIN único de 5 dígitos
             const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
             
             let totalOdd = cartItems.reduce((acc, item) => acc * item.oddVal, 1);
@@ -596,7 +592,6 @@
             toggleBoletimModal();
             document.getElementById('pinGeradoModal').classList.remove('hidden');
 
-            // Limpar carrinho
             cartItems = [];
             atualizarCalculosBoletim();
             renderizarJogos();
@@ -613,7 +608,7 @@
             window.open(`https://wa.me/?text=${txt}`, '_blank');
         }
 
-        // ABRIR E PREENCHER MODAL + MERCADOS (14 MERCADOS CALCULADOS)
+        // MAIS MERCADOS
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -625,7 +620,6 @@
             const body = document.getElementById('maisMercadosBody');
             
             let html = `
-                <!-- Dupla Chance -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Dupla Chance</div>
                     <div class="grid grid-cols-3 gap-1.5">
@@ -635,7 +629,6 @@
                     </div>
                 </div>
 
-                <!-- Empate Anula Aposta (DNB) -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta (DNB)</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -644,7 +637,6 @@
                     </div>
                 </div>
 
-                <!-- Ambas Marcam -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Ambas as Equipes Marcam</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -653,7 +645,6 @@
                     </div>
                 </div>
 
-                <!-- Total de Gols 2.5 -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Total de Gols (2.5)</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -662,7 +653,6 @@
                     </div>
                 </div>
 
-                <!-- Gols 1º Tempo 0.5 -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Gols no 1º Tempo (0.5 HT)</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -671,7 +661,6 @@
                     </div>
                 </div>
 
-                <!-- Escanteios e Cartões -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Especiais da Partida</div>
                     <div class="grid grid-cols-2 gap-1.5">
@@ -690,17 +679,13 @@
             matchMaisMercadosAtual = null;
         }
 
-        // CONSULTAR STATUS DO BILHETE PELO PIN
-        function abrirModalConsultarPIN() {
-            document.getElementById('consultarPINModal').classList.remove('hidden');
-        }
-        function fecharModalConsultarPIN() {
-            document.getElementById('consultarPINModal').classList.add('hidden');
-        }
+        // CONSULTAR PIN
+        function abrirModalConsultarPIN() { document.getElementById('consultarPINModal').classList.remove('hidden'); }
+        function fecharModalConsultarPIN() { document.getElementById('consultarPINModal').classList.add('hidden'); }
+        
         async function executarBuscaPIN() {
             const pin = document.getElementById('inputSearchPIN').value.trim();
             const resContainer = document.getElementById('consultarResult');
-            
             if (!pin) return;
 
             const { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
@@ -712,7 +697,7 @@
             }
 
             const statusColors = { WAITING_PAYMENT: 'text-amber-400', VALIDATED: 'text-emerald-400', WON: 'text-emerald-400 font-extrabold', LOST: 'text-red-400' };
-            const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU! (Prêmio Líquido)', LOST: 'Não premiado' };
+            const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU!', LOST: 'Não premiado' };
 
             resContainer.innerHTML = `
                 <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
@@ -725,9 +710,7 @@
             `;
         }
 
-        // -------------------------------------------------------------
-        // PAINEL ADMINISTRATIVO / CAMBISTA (F8 / ?admin=true)
-        // -------------------------------------------------------------
+        // PAINEL ADMIN / CAMBISTA
         function checkAdminParam() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') toggleAdmin();
@@ -766,7 +749,7 @@
             if (aba === 'jogos') carregarJogosAdmin();
         }
 
-        // VALIDAR PIN
+        // VALIDAR PIN ADMIN
         async function adminBuscarPIN() {
             const pin = document.getElementById('adminInputPIN').value.trim();
             const res = document.getElementById('adminPINResult');
@@ -835,7 +818,7 @@
             });
         }
 
-        // NOVO IMPORTAR JOGOS EM LOTE (TEXTO SIMPLES COM 14 MERCADOS E -15% MARGEM)
+        // IMPORTAÇÃO EM LOTE COM -15% DE MARGEM E 14 MERCADOS
         async function importarJogosEmLote() {
             const textoEntrada = document.getElementById('importInput').value.trim();
             if (!textoEntrada) {
@@ -845,15 +828,13 @@
 
             const linhas = textoEntrada.split('\n');
             let jogosProcessados = 0;
-            const MARGEM_LUCRO = 0.85; // Aplica 15% de desconto (1 - 0.15)
+            const MARGEM_LUCRO = 0.85; // Desconto de 15%
 
             for (let linha of linhas) {
                 linha = linha.trim();
                 if (!linha) continue;
 
-                // Formato: Campeonato | TimeCasa x TimeFora | Odd1 | OddX | Odd2 | DataHora (opcional)
                 const partes = linha.split('|').map(p => p.trim());
-
                 if (partes.length < 5) continue;
 
                 const liga = partes[0];
@@ -863,14 +844,13 @@
                 const rawDraw = parseFloat(partes[3]);
                 const rawAway = parseFloat(partes[4]);
 
-                // Odds Principais com 15% de margem
                 const oddH = parseFloat((rawHome * MARGEM_LUCRO).toFixed(2));
                 const oddD = parseFloat((rawDraw * MARGEM_LUCRO).toFixed(2));
                 const oddA = parseFloat((rawAway * MARGEM_LUCRO).toFixed(2));
 
                 let matchTime = partes[5] ? new Date(partes[5]).toISOString() : new Date(Date.now() + 3600000 * 4).toISOString();
 
-                // Fórmulas Matemáticas dos 14 Mercados Secundários
+                // Fórmulas dos mercados
                 const probH = (1 / rawHome);
                 const probD = (1 / rawDraw);
                 const probA = (1 / rawAway);
@@ -883,30 +863,24 @@
                 const expectGolsCasa = Math.max(0.6, 2.5 * (pH / (pH + pA)));
                 const expectGolsFora = Math.max(0.4, 2.5 * (pA / (pH + pA)));
 
-                // 1. Dupla Chance
                 const odd1X = parseFloat(((1 / (pH + pD)) * MARGEM_LUCRO).toFixed(2));
                 const oddX2 = parseFloat(((1 / (pD + pA)) * MARGEM_LUCRO).toFixed(2));
                 const odd12 = parseFloat(((1 / (pH + pA)) * MARGEM_LUCRO).toFixed(2));
 
-                // 2. Empate Anula Aposta (DNB)
                 const oddDNB1 = parseFloat(((1 / (pH / (pH + pA))) * MARGEM_LUCRO).toFixed(2));
                 const oddDNB2 = parseFloat(((1 / (pA / (pH + pA))) * MARGEM_LUCRO).toFixed(2));
 
-                // 3. Ambas Marcam (BTTS)
                 const probBTTS_Yes = Math.min(0.78, (expectGolsCasa * 0.45) * (expectGolsFora * 0.45) + 0.35);
                 const oddBTTS_Yes = parseFloat(((1 / probBTTS_Yes) * MARGEM_LUCRO).toFixed(2));
                 const oddBTTS_No  = parseFloat(((1 / (1 - probBTTS_Yes)) * MARGEM_LUCRO).toFixed(2));
 
-                // 4. Total de Gols 2.5
                 const probOver25 = Math.min(0.70, Math.max(0.30, (expectGolsCasa + expectGolsFora) / 3.8));
                 const oddOver25  = parseFloat(((1 / probOver25) * MARGEM_LUCRO).toFixed(2));
                 const oddUnder25 = parseFloat(((1 / (1 - probOver25)) * MARGEM_LUCRO).toFixed(2));
 
-                // 5. Gols 1º Tempo 0.5 HT
                 const oddOver05HT  = parseFloat((1.42 * MARGEM_LUCRO).toFixed(2));
                 const oddUnder05HT = parseFloat((2.60 * MARGEM_LUCRO).toFixed(2));
 
-                // 6. Cantos e Cartões
                 const oddCornersOver95  = parseFloat((1.80 * MARGEM_LUCRO).toFixed(2));
                 const oddCardsOver45    = parseFloat((1.75 * MARGEM_LUCRO).toFixed(2));
 
@@ -967,13 +941,13 @@
             carregarJogos();
         }
 
-        // GERENCIAR E ENCERRAR JOGOS NO ADMIN
+        // GERENCIAR JOGOS
         async function carregarJogosAdmin() {
             const container = document.getElementById('adminMatchesList');
             const { data } = await supabaseClient.from('matches').select('*').order('match_time', { ascending: true });
 
             if (!data || data.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-4">Nenhum jogo cadastrado.</div>`;
+                container.innerHTML = `<div class="text-slate-500 text-center py-4">Nenum jogo cadastrado.</div>`;
                 return;
             }
 
@@ -1024,7 +998,7 @@
             }
         }
 
-        // CARREGAR CAIXA E BILHETES ADMIN
+        // CAIXA E BILHETES
         async function carregarCaixa() {
             const dataSel = document.getElementById('caixaData').value || new Date().toISOString().split('T')[0];
             document.getElementById('caixaData').value = dataSel;
