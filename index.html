@@ -456,32 +456,28 @@
 
             const body = document.getElementById('maisMercadosBody');
 
-            // Fórmulas automáticas de mercados secundários baseadas nas odds 1X2
             const oH = parseFloat(match.odd_home);
             const oD = parseFloat(match.odd_draw);
             const oA = parseFloat(match.odd_away);
 
-            // Probabilidades implícitas
             const pH = 1 / oH;
             const pD = 1 / oD;
             const pA = 1 / oA;
 
-            // Dupla Chance (com limite mínimo de 1.01)
-            const odd1X = Math.max(1.01, parseFloat((1 / (pH + pD)).toFixed(2)));
-            const oddX2 = Math.max(1.01, parseFloat((1 / (pD + pA)).toFixed(2)));
-            const odd12 = Math.max(1.01, parseFloat((1 / (pH + pA)).toFixed(2)));
+            const calcSafe = (val) => val < 1.01 ? 1.01 : parseFloat(val.toFixed(2));
 
-            // Empate Anula Aposta
-            const oddDNB1 = Math.max(1.01, parseFloat((1 / (pH / (pH + pA))).toFixed(2)));
-            const oddDNB2 = Math.max(1.01, parseFloat((1 / (pA / (pH + pA))).toFixed(2)));
+            const odd1X = calcSafe(1 / (pH + pD));
+            const oddX2 = calcSafe(1 / (pD + pA));
+            const odd12 = calcSafe(1 / (pH + pA));
 
-            // Ambas Marcam
-            const bttsSim = Math.max(1.01, parseFloat((Math.min(oH, oA) * 0.90).toFixed(2)));
-            const bttsNao = Math.max(1.01, parseFloat((bttsSim * 1.15).toFixed(2)));
+            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)));
+            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)));
 
-            // Total de Gols 2.5
-            const over25 = Math.max(1.01, parseFloat(((oH + oA) / 2.3).toFixed(2)));
-            const under25 = Math.max(1.01, parseFloat((over25 * 1.05).toFixed(2)));
+            const bttsSim = calcSafe(Math.min(oH, oA) * 0.90);
+            const bttsNao = calcSafe(bttsSim * 1.15);
+
+            const over25 = calcSafe((oH + oA) / 2.3);
+            const under25 = calcSafe(over25 * 1.05);
 
             let html = `
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
@@ -807,7 +803,7 @@
             });
         }
 
-        // IMPORTAÇÃO DE JOGOS (COM LIMITE DE ODD MÍNIMA DE 1.01)
+        // IMPORTAÇÃO DE JOGOS (TRAVA GARANTIDA EM 1.01)
         async function importarJogosEmLote() {
             const textoEntrada = document.getElementById('importInput').value.trim();
             if (!textoEntrada) {
@@ -817,7 +813,7 @@
 
             const linhas = textoEntrada.split('\n');
             let jogosProcessados = 0;
-            const MARGEM_LUCRO = 0.85; // Margem de 15%
+            const MARGEM_LUCRO = 0.85;
 
             for (let linha of linhas) {
                 linha = linha.trim();
@@ -833,10 +829,15 @@
                 const rawDraw = parseFloat(partes[3]);
                 const rawAway = parseFloat(partes[4]);
 
-                // Aplica 15% de margem com TRAVA MÍNIMA de 1.01 em qualquer odd
-                const oddH = Math.max(1.01, parseFloat((rawHome * MARGEM_LUCRO).toFixed(2)));
-                const oddD = Math.max(1.01, parseFloat((rawDraw * MARGEM_LUCRO).toFixed(2)));
-                const oddA = Math.max(1.01, parseFloat((rawAway * MARGEM_LUCRO).toFixed(2)));
+                // Aplica 15% de margem com TRAVA MÍNIMA GARANTIDA de 1.01
+                const calcOdd = (raw) => {
+                    const comMargem = raw * MARGEM_LUCRO;
+                    return comMargem < 1.01 ? 1.01 : parseFloat(comMargem.toFixed(2));
+                };
+
+                const oddH = calcOdd(rawHome);
+                const oddD = calcOdd(rawDraw);
+                const oddA = calcOdd(rawAway);
 
                 let matchTime;
                 if (partes[5]) {
@@ -883,12 +884,16 @@
             const o2 = parseFloat(document.getElementById('manualOdd2').value);
 
             const MARGEM = 0.85;
+            const calcOdd = (raw) => {
+                const comMargem = raw * MARGEM;
+                return comMargem < 1.01 ? 1.01 : parseFloat(comMargem.toFixed(2));
+            };
 
             await supabaseClient.from('matches').insert([{
                 league: liga, home_team: home, away_team: away, match_time: time, status: 'OPEN',
-                odd_home: Math.max(1.01, parseFloat((o1 * MARGEM).toFixed(2))),
-                odd_draw: Math.max(1.01, parseFloat((oX * MARGEM).toFixed(2))),
-                odd_away: Math.max(1.01, parseFloat((o2 * MARGEM).toFixed(2)))
+                odd_home: calcOdd(o1),
+                odd_draw: calcOdd(oX),
+                odd_away: calcOdd(o2)
             }]);
 
             alert("Jogo criado com sucesso!");
