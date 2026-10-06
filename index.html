@@ -250,7 +250,7 @@
                     <p class="text-slate-400 text-[11px]">
                         Cole a lista de jogos abaixo no formato: <br>
                         <code class="text-amber-400 font-mono">Campeonato | TimeCasa x TimeFora | OddCasa | OddEmpate | OddFora</code><br>
-                        <em>A margem de -15% e os 14 mercados secundários serão calculados automaticamente!</em>
+                        <em>A margem de -15% e os mercados secundários serão calculados automaticamente!</em>
                     </p>
                     <textarea id="importInput" rows="6" placeholder="Brasileirão Série B | Sport x São Bernardo | 1.68 | 3.70 | 4.75&#10;MLS | Chicago Fire x Vancouver Whitecaps | 2.85 | 4.10 | 2.10" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-400"></textarea>
                     <button onclick="importarJogosEmLote()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl w-full">
@@ -306,10 +306,9 @@
 
     <!-- SCRIPT PRINCIPAL JAVASCRIPT -->
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
+        // CONFIGURAÇÃO DO SUPABASE (COM SUAS CHAVES REAIS)
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
-        // IMPORTANTE: Insira abaixo a sua chave 'anon' 'public' obtida em Project Settings > API no Supabase
-        const SUPABASE_ANON_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ESTADO GLOBAL
@@ -352,12 +351,12 @@
                 return minutosParaInicio > 5;
             });
 
-            renderizerFiltrosLigas();
+            renderizarFiltrosLigas();
             renderizarJogos();
         }
 
         // RENDERIZAR BOTOES DE LIGAS
-        function renderizerFiltrosLigas() {
+        function renderizarFiltrosLigas() {
             const container = document.getElementById('leagueFilters');
             const ligasUnicas = [...new Set(matchesData.map(m => m.league))];
             
@@ -372,13 +371,13 @@
 
         function filtrarPorLiga(liga) {
             selectedLiga = liga;
-            renderizerFiltrosLigas();
+            renderizarFiltrosLigas();
             renderizarJogos();
         }
 
         function limparFiltroEEstado() {
             selectedLiga = 'ALL';
-            renderizerFiltrosLigas();
+            renderizarFiltrosLigas();
             renderizarJogos();
         }
 
@@ -630,14 +629,6 @@
                 </div>
 
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta (DNB)</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Casa (1)', match.odd_dnb_1, 'Empate Anula', 'Casa')}
-                        ${renderButtonOdd(match.id, 'Fora (2)', match.odd_dnb_2, 'Empate Anula', 'Fora')}
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Ambas as Equipes Marcam</div>
                     <div class="grid grid-cols-2 gap-1.5">
                         ${renderButtonOdd(match.id, 'Sim', match.odd_btts_yes, 'Ambas Marcam', 'Sim')}
@@ -650,22 +641,6 @@
                     <div class="grid grid-cols-2 gap-1.5">
                         ${renderButtonOdd(match.id, 'Mais de 2.5', match.odd_over_25, 'Total Gols 2.5', 'Mais de 2.5')}
                         ${renderButtonOdd(match.id, 'Menos de 2.5', match.odd_under_25, 'Total Gols 2.5', 'Menos de 2.5')}
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Gols no 1º Tempo (0.5 HT)</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Mais de 0.5 HT', match.odd_ht_over_05, 'Gols 1ºT 0.5', 'Mais de 0.5 HT')}
-                        ${renderButtonOdd(match.id, 'Menos de 0.5 HT', match.odd_ht_under_05, 'Gols 1ºT 0.5', 'Menos de 0.5 HT')}
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Especiais da Partida</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Escanteios +9.5', match.odd_corners_over, 'Escanteios 9.5', 'Mais de 9.5')}
-                        ${renderButtonOdd(match.id, 'Cartões +4.5', match.odd_cards_over, 'Cartões 4.5', 'Mais de 4.5')}
                     </div>
                 </div>
             `;
@@ -818,7 +793,7 @@
             });
         }
 
-        // IMPORTAÇÃO EM LOTE COM -15% DE MARGEM E 14 MERCADOS
+        // IMPORTAÇÃO EM LOTE COM -15% DE MARGEM E DATA INTELIGENTE
         async function importarJogosEmLote() {
             const textoEntrada = document.getElementById('importInput').value.trim();
             if (!textoEntrada) {
@@ -848,15 +823,16 @@
                 const oddD = parseFloat((rawDraw * MARGEM_LUCRO).toFixed(2));
                 const oddA = parseFloat((rawAway * MARGEM_LUCRO).toFixed(2));
 
+                // Define a data para AMANHÃ às 20:00 se não for informada
                 let matchTime;
-if (partes[5]) {
-    matchTime = new Date(partes[5]).toISOString();
-} else {
-    const amanha = new Date();
-    amanha.setDate(amanha.getDate() + 1);
-    amanha.setHours(20, 0, 0, 0); // Define para amanhã às 20:00
-    matchTime = amanha.toISOString();
-}
+                if (partes[5]) {
+                    matchTime = new Date(partes[5]).toISOString();
+                } else {
+                    const amanha = new Date();
+                    amanha.setDate(amanha.getDate() + 1);
+                    amanha.setHours(20, 0, 0, 0);
+                    matchTime = amanha.toISOString();
+                }
 
                 // Fórmulas dos mercados
                 const probH = (1 / rawHome);
@@ -875,9 +851,6 @@ if (partes[5]) {
                 const oddX2 = parseFloat(((1 / (pD + pA)) * MARGEM_LUCRO).toFixed(2));
                 const odd12 = parseFloat(((1 / (pH + pA)) * MARGEM_LUCRO).toFixed(2));
 
-                const oddDNB1 = parseFloat(((1 / (pH / (pH + pA))) * MARGEM_LUCRO).toFixed(2));
-                const oddDNB2 = parseFloat(((1 / (pA / (pH + pA))) * MARGEM_LUCRO).toFixed(2));
-
                 const probBTTS_Yes = Math.min(0.78, (expectGolsCasa * 0.45) * (expectGolsFora * 0.45) + 0.35);
                 const oddBTTS_Yes = parseFloat(((1 / probBTTS_Yes) * MARGEM_LUCRO).toFixed(2));
                 const oddBTTS_No  = parseFloat(((1 / (1 - probBTTS_Yes)) * MARGEM_LUCRO).toFixed(2));
@@ -885,12 +858,6 @@ if (partes[5]) {
                 const probOver25 = Math.min(0.70, Math.max(0.30, (expectGolsCasa + expectGolsFora) / 3.8));
                 const oddOver25  = parseFloat(((1 / probOver25) * MARGEM_LUCRO).toFixed(2));
                 const oddUnder25 = parseFloat(((1 / (1 - probOver25)) * MARGEM_LUCRO).toFixed(2));
-
-                const oddOver05HT  = parseFloat((1.42 * MARGEM_LUCRO).toFixed(2));
-                const oddUnder05HT = parseFloat((2.60 * MARGEM_LUCRO).toFixed(2));
-
-                const oddCornersOver95  = parseFloat((1.80 * MARGEM_LUCRO).toFixed(2));
-                const oddCardsOver45    = parseFloat((1.75 * MARGEM_LUCRO).toFixed(2));
 
                 const matchPayload = {
                     league: liga,
@@ -904,23 +871,21 @@ if (partes[5]) {
                     odd_dc_1x: odd1X,
                     odd_dc_x2: oddX2,
                     odd_dc_12: odd12,
-                    odd_dnb_1: oddDNB1,
-                    odd_dnb_2: oddDNB2,
                     odd_btts_yes: oddBTTS_Yes,
                     odd_btts_no: oddBTTS_No,
                     odd_over_25: oddOver25,
-                    odd_under_25: oddUnder25,
-                    odd_ht_over_05: oddOver05HT,
-                    odd_ht_under_05: oddUnder05HT,
-                    odd_corners_over: oddCornersOver95,
-                    odd_cards_over: oddCardsOver45
+                    odd_under_25: oddUnder25
                 };
 
                 const { error } = await supabaseClient.from('matches').insert([matchPayload]);
-                if (!error) jogosProcessados++;
+                if (!error) {
+                    jogosProcessados++;
+                } else {
+                    console.error("Erro ao inserir:", error.message);
+                }
             }
 
-            alert(`Sucesso! ${jogosProcessados} jogos foram cadastrados com 14 mercados e margem de -15%!`);
+            alert(`Sucesso! ${jogosProcessados} jogos foram cadastrados com a margem de -15%!`);
             document.getElementById('importInput').value = '';
             carregarJogos();
         }
@@ -955,7 +920,7 @@ if (partes[5]) {
             const { data } = await supabaseClient.from('matches').select('*').order('match_time', { ascending: true });
 
             if (!data || data.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-4">Nenum jogo cadastrado.</div>`;
+                container.innerHTML = `<div class="text-slate-500 text-center py-4">Nenhum jogo cadastrado.</div>`;
                 return;
             }
 
