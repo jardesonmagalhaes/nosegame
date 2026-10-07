@@ -33,12 +33,10 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="max-w-4xl w-full mx-auto px-3 pt-4 flex-1">
-        <!-- BARRA DE FILTROS -->
         <div id="leagueFilters" class="flex gap-2 overflow-x-auto pb-3 no-scrollbar text-xs font-semibold">
             <button onclick="filtrarPorLiga('ALL')" class="btn-liga active bg-amber-500 text-slate-950 px-3 py-1.5 rounded-full whitespace-nowrap shadow font-bold">Todos os Jogos</button>
         </div>
 
-        <!-- LISTA DE JOGOS -->
         <div id="matchesContainer" class="space-y-4">
             <div class="text-center py-12 text-slate-500">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-amber-400"></i>
@@ -69,7 +67,7 @@
         </div>
     </div>
 
-    <!-- MODAL DO BOLETIM DE APOSTAS -->
+    <!-- MODAL BOLETIM -->
     <div id="boletimModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center">
@@ -112,14 +110,14 @@
         </div>
     </div>
 
-    <!-- MODAL DO PIN GERADO -->
+    <!-- MODAL PIN GERADO -->
     <div id="pinGeradoModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 w-full max-w-sm rounded-2xl border border-amber-500/30 p-5 text-center shadow-2xl">
             <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-500/20">
                 <i class="fa-solid fa-check text-2xl"></i>
             </div>
             <h3 class="font-black text-lg text-white">Pré-Bilhete Criado!</h3>
-            <p class="text-xs text-slate-400 mt-1">Envie o código ao cambista para validar a aposta.</p>
+            <p class="text-xs text-slate-400 mt-1">Envie o código ao cambista para validar e efetuar o pagamento.</p>
 
             <div class="my-4 p-3 bg-slate-950 border border-slate-800 rounded-xl">
                 <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Código PIN de Validação</div>
@@ -136,7 +134,7 @@
         </div>
     </div>
 
-    <!-- MODAL MAIS MERCADOS -->
+    <!-- MODAL MAIS MERCADOS 100% DINÂMICO -->
     <div id="maisMercadosModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[85vh] flex flex-col shadow-2xl">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center">
@@ -148,7 +146,7 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <div id="maisMercadosBody" class="p-4 overflow-y-auto space-y-4 text-xs"></div>
+            <div id="maisMercadosBody" class="p-4 overflow-y-auto space-y-3 text-xs"></div>
         </div>
     </div>
 
@@ -222,7 +220,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT PRINCIPAL JAVASCRIPT -->
+    <!-- SCRIPT JAVASCRIPT -->
     <script>
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x";
@@ -365,7 +363,7 @@
             `;
         }
 
-        // MAIS MERCADOS DINÂMICO
+        // MAIS MERCADOS - TOTALMENTE DINÂMICO
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -386,23 +384,14 @@
             const pA = 1 / oA;
             const calcSafe = (val) => val < 1.01 ? 1.01 : parseFloat(val.toFixed(2));
 
-            // Dupla Chance
-            const odd1X = calcSafe(1 / (pH + pD));
-            const oddX2 = calcSafe(1 / (pD + pA));
-            const odd12 = calcSafe(1 / (pH + pA));
-
-            // Empate Anula
-            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)));
-            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)));
-
             let html = `
                 <!-- DUPLA CHANCE -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Dupla Chance</div>
                     <div class="grid grid-cols-3 gap-1.5">
-                        ${renderButtonOdd(match.id, '1X (Casa/Emp)', odd1X, 'Dupla Chance', '1X')}
-                        ${renderButtonOdd(match.id, '12 (Casa/Fora)', odd12, 'Dupla Chance', '12')}
-                        ${renderButtonOdd(match.id, 'X2 (Emp/Fora)', oddX2, 'Dupla Chance', 'X2')}
+                        ${renderButtonOdd(match.id, '1X (Casa/Emp)', calcSafe(1 / (pH + pD)), 'Dupla Chance', '1X')}
+                        ${renderButtonOdd(match.id, '12 (Casa/Fora)', calcSafe(1 / (pH + pA)), 'Dupla Chance', '12')}
+                        ${renderButtonOdd(match.id, 'X2 (Emp/Fora)', calcSafe(1 / (pD + pA)), 'Dupla Chance', 'X2')}
                     </div>
                 </div>
 
@@ -410,75 +399,30 @@
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta (DNB)</div>
                     <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Casa (1)', oddDNB1, 'Empate Anula', 'Casa')}
-                        ${renderButtonOdd(match.id, 'Fora (2)', oddDNB2, 'Empate Anula', 'Fora')}
+                        ${renderButtonOdd(match.id, 'Casa (1)', calcSafe(1 / (pH / (pH + pA))), 'Empate Anula', 'Casa')}
+                        ${renderButtonOdd(match.id, 'Fora (2)', calcSafe(1 / (pA / (pH + pA))), 'Empate Anula', 'Fora')}
                     </div>
                 </div>
             `;
 
-            // TOTAL DE GOLS (+1.5, +2.5, +3.5)
-            const over15 = mkts.over_15 || match.odd_over15;
-            const under15 = mkts.under_15 || match.odd_under15;
-            const over25 = mkts.over_25 || match.odd_over25;
-            const under25 = mkts.under_25 || match.odd_under25;
-            const over35 = mkts.over_35 || match.odd_over35;
-            const under35 = mkts.under_35 || match.odd_under35;
+            // LOOP DINÂMICO PARA QUALQUER MERCADO ENVIADO PELO PYTHON
+            for (const [nomeMercado, opcoes] of Object.entries(mkts)) {
+                if (typeof opcoes === 'object' && opcoes !== null) {
+                    const qtdOpcoes = Object.keys(opcoes).length;
+                    const gridCols = qtdOpcoes === 2 ? 'grid-cols-2' : (qtdOpcoes === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-3');
 
-            if (over15 || over25 || over35) {
-                html += `
-                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
-                        <div class="font-bold text-amber-400 text-[11px]">Total de Gols</div>
-                        
-                        ${over15 ? `
-                            <div class="text-[10px] text-slate-400 font-bold">Linha de 1.5 Gols</div>
-                            <div class="grid grid-cols-2 gap-1.5">
-                                ${renderButtonOdd(match.id, 'Mais de 1.5', over15, 'Total Gols 1.5', 'Mais de 1.5')}${renderButtonOdd(match.id, 'Menos de 1.5', under15, 'Total Gols 1.5', 'Menos de 1.5')}
-                            </div>
-                        ` : ''}
+                    html += `
+                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                            <div class="font-bold text-amber-400 mb-2 text-[11px] capitalize">${nomeMercado}</div>
+                            <div class="grid ${gridCols} gap-1.5">
+                    `;
 
-                        ${over25 ? `
-                            <div class="text-[10px] text-slate-400 font-bold">Linha de 2.5 Gols</div>
-                            <div class="grid grid-cols-2 gap-1.5">
-                                ${renderButtonOdd(match.id, 'Mais de 2.5', over25, 'Total Gols 2.5', 'Mais de 2.5')}${renderButtonOdd(match.id, 'Menos de 2.5', under25, 'Total Gols 2.5', 'Menos de 2.5')}
-                            </div>
-                        ` : ''}
+                    for (const [opcaoNome, oddVal] of Object.entries(opcoes)) {
+                        html += renderButtonOdd(match.id, opcaoNome, oddVal, nomeMercado, opcaoNome);
+                    }
 
-                        ${over35 ? `
-                            <div class="text-[10px] text-slate-400 font-bold">Linha de 3.5 Gols</div>
-                            <div class="grid grid-cols-2 gap-1.5">
-                                ${renderButtonOdd(match.id, 'Mais de 3.5', over35, 'Total Gols 3.5', 'Mais de 3.5')}${renderButtonOdd(match.id, 'Menos de 3.5', under35, 'Total Gols 3.5', 'Menos de 3.5')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }
-
-            // AMBAS MARCAM
-            const bttsYes = mkts.btts_yes || match.odd_btts_yes;
-            const bttsNo = mkts.btts_no || match.odd_btts_no;
-            if (bttsYes) {
-                html += `
-                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                        <div class="font-bold text-amber-400 mb-2 text-[11px]">Ambas as Equipes Marcam</div>
-                        <div class="grid grid-cols-2 gap-1.5">
-                            ${renderButtonOdd(match.id, 'Sim', bttsYes, 'Ambas Marcam', 'Sim')}
-                            ${renderButtonOdd(match.id, 'Não', bttsNo, 'Ambas Marcam', 'Não')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // PLACAR EXATO (Se houver no JSON/markets)
-            if (mkts.correct_score && typeof mkts.correct_score === 'object') {
-                html += `
-                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                        <div class="font-bold text-amber-400 mb-2 text-[11px]">Placar Exato</div>
-                        <div class="grid grid-cols-3 gap-1.5">
-                `;
-                for (const [placar, oddVal] of Object.entries(mkts.correct_score)) {
-                    html += renderButtonOdd(match.id, placar, oddVal, 'Placar Exato', placar);
+                    html += `</div></div>`;
                 }
-                html += `</div></div>`;
             }
 
             body.innerHTML = html;
@@ -755,7 +699,7 @@
 
         async function validarBilhete(id) {
             await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', id);
-            alert("Bilhete validado!");
+            alert("Bilhete validado com sucesso!");
             adminBuscarPIN();
         }
 
