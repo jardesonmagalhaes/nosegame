@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- html2canvas para gerar imagem do comprovante -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { background-color: #0b0f19; color: #e2e8f0; font-family: sans-serif; }
@@ -20,7 +20,7 @@
 </head>
 <body class="min-h-screen flex flex-col pb-24">
 
-    <!-- CABEÇALHO / HEADER -->
+    <!-- CABEÇALHO -->
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-lg">
         <div class="flex items-center gap-2 cursor-pointer" onclick="limparFiltroEEstado()">
             <i class="fa-solid fa-trophy text-amber-400 text-2xl"></i>
@@ -31,9 +31,9 @@
         </button>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL (ÁREA DO CLIENTE) -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <main class="max-w-4xl w-full mx-auto px-3 pt-4 flex-1">
-        <!-- BARRA DE FILTROS POR CAMPEONATO -->
+        <!-- BARRA DE FILTROS -->
         <div id="leagueFilters" class="flex gap-2 overflow-x-auto pb-3 no-scrollbar text-xs font-semibold">
             <button onclick="filtrarPorLiga('ALL')" class="btn-liga active bg-amber-500 text-slate-950 px-3 py-1.5 rounded-full whitespace-nowrap shadow font-bold">Todos os Jogos</button>
         </div>
@@ -112,14 +112,14 @@
         </div>
     </div>
 
-    <!-- MODAL DE EXIBIÇÃO DO PIN GERADO -->
+    <!-- MODAL DO PIN GERADO -->
     <div id="pinGeradoModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 w-full max-w-sm rounded-2xl border border-amber-500/30 p-5 text-center shadow-2xl">
             <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-500/20">
                 <i class="fa-solid fa-check text-2xl"></i>
             </div>
             <h3 class="font-black text-lg text-white">Pré-Bilhete Criado!</h3>
-            <p class="text-xs text-slate-400 mt-1">Envie o código abaixo ao cambista para validar e efetuar o pagamento.</p>
+            <p class="text-xs text-slate-400 mt-1">Envie o código ao cambista para validar a aposta.</p>
 
             <div class="my-4 p-3 bg-slate-950 border border-slate-800 rounded-xl">
                 <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Código PIN de Validação</div>
@@ -136,9 +136,9 @@
         </div>
     </div>
 
-    <!-- MODAL + MERCADOS DE UMA PARTIDA -->
+    <!-- MODAL MAIS MERCADOS -->
     <div id="maisMercadosModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-slate-900 w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[85vh] flex flex-col shadow-2xl">
+        <div class="bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[85vh] flex flex-col shadow-2xl">
             <div class="p-4 border-b border-slate-800 flex justify-between items-center">
                 <div>
                     <h3 id="maisMercadosTitle" class="font-bold text-sm text-white">Mais Mercados</h3>
@@ -171,7 +171,7 @@
         </div>
     </div>
 
-    <!-- PAINEL DO CAMBISTA / ADMIN -->
+    <!-- PAINEL ADMIN -->
     <div id="adminPanel" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col">
         <div class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -188,139 +188,61 @@
             <button onclick="trocarAbaAdmin('caixa')" id="tab-caixa" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Caixa</button>
             <button onclick="trocarAbaAdmin('bilhetes')" id="tab-bilhetes" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Bilhetes</button>
             <button onclick="trocarAbaAdmin('jogos')" id="tab-jogos" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Gerenciar Jogos</button>
-            <button onclick="trocarAbaAdmin('importar')" id="tab-importar" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Importar Jogos (Texto)</button>
-            <button onclick="trocarAbaAdmin('criar')" id="tab-criar" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Criar Jogo Manual</button>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 max-w-4xl w-full mx-auto text-xs">
-            <!-- VALIDAR PIN -->
             <div id="content-validar" class="space-y-4">
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
                     <h4 class="font-bold text-white text-sm">Validar Pré-Bilhete de Apostador</h4>
                     <div class="flex gap-2">
-                        <input type="text" id="adminInputPIN" placeholder="Digite o PIN de 5 dígitos (Ex: 40392)..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-400 focus:outline-none">
+                        <input type="text" id="adminInputPIN" placeholder="Digite o PIN de 5 dígitos..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-400 focus:outline-none">
                         <button onclick="adminBuscarPIN()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl">Buscar</button>
                     </div>
                 </div>
                 <div id="adminPINResult"></div>
             </div>
 
-            <!-- CAIXA -->
             <div id="content-caixa" class="hidden space-y-4">
                 <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
                     <div>
                         <span class="text-slate-400 block text-[11px]">Selecione a Data:</span>
                         <input type="date" id="caixaData" onchange="carregarCaixa()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white font-bold mt-1">
                     </div>
-                    <button onclick="limparBilhetesAntigos()" class="bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-700/50 px-3 py-2 rounded-lg text-[11px]">
-                        Apagar Bilhetes Pendentes
-                    </button>
                 </div>
                 <div id="caixaMetrics" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
             </div>
 
-            <!-- BILHETES -->
             <div id="content-bilhetes" class="hidden space-y-3">
-                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    <button onclick="filtrarBilhetesAdmin('ALL')" class="bg-slate-800 text-white px-3 py-1 rounded-full text-[11px] font-bold">Todos</button>
-                    <button onclick="filtrarBilhetesAdmin('VALIDATED')" class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-3 py-1 rounded-full text-[11px] font-bold">Validados</button>
-                    <button onclick="filtrarBilhetesAdmin('WAITING_PAYMENT')" class="bg-amber-950 text-amber-300 border border-amber-800 px-3 py-1 rounded-full text-[11px] font-bold">Aguardando</button>
-                </div>
                 <div id="adminBilhetesList" class="space-y-2"></div>
             </div>
 
-            <!-- GERENCIAR JOGOS -->
             <div id="content-jogos" class="hidden space-y-3">
                 <div id="adminMatchesList" class="space-y-3"></div>
-            </div>
-
-            <!-- IMPORTAR JOGOS EM LOTE -->
-            <div id="content-importar" class="hidden space-y-3">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h4 class="font-bold text-white text-sm">Importar Jogos em Lote (Texto)</h4>
-                    <p class="text-slate-400 text-[11px]">
-                        Cole a lista de jogos abaixo no formato: <br>
-                        <code class="text-amber-400 font-mono">Campeonato | TimeCasa x TimeFora | OddCasa | OddEmpate | OddFora</code><br>
-                        <em>A margem de -15% será aplicada com limite mínimo de odd 1.01!</em>
-                    </p>
-                    <textarea id="importInput" rows="6" placeholder="Brasileirão Série B | Sport x São Bernardo | 1.68 | 3.70 | 4.75&#10;MLS | Chicago Fire x Vancouver Whitecaps | 2.85 | 4.10 | 2.10" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-400"></textarea>
-                    <button onclick="importarJogosEmLote()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl w-full">
-                        PROCESSAR E CADASTRAR JOGOS
-                    </button>
-                </div>
-            </div>
-
-            <!-- CRIAR JOGO MANUAL -->
-            <div id="content-criar" class="hidden">
-                <form onsubmit="criarJogoManual(event)" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h4 class="font-bold text-white text-sm mb-2">Cadastrar Partida Manualmente</h4>
-                    <div>
-                        <label class="text-slate-400">Campeonato:</label>
-                        <input type="text" id="manualLeague" required placeholder="Ex: Brasileirão Série A" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white mt-1">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-slate-400">Time da Casa:</label>
-                            <input type="text" id="manualHome" required placeholder="Ex: Flamengo" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white mt-1">
-                        </div>
-                        <div>
-                            <label class="text-slate-400">Time Visitante:</label>
-                            <input type="text" id="manualAway" required placeholder="Ex: Palmeiras" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white mt-1">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-slate-400">Data e Hora:</label>
-                        <input type="datetime-local" id="manualTime" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white mt-1">
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="text-slate-400">Odd Casa (1):</label>
-                            <input type="number" step="0.01" id="manualOdd1" required placeholder="2.10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-amber-400 font-bold mt-1">
-                        </div>
-                        <div>
-                            <label class="text-slate-400">Odd Empate (X):</label>
-                            <input type="number" step="0.01" id="manualOddX" required placeholder="3.20" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-amber-400 font-bold mt-1">
-                        </div>
-                        <div>
-                            <label class="text-slate-400">Odd Fora (2):</label>
-                            <input type="number" step="0.01" id="manualOdd2" required placeholder="3.40" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-amber-400 font-bold mt-1">
-                        </div>
-                    </div>
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl w-full mt-2">
-                        Salvar Partida
-                    </button>
-                </form>
             </div>
         </div>
     </div>
 
     <!-- SCRIPT PRINCIPAL JAVASCRIPT -->
     <script>
-        // CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ESTADO GLOBAL
         let matchesData = [];
         let selectedLiga = 'ALL';
         let cartItems = [];
         let matchMaisMercadosAtual = null;
 
-        // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', () => {
             carregarJogos();
             checkAdminParam();
-            
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'F8') toggleAdmin();
             });
         });
 
-        // CARREGAR JOGOS
         async function carregarJogos() {
             const container = document.getElementById('matchesContainer');
-            
             const { data, error } = await supabaseClient
                 .from('matches')
                 .select('*')
@@ -328,22 +250,20 @@
                 .order('match_time', { ascending: true });
 
             if (error) {
-                container.innerHTML = `<div class="text-center py-8 text-red-400 text-xs">Erro ao carregar partidas do banco.</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-red-400 text-xs">Erro ao carregar partidas.</div>`;
                 return;
             }
 
             const agora = new Date();
             matchesData = (data || []).filter(m => {
                 const tempoJogo = new Date(m.match_time);
-                const minutosParaInicio = (tempoJogo - agora) / (1000 * 60);
-                return minutosParaInicio > 5;
+                return ((tempoJogo - agora) / (1000 * 60)) > 5;
             });
 
             renderizarFiltrosLigas();
             renderizarJogos();
         }
 
-        // RENDERIZAR FILTROS
         function renderizarFiltrosLigas() {
             const container = document.getElementById('leagueFilters');
             const ligasUnicas = [...new Set(matchesData.map(m => m.league))];
@@ -369,7 +289,6 @@
             renderizarJogos();
         }
 
-        // RENDERIZAR JOGOS NA TELA
         function renderizarJogos() {
             const container = document.getElementById('matchesContainer');
             const jogosFiltrados = selectedLiga === 'ALL' ? matchesData : matchesData.filter(m => m.league === selectedLiga);
@@ -432,20 +351,21 @@
         }
 
         function renderButtonOdd(matchId, label, oddVal, mercadoNome, selecaoNome) {
-            if (!oddVal) return `<div class="bg-slate-950/30 rounded p-2 text-center text-slate-600 text-[10px]">-</div>`;
+            if (!oddVal || parseFloat(oddVal) <= 1.0) return `<div class="bg-slate-950/30 rounded p-2 text-center text-slate-600 text-[10px]">-</div>`;
             
+            const oddNum = parseFloat(oddVal);
             const isSelected = cartItems.some(i => i.matchId === matchId && i.selecaoNome === selecaoNome && i.mercadoNome === mercadoNome);
             const activeClass = isSelected ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-md' : 'bg-slate-950/80 hover:bg-slate-800 text-slate-200 border-slate-800';
 
             return `
-                <button onclick="selecionarPalpite('${matchId}', '${mercadoNome}', '${selecaoNome}', ${oddVal})" class="${activeClass} border rounded-lg p-1.5 text-center transition flex flex-col items-center justify-center">
+                <button onclick="selecionarPalpite('${matchId}', '${mercadoNome}', '${selecaoNome}', ${oddNum})" class="${activeClass} border rounded-lg p-1.5 text-center transition flex flex-col items-center justify-center">
                     <span class="text-[9px] opacity-75">${label}</span>
-                    <span class="text-xs font-extrabold ${isSelected ? 'text-slate-950' : 'text-amber-400'}">${parseFloat(oddVal).toFixed(2)}</span>
+                    <span class="text-xs font-extrabold ${isSelected ? 'text-slate-950' : 'text-amber-400'}">${oddNum.toFixed(2)}</span>
                 </button>
             `;
         }
 
-        // MAIS MERCADOS (Ajustados rigorosamente com margem de segurança)
+        // MAIS MERCADOS DINÂMICO
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -455,63 +375,28 @@
             document.getElementById('maisMercadosSub').innerText = match.league;
 
             const body = document.getElementById('maisMercadosBody');
+            const mkts = match.markets || {};
 
             const oH = parseFloat(match.odd_home);
             const oD = parseFloat(match.odd_draw);
             const oA = parseFloat(match.odd_away);
 
-            // Probabilidades brutas
-            const rawH = 1 / oH;
-            const rawD = 1 / oD;
-            const rawA = 1 / oA;
-            const totalProb = rawH + rawD + rawA;
+            const pH = 1 / oH;
+            const pD = 1 / oD;
+            const pA = 1 / oA;
+            const calcSafe = (val) => val < 1.01 ? 1.01 : parseFloat(val.toFixed(2));
 
-            // Probabilidades normalizadas (100%)
-            const pH = rawH / totalProb;
-            const pD = rawD / totalProb;
-            const pA = rawA / totalProb;
+            // Dupla Chance
+            const odd1X = calcSafe(1 / (pH + pD));
+            const oddX2 = calcSafe(1 / (pD + pA));
+            const odd12 = calcSafe(1 / (pH + pA));
 
-            const calcSafe = (odd, margem = 0.88) => {
-                const finalOdd = odd * margem;
-                return finalOdd < 1.01 ? 1.01 : parseFloat(finalOdd.toFixed(2));
-            };
-
-            // 1. Dupla Chance comercial
-            const odd1X = calcSafe(1 / (pH + pD), 0.88);
-            const oddX2 = calcSafe(1 / (pD + pA), 0.88);
-            const odd12 = calcSafe(1 / (pH + pA), 0.88);
-
-            // 2. Empate Anula Aposta (DNB)
-            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)), 0.88);
-            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)), 0.88);
-
-            // 3. Modelo Realista para Over/Under 2.5
-            // Estimativa de gols esperados do jogo baseada no total de odds
-            let pOver25, pUnder25;
-            
-            // Jogos truncados/equilibrados (ex: Sport x São Bernardo com odds como 1.68/3.70/4.75)
-            // A probabilidade de over 2.5 na Série B ronda em torno de 40%-45%
-            const minOdd = Math.min(oH, oA);
-            if (minOdd >= 1.60 && oD >= 3.20) {
-                pOver25 = 0.45; 
-                pUnder25 = 0.55;
-            } else if (minOdd < 1.30) { // Jogos muito desiguais (ex: Inglaterra x Tcheca)
-                pOver25 = 0.65;
-                pUnder25 = 0.35;
-            } else {
-                pOver25 = 0.50;
-                pUnder25 = 0.50;
-            }
-
-            const over25 = calcSafe(1 / pOver25, 0.85); // Puxa odd de over para baixo (~1.80 a 1.85)
-            const under25 = calcSafe(1 / pUnder25, 0.85);
-
-            // 4. Ambas Marcam (BTTS)
-            const pBttsSim = (pH > 0.6 || pA > 0.6) ? 0.42 : 0.48;
-            const bttsSim = calcSafe(1 / pBttsSim, 0.88);
-            const bttsNao = calcSafe(1 / (1 - pBttsSim), 0.88);
+            // Empate Anula
+            const oddDNB1 = calcSafe(1 / (pH / (pH + pA)));
+            const oddDNB2 = calcSafe(1 / (pA / (pH + pA)));
 
             let html = `
+                <!-- DUPLA CHANCE -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                     <div class="font-bold text-amber-400 mb-2 text-[11px]">Dupla Chance</div>
                     <div class="grid grid-cols-3 gap-1.5">
@@ -521,30 +406,80 @@
                     </div>
                 </div>
 
+                <!-- EMPATE ANULA APOSTA -->
                 <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta</div>
+                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta (DNB)</div>
                     <div class="grid grid-cols-2 gap-1.5">
                         ${renderButtonOdd(match.id, 'Casa (1)', oddDNB1, 'Empate Anula', 'Casa')}
                         ${renderButtonOdd(match.id, 'Fora (2)', oddDNB2, 'Empate Anula', 'Fora')}
                     </div>
                 </div>
-
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Ambas as Equipes Marcam</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Sim', bttsSim, 'Ambas Marcam', 'Sim')}
-                        ${renderButtonOdd(match.id, 'Não', bttsNao, 'Ambas Marcam', 'Não')}
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Total de Gols (2.5)</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Mais de 2.5', over25, 'Total Gols 2.5', 'Mais de 2.5')}
-                        ${renderButtonOdd(match.id, 'Menos de 2.5', under25, 'Total Gols 2.5', 'Menos de 2.5')}
-                    </div>
-                </div>
             `;
+
+            // TOTAL DE GOLS (+1.5, +2.5, +3.5)
+            const over15 = mkts.over_15 || match.odd_over15;
+            const under15 = mkts.under_15 || match.odd_under15;
+            const over25 = mkts.over_25 || match.odd_over25;
+            const under25 = mkts.under_25 || match.odd_under25;
+            const over35 = mkts.over_35 || match.odd_over35;
+            const under35 = mkts.under_35 || match.odd_under35;
+
+            if (over15 || over25 || over35) {
+                html += `
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
+                        <div class="font-bold text-amber-400 text-[11px]">Total de Gols</div>
+                        
+                        ${over15 ? `
+                            <div class="text-[10px] text-slate-400 font-bold">Linha de 1.5 Gols</div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                ${renderButtonOdd(match.id, 'Mais de 1.5', over15, 'Total Gols 1.5', 'Mais de 1.5')}${renderButtonOdd(match.id, 'Menos de 1.5', under15, 'Total Gols 1.5', 'Menos de 1.5')}
+                            </div>
+                        ` : ''}
+
+                        ${over25 ? `
+                            <div class="text-[10px] text-slate-400 font-bold">Linha de 2.5 Gols</div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                ${renderButtonOdd(match.id, 'Mais de 2.5', over25, 'Total Gols 2.5', 'Mais de 2.5')}${renderButtonOdd(match.id, 'Menos de 2.5', under25, 'Total Gols 2.5', 'Menos de 2.5')}
+                            </div>
+                        ` : ''}
+
+                        ${over35 ? `
+                            <div class="text-[10px] text-slate-400 font-bold">Linha de 3.5 Gols</div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                ${renderButtonOdd(match.id, 'Mais de 3.5', over35, 'Total Gols 3.5', 'Mais de 3.5')}${renderButtonOdd(match.id, 'Menos de 3.5', under35, 'Total Gols 3.5', 'Menos de 3.5')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // AMBAS MARCAM
+            const bttsYes = mkts.btts_yes || match.odd_btts_yes;
+            const bttsNo = mkts.btts_no || match.odd_btts_no;
+            if (bttsYes) {
+                html += `
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        <div class="font-bold text-amber-400 mb-2 text-[11px]">Ambas as Equipes Marcam</div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            ${renderButtonOdd(match.id, 'Sim', bttsYes, 'Ambas Marcam', 'Sim')}
+                            ${renderButtonOdd(match.id, 'Não', bttsNo, 'Ambas Marcam', 'Não')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // PLACAR EXATO (Se houver no JSON/markets)
+            if (mkts.correct_score && typeof mkts.correct_score === 'object') {
+                html += `
+                    <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        <div class="font-bold text-amber-400 mb-2 text-[11px]">Placar Exato</div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                `;
+                for (const [placar, oddVal] of Object.entries(mkts.correct_score)) {
+                    html += renderButtonOdd(match.id, placar, oddVal, 'Placar Exato', placar);
+                }
+                html += `</div></div>`;
+            }
 
             body.innerHTML = html;
             document.getElementById('maisMercadosModal').classList.remove('hidden');
@@ -674,7 +609,7 @@
             const { error } = await supabaseClient.from('tickets').insert([ticketPayload]);
 
             if (error) {
-                alert("Erro ao gravar pré-bilhete. Tente novamente.");
+                alert("Erro ao gravar pré-bilhete.");
                 return;
             }
 
@@ -728,7 +663,6 @@
             `;
         }
 
-        // PAINEL ADMIN
         function checkAdminParam() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') toggleAdmin();
@@ -757,7 +691,7 @@
             });
             document.getElementById(`tab-${aba}`).classList.add('border-b-2', 'border-amber-400', 'text-amber-400');
 
-            ['validar', 'caixa', 'bilhetes', 'jogos', 'importar', 'criar'].forEach(a => {
+            ['validar', 'caixa', 'bilhetes', 'jogos'].forEach(a => {
                 document.getElementById(`content-${a}`).classList.add('hidden');
             });
             document.getElementById(`content-${aba}`).classList.remove('hidden');
@@ -821,7 +755,7 @@
 
         async function validarBilhete(id) {
             await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', id);
-            alert("Bilhete validado com sucesso!");
+            alert("Bilhete validado!");
             adminBuscarPIN();
         }
 
@@ -833,102 +767,6 @@
                 link.href = canvas.toDataURL();
                 link.click();
             });
-        }
-
-        // IMPORTAÇÃO DE JOGOS (TRAVA MÍNIMA DE 1.01)
-        async function importarJogosEmLote() {
-            const textoEntrada = document.getElementById('importInput').value.trim();
-            if (!textoEntrada) {
-                alert("Por favor, cole pelo menos um jogo no campo de texto!");
-                return;
-            }
-
-            const linhas = textoEntrada.split('\n');
-            let jogosProcessados = 0;
-            const MARGEM_LUCRO = 0.85;
-
-            for (let linha of linhas) {
-                linha = linha.trim();
-                if (!linha) continue;
-
-                const partes = linha.split('|').map(p => p.trim());
-                if (partes.length < 5) continue;
-
-                const liga = partes[0];
-                const [homeTeam, awayTeam] = partes[1].split('x').map(t => t.trim());
-                
-                const rawHome = parseFloat(partes[2]);
-                const rawDraw = parseFloat(partes[3]);
-                const rawAway = parseFloat(partes[4]);
-
-                const calcOdd = (raw) => {
-                    const comMargem = raw * MARGEM_LUCRO;
-                    return comMargem < 1.01 ? 1.01 : parseFloat(comMargem.toFixed(2));
-                };
-
-                const oddH = calcOdd(rawHome);
-                const oddD = calcOdd(rawDraw);
-                const oddA = calcOdd(rawAway);
-
-                let matchTime;
-                if (partes[5]) {
-                    matchTime = new Date(partes[5]).toISOString();
-                } else {
-                    const amanha = new Date();
-                    amanha.setDate(amanha.getDate() + 1);
-                    amanha.setHours(20, 0, 0, 0);
-                    matchTime = amanha.toISOString();
-                }
-
-                const matchPayload = {
-                    league: liga,
-                    home_team: homeTeam,
-                    away_team: awayTeam,
-                    match_time: matchTime,
-                    status: 'OPEN',
-                    odd_home: oddH,
-                    odd_draw: oddD,
-                    odd_away: oddA
-                };
-
-                const { error } = await supabaseClient.from('matches').insert([matchPayload]);
-                if (!error) {
-                    jogosProcessados++;
-                } else {
-                    console.error("Erro ao inserir:", error.message);
-                }
-            }
-
-            alert(`Sucesso! ${jogosProcessados} jogos foram cadastrados com a margem de -15%!`);
-            document.getElementById('importInput').value = '';
-            carregarJogos();
-        }
-
-        async function criarJogoManual(e) {
-            e.preventDefault();
-            const liga = document.getElementById('manualLeague').value;
-            const home = document.getElementById('manualHome').value;
-            const away = document.getElementById('manualAway').value;
-            const time = new Date(document.getElementById('manualTime').value).toISOString();
-            const o1 = parseFloat(document.getElementById('manualOdd1').value);
-            const oX = parseFloat(document.getElementById('manualOddX').value);
-            const o2 = parseFloat(document.getElementById('manualOdd2').value);
-
-            const MARGEM = 0.85;
-            const calcOdd = (raw) => {
-                const comMargem = raw * MARGEM;
-                return comMargem < 1.01 ? 1.01 : parseFloat(comMargem.toFixed(2));
-            };
-
-            await supabaseClient.from('matches').insert([{
-                league: liga, home_team: home, away_team: away, match_time: time, status: 'OPEN',
-                odd_home: calcOdd(o1),
-                odd_draw: calcOdd(oX),
-                odd_away: calcOdd(o2)
-            }]);
-
-            alert("Jogo criado com sucesso!");
-            carregarJogos();
         }
 
         async function carregarJogosAdmin() {
@@ -948,42 +786,20 @@
                             <div class="font-bold text-white">${m.home_team} x ${m.away_team}</div>
                             <div class="text-[10px] text-slate-400">${m.league} | Status: <strong class="text-amber-400">${m.status}</strong></div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            ${m.status === 'OPEN' ? `
-                                <button onclick="encerrarPartida('${m.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs">
-                                    Encerrar / Placar
-                                </button>
-                            ` : ''}
-                            <button onclick="deletarJogo('${m.id}')" class="text-red-400 hover:text-red-300 p-1">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
+                        <button onclick="deletarJogo('${m.id}')" class="text-red-400 hover:text-red-300 p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
                     </div>
                 `;
             });
             container.innerHTML = html;
         }
 
-        async function encerrarPartida(id) {
-            const placarHome = prompt("Gols do Time da Casa:");
-            const placarAway = prompt("Gols do Time Visitante:");
-
-            if (placarHome === null || placarAway === null) return;
-
-            await supabaseClient.from('matches').update({
-                status: 'FINISHED',
-                home_score: parseInt(placarHome),
-                away_score: parseInt(placarAway)
-            }).eq('id', id);
-
-            alert("Partida encerrada!");
-            carregarJogosAdmin();
-        }
-
         async function deletarJogo(id) {
             if (confirm("Deseja apagar este jogo?")) {
                 await supabaseClient.from('matches').delete().eq('id', id);
                 carregarJogosAdmin();
+                carregarJogos();
             }
         }
 
@@ -1005,13 +821,6 @@
                 <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="text-slate-400 block">Prêmios</span><strong class="text-red-400 text-base">R$ ${saídas.toFixed(2)}</strong></div>
                 <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="text-slate-400 block">Lucro Líquido</span><strong class="text-amber-400 text-base">R$ ${(entradas - saídas).toFixed(2)}</strong></div>
             `;
-        }
-
-        async function limparBilhetesAntigos() {
-            if (confirm("Apagar todos os pré-bilhetes pendentes?")) {
-                await supabaseClient.from('tickets').delete().eq('status', 'WAITING_PAYMENT');
-                carregarCaixa();
-            }
         }
 
         async function carregarBilhetesAdmin() {
