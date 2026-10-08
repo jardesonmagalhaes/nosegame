@@ -4,145 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOSEGAME - Aposta Esportiva</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { background-color: #0b0f19; color: #e2e8f0; font-family: sans-serif; }
+        body { background-color: #f8fafc; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-24">
+<body class="min-h-screen flex flex-col pb-24 bg-slate-100 text-slate-900">
 
-    <!-- CABEÇALHO -->
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-lg">
+    <!-- CABEÇALHO CLARO -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-2 cursor-pointer" onclick="limparFiltroEEstado()">
-            <i class="fa-solid fa-trophy text-amber-400 text-2xl"></i>
-            <span class="font-black text-xl tracking-wider text-white">NOSE<span class="text-amber-400">GAME</span></span>
+            <div class="bg-amber-500 text-slate-950 px-2 py-1 rounded-lg font-black text-lg">NG</div>
+            <span class="font-black text-xl tracking-wider text-slate-900">NOSE<span class="text-amber-500">GAME</span></span>
         </div>
-        <button onclick="abrirModalConsultarPIN()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-search text-amber-400"></i> Consultar Bilhete
+        <button onclick="abrirModalConsultarPIN()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3 py-2 rounded-xl border border-slate-300 font-bold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-search text-amber-500"></i> Consultar Bilhete
         </button>
     </header>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="max-w-4xl w-full mx-auto px-3 pt-4 flex-1">
+        <!-- BARRA DE FILTROS POR LIGA -->
         <div id="leagueFilters" class="flex gap-2 overflow-x-auto pb-3 no-scrollbar text-xs font-semibold">
-            <button onclick="filtrarPorLiga('ALL')" class="btn-liga active bg-amber-500 text-slate-950 px-3 py-1.5 rounded-full whitespace-nowrap shadow font-bold">Todos os Jogos</button>
+            <button onclick="filtrarPorLiga('ALL')" class="btn-liga active bg-slate-900 text-white px-4 py-2 rounded-full whitespace-nowrap shadow-sm font-bold">Todos os Jogos</button>
         </div>
 
-        <div id="matchesContainer" class="space-y-4">
-            <div class="text-center py-12 text-slate-500">
-                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-amber-400"></i>
-                <p class="text-sm">Carregando partidas disponíveis...</p>
+        <!-- LISTA DE JOGOS -->
+        <div id="matchesContainer" class="space-y-3">
+            <div class="text-center py-12 text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-amber-500"></i>
+                <p class="text-sm font-semibold">Carregando cotações atualizadas...</p>
             </div>
         </div>
     </main>
 
     <!-- BARRA FLUTUANTE DO BOLETIM -->
-    <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur border-t border-slate-800 p-3 shadow-2xl z-30 transition-transform transform translate-y-0">
+    <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 shadow-2xl z-30">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="relative">
-                    <button onclick="toggleBoletimModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 p-2.5 rounded-xl font-bold transition shadow-lg flex items-center justify-center">
+                    <button onclick="toggleBoletimModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 p-2.5 rounded-xl font-black shadow transition flex items-center justify-center">
                         <i class="fa-solid fa-receipt text-lg"></i>
                     </button>
-                    <span id="cartCount" class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900">0</span>
+                    <span id="cartCount" class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">0</span>
                 </div>
                 <div>
-                    <div class="text-[11px] text-slate-400">Cotação: <span id="cartTotalOdd" class="text-amber-400 font-bold">1.00</span></div>
-                    <div class="text-xs font-bold text-white">Retorno: <span id="cartPossibleReturn" class="text-emerald-400 font-extrabold">R$ 0,00</span></div>
+                    <div class="text-[11px] text-slate-500 font-medium">Cotação Total: <span id="cartTotalOdd" class="text-slate-900 font-bold">1.00</span></div>
+                    <div class="text-xs font-bold text-slate-900">Retorno Possível: <span id="cartPossibleReturn" class="text-emerald-600 font-extrabold">R$ 0,00</span></div>
                 </div>
             </div>
 
-            <button onclick="toggleBoletimModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition">
+            <button onclick="toggleBoletimModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition">
                 Finalizar Aposta
             </button>
         </div>
     </div>
 
-    <!-- MODAL BOLETIM -->
-    <div id="boletimModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[90vh] flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-                <h3 class="font-bold text-base text-white flex items-center gap-2">
-                    <i class="fa-solid fa-receipt text-amber-400"></i> Boletim de Apostas
-                </h3>
-                <button onclick="toggleBoletimModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div id="boletimItems" class="p-4 overflow-y-auto flex-1 space-y-2 text-xs divide-y divide-slate-800/50"></div>
-
-            <div class="p-4 bg-slate-950/60 border-t border-slate-800 space-y-3">
-                <div class="flex justify-between text-xs text-slate-400">
-                    <span>Mínimo de Jogos: <strong class="text-white">3</strong></span>
-                    <span>Ganho Máximo: <strong class="text-amber-400">R$ 500,00</strong></span>
-                </div>
-
+    <!-- MODAL MAIS MERCADOS (ESTILO BET365 / BETANO) -->
+    <div id="maisMercadosModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-xl rounded-t-2xl sm:rounded-2xl border border-slate-200 max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-2xl">
                 <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Seu Nome Completo:</label>
-                    <input type="text" id="apostadorNome" placeholder="Digite seu nome..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                    <h3 id="maisMercadosTitle" class="font-bold text-sm text-slate-900">Mais Mercados</h3>
+                    <span id="maisMercadosSub" class="text-[11px] text-slate-500 font-medium">Partida</span>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Valor do Palpite (R$):</label>
-                        <input type="number" id="apostadorValor" value="5.00" min="5" step="1" oninput="atualizarCalculosBoletim()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-bold text-amber-400 focus:outline-none focus:border-amber-400">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Retorno Possível:</label>
-                        <div id="boletimRetornoText" class="w-full bg-slate-900/80 border border-slate-800 rounded-lg px-3 py-2 text-xs font-black text-emerald-400">R$ 0,00</div>
-                    </div>
-                </div>
-
-                <button onclick="gerarPréBilhetePIN()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-key"></i> GERAR CÓDIGO PIN
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PIN GERADO -->
-    <div id="pinGeradoModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 w-full max-w-sm rounded-2xl border border-amber-500/30 p-5 text-center shadow-2xl">
-            <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-amber-500/20">
-                <i class="fa-solid fa-check text-2xl"></i>
-            </div>
-            <h3 class="font-black text-lg text-white">Pré-Bilhete Criado!</h3>
-            <p class="text-xs text-slate-400 mt-1">Envie o código ao cambista para validar e efetuar o pagamento.</p>
-
-            <div class="my-4 p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Código PIN de Validação</div>
-                <div id="displayPIN" class="text-3xl font-mono font-black text-amber-400 tracking-wider my-1">00000</div>
-                <div class="text-[11px] text-slate-400">Status: <span class="text-amber-400 font-bold">Aguardando Pagamento</span></div>
-            </div>
-
-            <button onclick="enviarPINWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 rounded-xl shadow transition flex items-center justify-center gap-2 mb-2">
-                <i class="fa-brands fa-whatsapp text-lg"></i> Enviar Código no WhatsApp
-            </button>
-            <button onclick="fecharModalPIN()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">
-                Fechar
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL MAIS MERCADOS 100% DINÂMICO -->
-    <div id="maisMercadosModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-slate-900 w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-800 max-h-[85vh] flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-                <div>
-                    <h3 id="maisMercadosTitle" class="font-bold text-sm text-white">Mais Mercados</h3>
-                    <span id="maisMercadosSub" class="text-[11px] text-slate-400">Partida</span>
-                </div>
-                <button onclick="fecharMaisMercados()" class="text-slate-400 hover:text-white p-1">
+                <button onclick="fecharMaisMercados()" class="text-slate-400 hover:text-slate-600 p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -150,77 +81,50 @@
         </div>
     </div>
 
-    <!-- MODAL CONSULTAR PIN -->
-    <div id="consultarPINModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 w-full max-w-sm rounded-2xl border border-slate-800 p-5 shadow-2xl">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                    <i class="fa-solid fa-search text-amber-400"></i> Consultar Bilhete
+    <!-- MODAL BOLETIM DE APOSTAS -->
+    <div id="boletimModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-slate-200 max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-receipt text-amber-500"></i> Boletim de Apostas
                 </h3>
-                <button onclick="fecharModalConsultarPIN()" class="text-slate-400 hover:text-white">
-                    <i class="fa-solid fa-xmark"></i>
+                <button onclick="toggleBoletimModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <input type="text" id="inputSearchPIN" placeholder="Digite o PIN de 5 dígitos..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-center text-lg font-mono font-bold text-amber-400 focus:outline-none mb-3">
-            <button onclick="executarBuscaPIN()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2.5 rounded-xl transition">
-                Consultar Status
-            </button>
-            <div id="consultarResult" class="mt-4 hidden text-xs"></div>
-        </div>
-    </div>
 
-    <!-- PAINEL ADMIN -->
-    <div id="adminPanel" class="fixed inset-0 bg-slate-950 z-50 hidden flex flex-col">
-        <div class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-user-shield text-amber-400"></i>
-                <span class="font-black text-sm text-white">Painel do Cambista (NOSEGAME)</span>
-            </div>
-            <button onclick="fecharAdmin()" class="bg-slate-800 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs">
-                Sair do Painel
-            </button>
-        </div>
+            <div id="boletimItems" class="p-4 overflow-y-auto flex-1 space-y-2 text-xs divide-y divide-slate-100"></div>
 
-        <div class="flex overflow-x-auto bg-slate-900/50 border-b border-slate-800 text-xs no-scrollbar">
-            <button onclick="trocarAbaAdmin('validar')" id="tab-validar" class="tab-admin px-4 py-2.5 font-bold border-b-2 border-amber-400 text-amber-400 whitespace-nowrap">Validar PIN</button>
-            <button onclick="trocarAbaAdmin('caixa')" id="tab-caixa" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Caixa</button>
-            <button onclick="trocarAbaAdmin('bilhetes')" id="tab-bilhetes" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Bilhetes</button>
-            <button onclick="trocarAbaAdmin('jogos')" id="tab-jogos" class="tab-admin px-4 py-2.5 font-bold text-slate-400 whitespace-nowrap">Gerenciar Jogos</button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto p-4 max-w-4xl w-full mx-auto text-xs">
-            <div id="content-validar" class="space-y-4">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h4 class="font-bold text-white text-sm">Validar Pré-Bilhete de Apostador</h4>
-                    <div class="flex gap-2">
-                        <input type="text" id="adminInputPIN" placeholder="Digite o PIN de 5 dígitos..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-400 focus:outline-none">
-                        <button onclick="adminBuscarPIN()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl">Buscar</button>
-                    </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-3">
+                <div class="flex justify-between text-xs text-slate-500">
+                    <span>Mínimo de Jogos: <strong class="text-slate-900">3</strong></span>
+                    <span>Ganho Máximo: <strong class="text-amber-600">R$ 500,00</strong></span>
                 </div>
-                <div id="adminPINResult"></div>
-            </div>
 
-            <div id="content-caixa" class="hidden space-y-4">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nome do Apostador:</label>
+                    <input type="text" id="apostadorNome" placeholder="Digite seu nome completo..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <span class="text-slate-400 block text-[11px]">Selecione a Data:</span>
-                        <input type="date" id="caixaData" onchange="carregarCaixa()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-white font-bold mt-1">
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Valor da Aposta (R$):</label>
+                        <input type="number" id="apostadorValor" value="5.00" min="5" step="1" oninput="atualizarCalculosBoletim()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-amber-600 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Retorno Possível:</label>
+                        <div id="boletimRetornoText" class="w-full bg-slate-200/60 border border-slate-300 rounded-xl px-3 py-2 text-xs font-black text-emerald-700">R$ 0,00</div>
                     </div>
                 </div>
-                <div id="caixaMetrics" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-            </div>
 
-            <div id="content-bilhetes" class="hidden space-y-3">
-                <div id="adminBilhetesList" class="space-y-2"></div>
-            </div>
-
-            <div id="content-jogos" class="hidden space-y-3">
-                <div id="adminMatchesList" class="space-y-3"></div>
+                <button onclick="gerarPréBilhetePIN()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm py-3 rounded-xl shadow transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-key"></i> GERAR CÓDIGO PIN
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT JAVASCRIPT -->
+    <!-- SCRIPT JAVASCRIPT PRINCIPAL -->
     <script>
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_-VzQcblLZ-6pYbxrYz-DpQ_VgNGRA6x";
@@ -231,13 +135,7 @@
         let cartItems = [];
         let matchMaisMercadosAtual = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            carregarJogos();
-            checkAdminParam();
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'F8') toggleAdmin();
-            });
-        });
+        document.addEventListener('DOMContentLoaded', carregarJogos);
 
         async function carregarJogos() {
             const container = document.getElementById('matchesContainer');
@@ -245,19 +143,14 @@
                 .from('matches')
                 .select('*')
                 .eq('status', 'OPEN')
-                .order('match_time', { ascending: true });
+                .order('league', { ascending: true });
 
-            if (error) {
-                container.innerHTML = `<div class="text-center py-8 text-red-400 text-xs">Erro ao carregar partidas.</div>`;
+            if (error || !data) {
+                container.innerHTML = `<div class="text-center py-8 text-red-500 text-xs font-semibold">Erro ao carregar partidas.</div>`;
                 return;
             }
 
-            const agora = new Date();
-            matchesData = (data || []).filter(m => {
-                const tempoJogo = new Date(m.match_time);
-                return ((tempoJogo - agora) / (1000 * 60)) > 5;
-            });
-
+            matchesData = data;
             renderizarFiltrosLigas();
             renderizarJogos();
         }
@@ -266,10 +159,10 @@
             const container = document.getElementById('leagueFilters');
             const ligasUnicas = [...new Set(matchesData.map(m => m.league))];
             
-            let html = `<button onclick="filtrarPorLiga('ALL')" class="btn-liga ${selectedLiga === 'ALL' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'} px-3 py-1.5 rounded-full whitespace-nowrap shadow">Todos os Jogos</button>`;
+            let html = `<button onclick="filtrarPorLiga('ALL')" class="btn-liga ${selectedLiga === 'ALL' ? 'bg-slate-900 text-white font-bold' : 'bg-white text-slate-700 border border-slate-200'} px-4 py-2 rounded-full whitespace-nowrap shadow-sm">Todos os Jogos</button>`;
             
             ligasUnicas.forEach(liga => {
-                html += `<button onclick="filtrarPorLiga('${liga}')" class="btn-liga ${selectedLiga === liga ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-300'} px-3 py-1.5 rounded-full whitespace-nowrap shadow">${liga}</button>`;
+                html += `<button onclick="filtrarPorLiga('${liga}')" class="btn-liga ${selectedLiga === liga ? 'bg-slate-900 text-white font-bold' : 'bg-white text-slate-700 border border-slate-200'} px-4 py-2 rounded-full whitespace-nowrap shadow-sm">${liga}</button>`;
             });
 
             container.innerHTML = html;
@@ -292,7 +185,7 @@
             const jogosFiltrados = selectedLiga === 'ALL' ? matchesData : matchesData.filter(m => m.league === selectedLiga);
 
             if (jogosFiltrados.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">Nenhuma partida disponível no momento.</div>`;
+                container.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs font-semibold">Nenhuma partida disponível no momento.</div>`;
                 return;
             }
 
@@ -305,11 +198,11 @@
             let html = '';
             for (const [liga, jogos] of Object.entries(agrupadoPorLiga)) {
                 html += `
-                    <div class="bg-slate-900 rounded-xl border border-slate-800/80 overflow-hidden shadow-lg">
-                        <div class="bg-slate-800/60 px-3 py-2 border-b border-slate-800/80 text-xs font-bold text-amber-400 flex items-center gap-2">
-                            <i class="fa-solid fa-trophy text-[10px]"></i> ${liga}
+                    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm">
+                        <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 text-xs font-black text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-amber-500"></i> ${liga}
                         </div>
-                        <div class="divide-y divide-slate-800/40">
+                        <div class="divide-y divide-slate-100">
                 `;
 
                 jogos.forEach(m => {
@@ -318,25 +211,25 @@
                     const dataStr = dataObj.toLocaleDateString([], { weekday: 'short', day: '2-digit', month: 'short' });
 
                     html += `
-                        <div class="p-3 hover:bg-slate-800/20 transition">
-                            <div class="text-[10px] text-slate-500 font-semibold mb-1 flex justify-between">
+                        <div class="p-3.5 hover:bg-slate-50 transition">
+                            <div class="text-[10px] text-slate-400 font-bold mb-1 flex justify-between">
                                 <span>${dataStr} às ${horaStr}</span>
-                                <span class="text-amber-400 font-bold">1X2</span>
+                                <span class="text-slate-500 font-extrabold uppercase">1X2 Resultado Final</span>
                             </div>
-                            <div class="flex items-center justify-between gap-2 mb-2.5">
-                                <div class="text-xs font-bold text-white flex-1">${m.home_team}</div>
-                                <div class="text-[10px] font-black text-slate-600 px-1">VS</div>
-                                <div class="text-xs font-bold text-white flex-1 text-right">${m.away_team}</div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <div class="text-xs font-bold text-slate-900 flex-1">${m.home_team}</div>
+                                <div class="text-[10px] font-black text-slate-300 px-1">VS</div>
+                                <div class="text-xs font-bold text-slate-900 flex-1 text-right">${m.away_team}</div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-1.5 mb-2">
+                            <div class="grid grid-cols-3 gap-2 mb-2">
                                 ${renderButtonOdd(m.id, 'Casa (1)', m.odd_home, '1X2', 'Casa')}
                                 ${renderButtonOdd(m.id, 'Empate (X)', m.odd_draw, '1X2', 'Empate')}
                                 ${renderButtonOdd(m.id, 'Fora (2)', m.odd_away, '1X2', 'Fora')}
                             </div>
 
-                            <button onclick="abrirMaisMercados('${m.id}')" class="w-full bg-slate-950/60 hover:bg-slate-800 text-slate-400 text-[11px] py-1.5 rounded-lg border border-slate-800/80 font-bold flex items-center justify-center gap-1 transition">
-                                <i class="fa-solid fa-plus text-[10px] text-amber-400"></i> Mais Mercados
+                            <button onclick="abrirMaisMercados('${m.id}')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition border border-slate-200">
+                                <i class="fa-solid fa-plus text-[10px] text-amber-500"></i> Mais Mercados
                             </button>
                         </div>
                     `;
@@ -349,21 +242,21 @@
         }
 
         function renderButtonOdd(matchId, label, oddVal, mercadoNome, selecaoNome) {
-            if (!oddVal || parseFloat(oddVal) <= 1.0) return `<div class="bg-slate-950/30 rounded p-2 text-center text-slate-600 text-[10px]">-</div>`;
+            if (!oddVal || parseFloat(oddVal) <= 1.0) return `<div class="bg-slate-100 rounded-xl p-2 text-center text-slate-300 text-[10px]">-</div>`;
             
             const oddNum = parseFloat(oddVal);
             const isSelected = cartItems.some(i => i.matchId === matchId && i.selecaoNome === selecaoNome && i.mercadoNome === mercadoNome);
-            const activeClass = isSelected ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-md' : 'bg-slate-950/80 hover:bg-slate-800 text-slate-200 border-slate-800';
+            const activeClass = isSelected ? 'bg-amber-500 text-slate-950 font-black border-amber-500 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200';
 
             return `
-                <button onclick="selecionarPalpite('${matchId}', '${mercadoNome}', '${selecaoNome}', ${oddNum})" class="${activeClass} border rounded-lg p-1.5 text-center transition flex flex-col items-center justify-center">
-                    <span class="text-[9px] opacity-75">${label}</span>
-                    <span class="text-xs font-extrabold ${isSelected ? 'text-slate-950' : 'text-amber-400'}">${oddNum.toFixed(2)}</span>
+                <button onclick="selecionarPalpite('${matchId}', '${mercadoNome}', '${selecaoNome}', ${oddNum})" class="${activeClass} border rounded-xl p-2 text-center transition flex flex-col items-center justify-center">
+                    <span class="text-[9px] font-semibold ${isSelected ? 'text-slate-950' : 'text-slate-400'}">${label}</span>
+                    <span class="text-xs font-black ${isSelected ? 'text-slate-950' : 'text-slate-900'}">${oddNum.toFixed(2)}</span>
                 </button>
             `;
         }
 
-        // MAIS MERCADOS - TOTALMENTE DINÂMICO
+        // MAIS MERCADOS ORGANIZADOS LADO A LADO (+ e -)
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -375,64 +268,38 @@
             const body = document.getElementById('maisMercadosBody');
             const mkts = match.markets || {};
 
-            const oH = parseFloat(match.odd_home);
-            const oD = parseFloat(match.odd_draw);
-            const oA = parseFloat(match.odd_away);
+            let html = '';
 
-            const pH = 1 / oH;
-            const pD = 1 / oD;
-            const pA = 1 / oA;
-            const calcSafe = (val) => val < 1.01 ? 1.01 : parseFloat(val.toFixed(2));
-
-            let html = `
-                <!-- DUPLA CHANCE -->
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Dupla Chance</div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        ${renderButtonOdd(match.id, '1X (Casa/Emp)', calcSafe(1 / (pH + pD)), 'Dupla Chance', '1X')}
-                        ${renderButtonOdd(match.id, '12 (Casa/Fora)', calcSafe(1 / (pH + pA)), 'Dupla Chance', '12')}
-                        ${renderButtonOdd(match.id, 'X2 (Emp/Fora)', calcSafe(1 / (pD + pA)), 'Dupla Chance', 'X2')}
-                    </div>
-                </div>
-
-                <!-- EMPATE ANULA APOSTA -->
-                <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                    <div class="font-bold text-amber-400 mb-2 text-[11px]">Empate Anula Aposta (DNB)</div>
-                    <div class="grid grid-cols-2 gap-1.5">
-                        ${renderButtonOdd(match.id, 'Casa (1)', calcSafe(1 / (pH / (pH + pA))), 'Empate Anula', 'Casa')}
-                        ${renderButtonOdd(match.id, 'Fora (2)', calcSafe(1 / (pA / (pH + pA))), 'Empate Anula', 'Fora')}
-                    </div>
-                </div>
-            `;
-
-            // LOOP DINÂMICO PARA QUALQUER MERCADO ENVIADO PELO PYTHON
             for (const [nomeMercado, opcoes] of Object.entries(mkts)) {
                 if (typeof opcoes === 'object' && opcoes !== null) {
-                    const qtdOpcoes = Object.keys(opcoes).length;
-                    const gridCols = qtdOpcoes === 2 ? 'grid-cols-2' : (qtdOpcoes === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-3');
+                    const chaves = Object.keys(opcoes);
 
                     html += `
-                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
-                            <div class="font-bold text-amber-400 mb-2 text-[11px] capitalize">${nomeMercado}</div>
-                            <div class="grid ${gridCols} gap-1.5">
+                        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                            <div class="font-bold text-slate-800 mb-2.5 text-xs border-b border-slate-200/80 pb-1 flex justify-between items-center">
+                                <span>${nomeMercado}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
                     `;
 
-                    for (const [opcaoNome, oddVal] of Object.entries(opcoes)) {
+                    chaves.forEach(opcaoNome => {
+                        const oddVal = opcoes[opcaoNome];
                         html += renderButtonOdd(match.id, opcaoNome, oddVal, nomeMercado, opcaoNome);
-                    }
+                    });
 
                     html += `</div></div>`;
                 }
+            }
+
+            if (!html) {
+                html = `<div class="text-center py-8 text-slate-400 text-xs">Nenhum mercado adicional cadastrado para esta partida.</div>`;
             }
 
             body.innerHTML = html;
             document.getElementById('maisMercadosModal').classList.remove('hidden');
         }
 
-        function fecharMaisMercados() {
-            document.getElementById('maisMercadosModal').classList.add('hidden');
-            matchMaisMercadosAtual = null;
-        }
+        function fecharMaisMercados() { document.getElementById('maisMercadosModal').classList.add('hidden'); }
 
         function selecionarPalpite(matchId, mercadoNome, selecaoNome, oddVal) {
             const match = matchesData.find(m => m.id === matchId);
@@ -477,7 +344,7 @@
         function renderizarItensBoletimModal() {
             const container = document.getElementById('boletimItems');
             if (cartItems.length === 0) {
-                container.innerHTML = `<div class="text-center py-6 text-slate-500">Seu boletim está vazio.</div>`;
+                container.innerHTML = `<div class="text-center py-6 text-slate-400">Seu boletim está vazio.</div>`;
                 return;
             }
 
@@ -486,12 +353,12 @@
                 html += `
                     <div class="py-2 flex justify-between items-center">
                         <div>
-                            <div class="font-bold text-white text-xs">${item.match.home_team} x ${item.match.away_team}</div>
-                            <div class="text-[10px] text-slate-400">${item.mercadoNome}: <strong class="text-amber-400">${item.selecaoNome}</strong></div>
+                            <div class="font-bold text-slate-800 text-xs">${item.match.home_team} x ${item.match.away_team}</div>
+                            <div class="text-[10px] text-slate-500">${item.mercadoNome}: <strong class="text-amber-600">${item.selecaoNome}</strong></div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="font-extrabold text-amber-400 text-xs">${item.oddVal.toFixed(2)}</span>
-                            <button onclick="removerItemCarrinho(${idx})" class="text-red-400 hover:text-red-300 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            <span class="font-extrabold text-slate-900 text-xs">${item.oddVal.toFixed(2)}</span>
+                            <button onclick="removerItemCarrinho(${idx})" class="text-red-500 hover:text-red-700 p-1"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 `;
@@ -505,286 +372,7 @@
             renderizarJogos();
         }
 
-        function toggleBoletimModal() {
-            document.getElementById('boletimModal').classList.toggle('hidden');
-        }
-
-        async function gerarPréBilhetePIN() {
-            const nome = document.getElementById('apostadorNome').value.trim();
-            const valor = parseFloat(document.getElementById('apostadorValor').value) || 0;
-
-            if (cartItems.length < 3) {
-                alert("O boletim deve conter no mínimo 3 partidas!");
-                return;
-            }
-            if (!nome) {
-                alert("Por favor, informe seu nome completo!");
-                return;
-            }
-            if (valor < 5) {
-                alert("O valor mínimo para aposta é de R$ 5,00!");
-                return;
-            }
-
-            const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
-            
-            let totalOdd = cartItems.reduce((acc, item) => acc * item.oddVal, 1);
-            let retornoPossivel = valor * totalOdd;
-            if (retornoPossivel > 500) retornoPossivel = 500.00;
-
-            const ticketPayload = {
-                pin: pinCode,
-                client_name: nome,
-                bet_value: valor,
-                possible_return: retornoPossivel,
-                total_odd: totalOdd,
-                status: 'WAITING_PAYMENT',
-                selections: cartItems.map(i => ({
-                    match_id: i.matchId,
-                    home_team: i.match.home_team,
-                    away_team: i.match.away_team,
-                    league: i.match.league,
-                    market: i.mercadoNome,
-                    selection: i.selecaoNome,
-                    odd: i.oddVal
-                }))
-            };
-
-            const { error } = await supabaseClient.from('tickets').insert([ticketPayload]);
-
-            if (error) {
-                alert("Erro ao gravar pré-bilhete.");
-                return;
-            }
-
-            document.getElementById('displayPIN').innerText = pinCode;
-            toggleBoletimModal();
-            document.getElementById('pinGeradoModal').classList.remove('hidden');
-
-            cartItems = [];
-            atualizarCalculosBoletim();
-            renderizarJogos();
-        }
-
-        function fecharModalPIN() {
-            document.getElementById('pinGeradoModal').classList.add('hidden');
-        }
-
-        function enviarPINWhatsApp() {
-            const pin = document.getElementById('displayPIN').innerText;
-            const nome = document.getElementById('apostadorNome').value;
-            const txt = encodeURIComponent(`Olá! Fiz meu pré-bilhete no NOSEGAME.\n\n*Apostador:* ${nome}\n*Código PIN:* ${pin}\n\nPor favor, valide meu bilhete!`);
-            window.open(`https://wa.me/?text=${txt}`, '_blank');
-        }
-
-        function abrirModalConsultarPIN() { document.getElementById('consultarPINModal').classList.remove('hidden'); }
-        function fecharModalConsultarPIN() { document.getElementById('consultarPINModal').classList.add('hidden'); }
-        
-        async function executarBuscaPIN() {
-            const pin = document.getElementById('inputSearchPIN').value.trim();
-            const resContainer = document.getElementById('consultarResult');
-            if (!pin) return;
-
-            const { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
-
-            resContainer.classList.remove('hidden');
-            if (error || !data) {
-                resContainer.innerHTML = `<div class="p-3 bg-red-950/50 text-red-300 border border-red-800/50 rounded-xl">Bilhete não encontrado.</div>`;
-                return;
-            }
-
-            const statusColors = { WAITING_PAYMENT: 'text-amber-400', VALIDATED: 'text-emerald-400', WON: 'text-emerald-400 font-extrabold', LOST: 'text-red-400' };
-            const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU!', LOST: 'Não premiado' };
-
-            resContainer.innerHTML = `
-                <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-                    <div class="flex justify-between font-bold">
-                        <span>Apostador: ${data.client_name}</span>
-                        <span class="${statusColors[data.status]}">${statusLabels[data.status]}</span>
-                    </div>
-                    <div class="text-[11px] text-slate-400">Valor: R$ ${parseFloat(data.bet_value).toFixed(2)} | Retorno: <strong class="text-emerald-400">R$ ${parseFloat(data.possible_return).toFixed(2)}</strong></div>
-                </div>
-            `;
-        }
-
-        function checkAdminParam() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true') toggleAdmin();
-        }
-
-        function toggleAdmin() {
-            const p = document.getElementById('adminPanel');
-            if (p.classList.contains('hidden')) {
-                const pass = prompt("Digite a senha do cambista:");
-                if (pass === 'admin123') {
-                    p.classList.remove('hidden');
-                    carregarJogosAdmin();
-                } else if (pass !== null) {
-                    alert("Senha incorreta!");
-                }
-            } else {
-                p.classList.add('hidden');
-            }
-        }
-        function fecharAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
-
-        function trocarAbaAdmin(aba) {
-            document.querySelectorAll('.tab-admin').forEach(b => {
-                b.classList.remove('border-b-2', 'border-amber-400', 'text-amber-400');
-                b.classList.add('text-slate-400');
-            });
-            document.getElementById(`tab-${aba}`).classList.add('border-b-2', 'border-amber-400', 'text-amber-400');
-
-            ['validar', 'caixa', 'bilhetes', 'jogos'].forEach(a => {
-                document.getElementById(`content-${a}`).classList.add('hidden');
-            });
-            document.getElementById(`content-${aba}`).classList.remove('hidden');
-
-            if (aba === 'caixa') carregarCaixa();
-            if (aba === 'bilhetes') carregarBilhetesAdmin();
-            if (aba === 'jogos') carregarJogosAdmin();
-        }
-
-        async function adminBuscarPIN() {
-            const pin = document.getElementById('adminInputPIN').value.trim();
-            const res = document.getElementById('adminPINResult');
-            if (!pin) return;
-
-            const { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
-
-            if (error || !ticket) {
-                res.innerHTML = `<div class="p-3 bg-red-950/40 text-red-300 rounded-xl">Bilhete não encontrado.</div>`;
-                return;
-            }
-
-            let htmlSelections = ticket.selections.map(s => `
-                <div class="flex justify-between text-[11px] py-1 border-b border-slate-800">
-                    <span>${s.home_team} x ${s.away_team}</span>
-                    <span class="text-amber-400 font-bold">${s.market}: ${s.selection} (${parseFloat(s.odd).toFixed(2)})</span>
-                </div>
-            `).join('');
-
-            res.innerHTML = `
-                <div id="comprovanteCard" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-white text-sm">${ticket.client_name}</h4>
-                            <span class="text-[10px] text-slate-400">PIN: <strong class="text-amber-400 font-mono text-xs">${ticket.pin}</strong></span>
-                        </div>
-                        <span class="px-2 py-1 bg-amber-500/10 text-amber-400 font-bold text-[10px] rounded-lg">${ticket.status}</span>
-                    </div>
-
-                    <div class="bg-slate-950 p-2.5 rounded-lg space-y-1">
-                        ${htmlSelections}
-                    </div>
-
-                    <div class="flex justify-between text-xs pt-1">
-                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value).toFixed(2)}</strong></span>
-                        <span>Retorno: <strong class="text-emerald-400">R$ ${parseFloat(ticket.possible_return).toFixed(2)}</strong></span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 pt-2">
-                        ${ticket.status === 'WAITING_PAYMENT' ? `
-                            <button onclick="validarBilhete('${ticket.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2.5 rounded-xl">
-                                VALIDAR (DINHEIRO RECEBIDO)
-                            </button>
-                        ` : ''}
-                        <button onclick="gerarImagemComprovante()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold p-2.5 rounded-xl">
-                            BAIXAR IMAGEM (PNG)
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function validarBilhete(id) {
-            await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', id);
-            alert("Bilhete validado com sucesso!");
-            adminBuscarPIN();
-        }
-
-        function gerarImagemComprovante() {
-            const card = document.getElementById('comprovanteCard');
-            html2canvas(card).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `comprovante-nosegame.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-
-        async function carregarJogosAdmin() {
-            const container = document.getElementById('adminMatchesList');
-            const { data } = await supabaseClient.from('matches').select('*').order('match_time', { ascending: true });
-
-            if (!data || data.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 text-center py-4">Nenhum jogo cadastrado.</div>`;
-                return;
-            }
-
-            let html = '';
-            data.forEach(m => {
-                html += `
-                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-white">${m.home_team} x ${m.away_team}</div>
-                            <div class="text-[10px] text-slate-400">${m.league} | Status: <strong class="text-amber-400">${m.status}</strong></div>
-                        </div>
-                        <button onclick="deletarJogo('${m.id}')" class="text-red-400 hover:text-red-300 p-1">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        async function deletarJogo(id) {
-            if (confirm("Deseja apagar este jogo?")) {
-                await supabaseClient.from('matches').delete().eq('id', id);
-                carregarJogosAdmin();
-                carregarJogos();
-            }
-        }
-
-        async function carregarCaixa() {
-            const dataSel = document.getElementById('caixaData').value || new Date().toISOString().split('T')[0];
-            document.getElementById('caixaData').value = dataSel;
-
-            const { data } = await supabaseClient.from('tickets').select('*');
-            const metrics = document.getElementById('caixaMetrics');
-
-            let entradas = 0, saídas = 0;
-            (data || []).forEach(t => {
-                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value);
-                if (t.status === 'WON') saídas += parseFloat(t.possible_return);
-            });
-
-            metrics.innerHTML = `
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="text-slate-400 block">Entradas</span><strong class="text-emerald-400 text-base">R$ ${entradas.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="text-slate-400 block">Prêmios</span><strong class="text-red-400 text-base">R$ ${saídas.toFixed(2)}</strong></div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="text-slate-400 block">Lucro Líquido</span><strong class="text-amber-400 text-base">R$ ${(entradas - saídas).toFixed(2)}</strong></div>
-            `;
-        }
-
-        async function carregarBilhetesAdmin() {
-            const container = document.getElementById('adminBilhetesList');
-            const { data } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
-
-            let html = '';
-            (data || []).forEach(t => {
-                html += `
-                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                        <div>
-                            <div class="font-bold text-white">${t.client_name} (PIN: ${t.pin})</div>
-                            <div class="text-slate-400">R$ ${parseFloat(t.bet_value).toFixed(2)} -> R$ ${parseFloat(t.possible_return).toFixed(2)}</div>
-                        </div>
-                        <span class="font-bold text-amber-400">${t.status}</span>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
+        function toggleBoletimModal() { document.getElementById('boletimModal').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
