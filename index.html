@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOSEGAME - Aposta Esportiva</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- html2canvas para gerar comprovante em imagem -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { background-color: #f8fafc; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -16,7 +20,7 @@
 </head>
 <body class="min-h-screen flex flex-col pb-24 bg-slate-100 text-slate-900">
 
-    <!-- CABEÇALHO CLARO -->
+    <!-- CABEÇALHO CLARO E LIMPO -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-2 cursor-pointer" onclick="limparFiltroEEstado()">
             <div class="bg-amber-500 text-slate-950 px-2 py-1 rounded-lg font-black text-lg">NG</div>
@@ -124,6 +128,104 @@
         </div>
     </div>
 
+    <!-- MODAL PIN GERADO -->
+    <div id="pinGeradoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl border border-slate-200 p-5 text-center shadow-2xl">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-check text-2xl"></i>
+            </div>
+            <h3 class="font-black text-lg text-slate-900">Pré-Bilhete Criado!</h3>
+            <p class="text-xs text-slate-500 mt-1">Envie o código abaixo ao cambista para validar e pagar.</p>
+
+            <div class="my-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Código PIN de Validação</div>
+                <div id="displayPIN" class="text-3xl font-mono font-black text-amber-600 tracking-wider my-1">00000</div>
+                <div class="text-[11px] text-slate-500">Status: <span class="text-amber-600 font-bold">Aguardando Pagamento</span></div>
+            </div>
+
+            <button onclick="enviarPINWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow transition flex items-center justify-center gap-2 mb-2">
+                <i class="fa-brands fa-whatsapp text-lg"></i> Enviar Código no WhatsApp
+            </button>
+            <button onclick="fecharModalPIN()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL CONSULTAR PIN (CLIENTE) -->
+    <div id="consultarPINModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl border border-slate-200 p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-search text-amber-500"></i> Consultar Bilhete
+                </h3>
+                <button onclick="fecharModalConsultarPIN()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <input type="text" id="inputSearchPIN" placeholder="Digite o PIN de 5 dígitos..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-center text-lg font-mono font-bold text-amber-600 focus:outline-none mb-3">
+            <button onclick="executarBuscaPIN()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition">
+                Consultar Status
+            </button>
+            <div id="consultarResult" class="mt-4 hidden text-xs"></div>
+        </div>
+    </div>
+
+    <!-- PAINEL DO CAMBISTA (ADMIN COMPLETO - TECLA F8) -->
+    <div id="adminPanel" class="fixed inset-0 bg-slate-100 z-50 hidden flex flex-col">
+        <div class="bg-slate-900 text-white p-3 flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-user-shield text-amber-400"></i>
+                <span class="font-bold text-sm">Painel do Cambista - NOSEGAME</span>
+            </div>
+            <button onclick="fecharAdmin()" class="bg-slate-800 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg text-xs">
+                Sair
+            </button>
+        </div>
+
+        <div class="flex overflow-x-auto bg-white border-b border-slate-200 text-xs no-scrollbar">
+            <button onclick="trocarAbaAdmin('validar')" id="tab-validar" class="tab-admin px-4 py-3 font-bold border-b-2 border-amber-500 text-amber-600">Validar PIN</button>
+            <button onclick="trocarAbaAdmin('jogos')" id="tab-jogos" class="tab-admin px-4 py-3 font-bold text-slate-500">Gerenciar & Editar Jogos</button>
+            <button onclick="trocarAbaAdmin('caixa')" id="tab-caixa" class="tab-admin px-4 py-3 font-bold text-slate-500">Caixa & Relatórios</button>
+            <button onclick="trocarAbaAdmin('bilhetes')" id="tab-bilhetes" class="tab-admin px-4 py-3 font-bold text-slate-500">Todos os Bilhetes</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 max-w-4xl w-full mx-auto text-xs">
+            <!-- ABA VALIDAR PIN -->
+            <div id="content-validar" class="space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm">Validar Pré-Bilhete do Apostador</h4>
+                    <div class="flex gap-2">
+                        <input type="text" id="adminInputPIN" placeholder="Digite o PIN..." class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono font-bold text-amber-600 focus:outline-none">
+                        <button onclick="adminBuscarPIN()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl">Buscar PIN</button>
+                    </div>
+                </div>
+                <div id="adminPINResult"></div>
+            </div>
+
+            <!-- ABA GERENCIAR JOGOS -->
+            <div id="content-jogos" class="hidden space-y-3">
+                <div id="adminMatchesList" class="space-y-3"></div>
+            </div>
+
+            <!-- ABA CAIXA DO CAMBISTA -->
+            <div id="content-caixa" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+                    <div>
+                        <span class="text-slate-500 block text-[11px]">Selecione a Data:</span>
+                        <input type="date" id="caixaData" onchange="carregarCaixa()" class="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-slate-800 font-bold mt-1">
+                    </div>
+                </div>
+                <div id="caixaMetrics" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- ABA TODOS OS BILHETES -->
+            <div id="content-bilhetes" class="hidden space-y-3">
+                <div id="adminBilhetesList" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- SCRIPT JAVASCRIPT PRINCIPAL -->
     <script>
         const SUPABASE_URL = "https://weaffqocmxfczgwketrb.supabase.co";
@@ -135,7 +237,13 @@
         let cartItems = [];
         let matchMaisMercadosAtual = null;
 
-        document.addEventListener('DOMContentLoaded', carregarJogos);
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarJogos();
+            checkAdminParam();
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F8') toggleAdmin();
+            });
+        });
 
         async function carregarJogos() {
             const container = document.getElementById('matchesContainer');
@@ -373,6 +481,307 @@
         }
 
         function toggleBoletimModal() { document.getElementById('boletimModal').classList.toggle('hidden'); }
+
+        async function gerarPréBilhetePIN() {
+            const nome = document.getElementById('apostadorNome').value.trim();
+            const valor = parseFloat(document.getElementById('apostadorValor').value) || 0;
+
+            if (cartItems.length < 3) {
+                alert("O boletim deve conter no mínimo 3 partidas!");
+                return;
+            }
+            if (!nome) {
+                alert("Por favor, informe seu nome completo!");
+                return;
+            }
+            if (valor < 5) {
+                alert("O valor mínimo para aposta é de R$ 5,00!");
+                return;
+            }
+
+            const pinCode = Math.floor(10000 + Math.random() * 90000).toString();
+            
+            let totalOdd = cartItems.reduce((acc, item) => acc * item.oddVal, 1);
+            let retornoPossivel = valor * totalOdd;
+            if (retornoPossivel > 500) retornoPossivel = 500.00;
+
+            const ticketPayload = {
+                pin: pinCode,
+                client_name: nome,
+                bet_value: valor,
+                possible_return: retornoPossivel,
+                total_odd: totalOdd,
+                status: 'WAITING_PAYMENT',
+                selections: cartItems.map(i => ({
+                    match_id: i.matchId,
+                    home_team: i.match.home_team,
+                    away_team: i.match.away_team,
+                    league: i.match.league,
+                    market: i.mercadoNome,
+                    selection: i.selecaoNome,
+                    odd: i.oddVal
+                }))
+            };
+
+            const { error } = await supabaseClient.from('tickets').insert([ticketPayload]);
+
+            if (error) {
+                alert("Erro ao gravar pré-bilhete.");
+                return;
+            }
+
+            document.getElementById('displayPIN').innerText = pinCode;
+            toggleBoletimModal();
+            document.getElementById('pinGeradoModal').classList.remove('hidden');
+
+            cartItems = [];
+            atualizarCalculosBoletim();
+            renderizarJogos();
+        }
+
+        function fecharModalPIN() { document.getElementById('pinGeradoModal').classList.add('hidden'); }
+
+        function enviarPINWhatsApp() {
+            const pin = document.getElementById('displayPIN').innerText;
+            const nome = document.getElementById('apostadorNome').value;
+            const txt = encodeURIComponent(`Olá! Fiz meu pré-bilhete no NOSEGAME.\n\n*Apostador:* ${nome}\n*Código PIN:* ${pin}\n\nPor favor, valide meu bilhete!`);
+            window.open(`https://wa.me/?text=${txt}`, '_blank');
+        }
+
+        function abrirModalConsultarPIN() { document.getElementById('consultarPINModal').classList.remove('hidden'); }
+        function fecharModalConsultarPIN() { document.getElementById('consultarPINModal').classList.add('hidden'); }
+        
+        async function executarBuscaPIN() {
+            const pin = document.getElementById('inputSearchPIN').value.trim();
+            const resContainer = document.getElementById('consultarResult');
+            if (!pin) return;
+
+            const { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+
+            resContainer.classList.remove('hidden');
+            if (error || !data) {
+                resContainer.innerHTML = `<div class="p-3 bg-red-50 text-red-600 border border-red-200 rounded-xl">Bilhete não encontrado.</div>`;
+                return;
+            }
+
+            const statusColors = { WAITING_PAYMENT: 'text-amber-600', VALIDATED: 'text-emerald-600', WON: 'text-emerald-600 font-extrabold', LOST: 'text-red-500' };
+            const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU!', LOST: 'Não premiado' };
+
+            resContainer.innerHTML = `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <div class="flex justify-between font-bold">
+                        <span>Apostador: ${data.client_name}</span>
+                        <span class="${statusColors[data.status]}">${statusLabels[data.status]}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(data.bet_value).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return).toFixed(2)}</strong></div>
+                </div>
+            `;
+        }
+
+        function checkAdminParam() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('admin') === 'true') toggleAdmin();
+        }
+
+        function toggleAdmin() {
+            const p = document.getElementById('adminPanel');
+            if (p.classList.contains('hidden')) {
+                const pass = prompt("Digite a senha do admin:");
+                if (pass === 'admin123') {
+                    p.classList.remove('hidden');
+                    carregarJogosAdmin();
+                } else if (pass !== null) {
+                    alert("Senha incorreta!");
+                }
+            } else {
+                p.classList.add('hidden');
+            }
+        }
+        function fecharAdmin() { document.getElementById('adminPanel').classList.add('hidden'); }
+
+        function trocarAbaAdmin(aba) {
+            document.querySelectorAll('.tab-admin').forEach(b => {
+                b.classList.remove('border-b-2', 'border-amber-500', 'text-amber-600');
+                b.classList.add('text-slate-500');
+            });
+            document.getElementById(`tab-${aba}`).classList.add('border-b-2', 'border-amber-500', 'text-amber-600');
+
+            ['validar', 'caixa', 'jogos', 'bilhetes'].forEach(a => {
+                document.getElementById(`content-${a}`).classList.add('hidden');
+            });
+            document.getElementById(`content-${aba}`).classList.remove('hidden');
+
+            if (aba === 'caixa') carregarCaixa();
+            if (aba === 'jogos') carregarJogosAdmin();
+            if (aba === 'bilhetes') carregarBilhetesAdmin();
+        }
+
+        async function adminBuscarPIN() {
+            const pin = document.getElementById('adminInputPIN').value.trim();
+            const res = document.getElementById('adminPINResult');
+            if (!pin) return;
+
+            const { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+
+            if (error || !ticket) {
+                res.innerHTML = `<div class="p-3 bg-red-50 text-red-600 rounded-xl border border-red-200">Bilhete não encontrado.</div>`;
+                return;
+            }
+
+            let htmlSelections = ticket.selections.map(s => `
+                <div class="flex justify-between text-[11px] py-1 border-b border-slate-200">
+                    <span>${s.home_team} x ${s.away_team}</span>
+                    <span class="text-amber-600 font-bold">${s.market}: ${s.selection} (${parseFloat(s.odd).toFixed(2)})</span>
+                </div>
+            `).join('');
+
+            res.innerHTML = `
+                <div id="comprovanteCard" class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${ticket.client_name}</h4>
+                            <span class="text-[10px] text-slate-500">PIN: <strong class="text-amber-600 font-mono text-xs">${ticket.pin}</strong></span>
+                        </div>
+                        <span class="px-2 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] rounded-lg">${ticket.status}</span>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 rounded-lg space-y-1">
+                        ${htmlSelections}
+                    </div>
+
+                    <div class="flex justify-between text-xs pt-1">
+                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value).toFixed(2)}</strong></span>
+                        <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return).toFixed(2)}</strong></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        ${ticket.status === 'WAITING_PAYMENT' ? `
+                            <button onclick="validarBilhete('${ticket.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-2.5 rounded-xl transition">
+                                VALIDAR (DINHEIRO RECEBIDO)
+                            </button>
+                        ` : ''}
+                        <button onclick="gerarImagemComprovante()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold p-2.5 rounded-xl transition">
+                            BAIXAR IMAGEM (PNG)
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function validarBilhete(id) {
+            await supabaseClient.from('tickets').update({ status: 'VALIDATED' }).eq('id', id);
+            alert("Bilhete validado com sucesso!");
+            adminBuscarPIN();
+        }
+
+        function gerarImagemComprovante() {
+            const card = document.getElementById('comprovanteCard');
+            html2canvas(card).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `comprovante-nosegame.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        async function carregarJogosAdmin() {
+            const container = document.getElementById('adminMatchesList');
+            const { data } = await supabaseClient.from('matches').select('*').order('league', { ascending: true });
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-center py-4">Nenhum jogo cadastrado.</div>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach(m => {
+                html += `
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+                        <div>
+                            <div class="font-bold text-slate-800">${m.home_team} x ${m.away_team}</div>
+                            <div class="text-[10px] text-slate-500">${m.league} | Odds 1X2: ${m.odd_home} / ${m.odd_draw} / ${m.odd_away}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editarOddsJogo('${m.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200">
+                                Editar Odds
+                            </button>
+                            <button onclick="deletarJogo('${m.id}')" class="text-red-500 hover:text-red-700 p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function editarOddsJogo(id) {
+            const match = matchesData.find(m => m.id === id);
+            if (!match) return;
+
+            const novaHome = prompt(`Nova Odd Casa (${match.home_team}):`, match.odd_home);
+            const novaDraw = prompt(`Nova Odd Empate:`, match.odd_draw);
+            const novaAway = prompt(`Nova Odd Fora (${match.away_team}):`, match.odd_away);
+
+            if (novaHome && novaDraw && novaAway) {
+                await supabaseClient.from('matches').update({
+                    odd_home: parseFloat(novaHome),
+                    odd_draw: parseFloat(novaDraw),
+                    odd_away: parseFloat(novaAway)
+                }).eq('id', id);
+
+                alert("Odds atualizadas com sucesso!");
+                carregarJogosAdmin();
+                carregarJogos();
+            }
+        }
+
+        async function deletarJogo(id) {
+            if (confirm("Deseja apagar este jogo?")) {
+                await supabaseClient.from('matches').delete().eq('id', id);
+                carregarJogosAdmin();
+                carregarJogos();
+            }
+        }
+
+        async function carregarCaixa() {
+            const dataSel = document.getElementById('caixaData').value || new Date().toISOString().split('T')[0];
+            document.getElementById('caixaData').value = dataSel;
+
+            const { data } = await supabaseClient.from('tickets').select('*');
+            const metrics = document.getElementById('caixaMetrics');
+
+            let entradas = 0, saídas = 0;
+            (data || []).forEach(t => {
+                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value);
+                if (t.status === 'WON') saídas += parseFloat(t.possible_return);
+            });
+
+            metrics.innerHTML = `
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm"><span class="text-slate-500 block text-[11px]">Entradas</span><strong class="text-emerald-600 text-base">R$ ${entradas.toFixed(2)}</strong></div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm"><span class="text-slate-500 block text-[11px]">Prêmios</span><strong class="text-red-500 text-base">R$ ${saídas.toFixed(2)}</strong></div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm"><span class="text-slate-500 block text-[11px]">Lucro Líquido</span><strong class="text-amber-600 text-base">R$ ${(entradas - saídas).toFixed(2)}</strong></div>
+            `;
+        }
+
+        async function carregarBilhetesAdmin() {
+            const container = document.getElementById('adminBilhetesList');
+            const { data } = await supabaseClient.from('tickets').select('*').order('created_at', { ascending: false });
+
+            let html = '';
+            (data || []).forEach(t => {
+                html += `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs shadow-sm">
+                        <div>
+                            <div class="font-bold text-slate-800">${t.client_name} (PIN: ${t.pin})</div>
+                            <div class="text-slate-500">R$ ${parseFloat(t.bet_value).toFixed(2)} -> R$ ${parseFloat(t.possible_return).toFixed(2)}</div>
+                        </div>
+                        <span class="font-bold text-amber-600">${t.status}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
     </script>
 </body>
 </html>
