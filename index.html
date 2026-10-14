@@ -69,7 +69,7 @@
         </div>
     </div>
 
-    <!-- MODAL MAIS MERCADOS (ESTILO BET365 / BETANO) -->
+    <!-- MODAL MAIS MERCADOS -->
     <div id="maisMercadosModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-xl rounded-t-2xl sm:rounded-2xl border border-slate-200 max-h-[85vh] flex flex-col shadow-2xl">
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-2xl">
@@ -152,7 +152,7 @@
         </div>
     </div>
 
-    <!-- MODAL CONSULTAR PIN (CLIENTE) -->
+    <!-- MODAL CONSULTAR PIN -->
     <div id="consultarPINModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl border border-slate-200 p-5 shadow-2xl">
             <div class="flex justify-between items-center mb-3">
@@ -171,7 +171,7 @@
         </div>
     </div>
 
-    <!-- PAINEL DO CAMBISTA (ADMIN COMPLETO - TECLA F8) -->
+    <!-- PAINEL DO CAMBISTA (F8) -->
     <div id="adminPanel" class="fixed inset-0 bg-slate-100 z-50 hidden flex flex-col">
         <div class="bg-slate-900 text-white p-3 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-2">
@@ -364,7 +364,6 @@
             `;
         }
 
-        // MAIS MERCADOS ORGANIZADOS LADO A LADO (+ e -)
         function abrirMaisMercados(matchId) {
             const match = matchesData.find(m => m.id === matchId);
             if (!match) return;
@@ -505,12 +504,13 @@
             let retornoPossivel = valor * totalOdd;
             if (retornoPossivel > 500) retornoPossivel = 500.00;
 
+            // Payload 100% compatível com a tabela do Supabase
             const ticketPayload = {
                 pin: pinCode,
                 client_name: nome,
                 bet_value: valor,
                 possible_return: retornoPossivel,
-                total_odd: totalOdd,
+                total_odd: parseFloat(totalOdd.toFixed(2)),
                 status: 'WAITING_PAYMENT',
                 selections: cartItems.map(i => ({
                     match_id: i.matchId,
@@ -526,7 +526,8 @@
             const { error } = await supabaseClient.from('tickets').insert([ticketPayload]);
 
             if (error) {
-                alert("Erro ao gravar pré-bilhete.");
+                console.error("Erro Supabase:", error);
+                alert("Erro ao gravar pré-bilhete. Verifique as permissões da tabela 'tickets'.");
                 return;
             }
 
@@ -573,7 +574,7 @@
                         <span>Apostador: ${data.client_name}</span>
                         <span class="${statusColors[data.status]}">${statusLabels[data.status]}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(data.bet_value).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return).toFixed(2)}</strong></div>
+                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(data.bet_value || 0).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return || 0).toFixed(2)}</strong></div>
                 </div>
             `;
         }
@@ -628,7 +629,7 @@
                 return;
             }
 
-            let htmlSelections = ticket.selections.map(s => `
+            let htmlSelections = (ticket.selections || []).map(s => `
                 <div class="flex justify-between text-[11px] py-1 border-b border-slate-200">
                     <span>${s.home_team} x ${s.away_team}</span>
                     <span class="text-amber-600 font-bold">${s.market}: ${s.selection} (${parseFloat(s.odd).toFixed(2)})</span>
@@ -650,8 +651,8 @@
                     </div>
 
                     <div class="flex justify-between text-xs pt-1">
-                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value).toFixed(2)}</strong></span>
-                        <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return).toFixed(2)}</strong></span>
+                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value || 0).toFixed(2)}</strong></span>
+                        <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return || 0).toFixed(2)}</strong></span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 pt-2">
@@ -753,8 +754,8 @@
 
             let entradas = 0, saídas = 0;
             (data || []).forEach(t => {
-                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value);
-                if (t.status === 'WON') saídas += parseFloat(t.possible_return);
+                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value || 0);
+                if (t.status === 'WON') saídas += parseFloat(t.possible_return || 0);
             });
 
             metrics.innerHTML = `
@@ -774,7 +775,7 @@
                     <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs shadow-sm">
                         <div>
                             <div class="font-bold text-slate-800">${t.client_name} (PIN: ${t.pin})</div>
-                            <div class="text-slate-500">R$ ${parseFloat(t.bet_value).toFixed(2)} -> R$ ${parseFloat(t.possible_return).toFixed(2)}</div>
+                            <div class="text-slate-500">R$ ${parseFloat(t.bet_value || 0).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
                         </div>
                         <span class="font-bold text-amber-600">${t.status}</span>
                     </div>
