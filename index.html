@@ -20,7 +20,7 @@
 </head>
 <body class="min-h-screen flex flex-col pb-24 bg-slate-100 text-slate-900">
 
-    <!-- CABEÇALHO CLARO E LIMPO -->
+    <!-- CABEÇALHO -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center gap-2 cursor-pointer" onclick="limparFiltroEEstado()">
             <div class="bg-amber-500 text-slate-950 px-2 py-1 rounded-lg font-black text-lg">NG</div>
@@ -33,12 +33,10 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="max-w-4xl w-full mx-auto px-3 pt-4 flex-1">
-        <!-- BARRA DE FILTROS POR LIGA -->
         <div id="leagueFilters" class="flex gap-2 overflow-x-auto pb-3 no-scrollbar text-xs font-semibold">
             <button onclick="filtrarPorLiga('ALL')" class="btn-liga active bg-slate-900 text-white px-4 py-2 rounded-full whitespace-nowrap shadow-sm font-bold">Todos os Jogos</button>
         </div>
 
-        <!-- LISTA DE JOGOS -->
         <div id="matchesContainer" class="space-y-3">
             <div class="text-center py-12 text-slate-400">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-amber-500"></i>
@@ -504,14 +502,11 @@
             let retornoPossivel = valor * totalOdd;
             if (retornoPossivel > 500) retornoPossivel = 500.00;
 
-            // Envia tanto 'pin' como 'code', além de 'bet_value' e 'amount' para garantir compatibilidade com qualquer schema
             const ticketPayload = {
                 pin: pinCode,
-                code: pinCode,
                 client_name: nome,
                 bet_value: valor,
-                amount: valor,
-                possible_return: retornoPossivel,
+                possible_return: parseFloat(retornoPossivel.toFixed(2)),
                 total_odd: parseFloat(totalOdd.toFixed(2)),
                 status: 'WAITING_PAYMENT',
                 selections: cartItems.map(i => ({
@@ -529,7 +524,7 @@
 
             if (error) {
                 console.error("Erro Supabase:", error);
-                alert("Erro ao gravar pré-bilhete. Verifique se executou o comando SQL no Supabase.");
+                alert("Erro ao gravar pré-bilhete. Verifique se o SQL foi executado no Supabase.");
                 return;
             }
 
@@ -559,13 +554,7 @@
             const resContainer = document.getElementById('consultarResult');
             if (!pin) return;
 
-            // Busca por pin ou por code
-            let { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
-            if (error || !data) {
-                const resCode = await supabaseClient.from('tickets').select('*').eq('code', pin).single();
-                data = resCode.data;
-                error = resCode.error;
-            }
+            const { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
 
             resContainer.classList.remove('hidden');
             if (error || !data) {
@@ -576,15 +565,13 @@
             const statusColors = { WAITING_PAYMENT: 'text-amber-600', VALIDATED: 'text-emerald-600', WON: 'text-emerald-600 font-extrabold', LOST: 'text-red-500' };
             const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU!', LOST: 'Não premiado' };
 
-            const valAposta = data.bet_value || data.amount || 0;
-
             resContainer.innerHTML = `
                 <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                     <div class="flex justify-between font-bold">
                         <span>Apostador: ${data.client_name}</span>
                         <span class="${statusColors[data.status]}">${statusLabels[data.status]}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(valAposta).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return || 0).toFixed(2)}</strong></div>
+                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(data.bet_value).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return).toFixed(2)}</strong></div>
                 </div>
             `;
         }
@@ -632,12 +619,7 @@
             const res = document.getElementById('adminPINResult');
             if (!pin) return;
 
-            let { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
-            if (error || !ticket) {
-                const resCode = await supabaseClient.from('tickets').select('*').eq('code', pin).single();
-                ticket = resCode.data;
-                error = resCode.error;
-            }
+            const { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
 
             if (error || !ticket) {
                 res.innerHTML = `<div class="p-3 bg-red-50 text-red-600 rounded-xl border border-red-200">Bilhete não encontrado.</div>`;
@@ -651,15 +633,12 @@
                 </div>
             `).join('');
 
-            const valAposta = ticket.bet_value || ticket.amount || 0;
-            const codigoExibicao = ticket.pin || ticket.code;
-
             res.innerHTML = `
                 <div id="comprovanteCard" class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
                     <div class="flex justify-between items-start">
                         <div>
                             <h4 class="font-bold text-slate-800 text-sm">${ticket.client_name}</h4>
-                            <span class="text-[10px] text-slate-500">PIN: <strong class="text-amber-600 font-mono text-xs">${codigoExibicao}</strong></span>
+                            <span class="text-[10px] text-slate-500">PIN: <strong class="text-amber-600 font-mono text-xs">${ticket.pin}</strong></span>
                         </div>
                         <span class="px-2 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] rounded-lg">${ticket.status}</span>
                     </div>
@@ -669,8 +648,8 @@
                     </div>
 
                     <div class="flex justify-between text-xs pt-1">
-                        <span>Aposta: <strong>R$ ${parseFloat(valAposta).toFixed(2)}</strong></span>
-                        <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return || 0).toFixed(2)}</strong></span>
+                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value).toFixed(2)}</strong></span>
+                        <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return).toFixed(2)}</strong></span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 pt-2">
@@ -772,8 +751,7 @@
 
             let entradas = 0, saídas = 0;
             (data || []).forEach(t => {
-                const valAposta = t.bet_value || t.amount || 0;
-                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(valAposta);
+                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value || 0);
                 if (t.status === 'WON') saídas += parseFloat(t.possible_return || 0);
             });
 
@@ -790,13 +768,11 @@
 
             let html = '';
             (data || []).forEach(t => {
-                const valAposta = t.bet_value || t.amount || 0;
-                const codigoExibicao = t.pin || t.code || 'N/A';
                 html += `
                     <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs shadow-sm">
                         <div>
-                            <div class="font-bold text-slate-800">${t.client_name} (PIN: ${codigoExibicao})</div>
-                            <div class="text-slate-500">R$ ${parseFloat(valAposta).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
+                            <div class="font-bold text-slate-800">${t.client_name} (PIN: ${t.pin})</div>
+                            <div class="text-slate-500">R$ ${parseFloat(t.bet_value || 0).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
                         </div>
                         <span class="font-bold text-amber-600">${t.status}</span>
                     </div>
