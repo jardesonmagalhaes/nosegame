@@ -504,11 +504,12 @@
             let retornoPossivel = valor * totalOdd;
             if (retornoPossivel > 500) retornoPossivel = 500.00;
 
-            // Payload 100% compatível com a tabela do Supabase
+            // Envia tanto 'bet_value' quanto 'amount' para garantir compatibilidade
             const ticketPayload = {
                 pin: pinCode,
                 client_name: nome,
                 bet_value: valor,
+                amount: valor,
                 possible_return: retornoPossivel,
                 total_odd: parseFloat(totalOdd.toFixed(2)),
                 status: 'WAITING_PAYMENT',
@@ -568,13 +569,15 @@
             const statusColors = { WAITING_PAYMENT: 'text-amber-600', VALIDATED: 'text-emerald-600', WON: 'text-emerald-600 font-extrabold', LOST: 'text-red-500' };
             const statusLabels = { WAITING_PAYMENT: 'Aguardando Pagamento', VALIDATED: 'Validado (Aposta Ativa)', WON: 'GANHOU!', LOST: 'Não premiado' };
 
+            const valAposta = data.bet_value || data.amount || 0;
+
             resContainer.innerHTML = `
                 <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                     <div class="flex justify-between font-bold">
                         <span>Apostador: ${data.client_name}</span>
                         <span class="${statusColors[data.status]}">${statusLabels[data.status]}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(data.bet_value || 0).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return || 0).toFixed(2)}</strong></div>
+                    <div class="text-[11px] text-slate-500">Valor: R$ ${parseFloat(valAposta).toFixed(2)} | Retorno: <strong class="text-emerald-600">R$ ${parseFloat(data.possible_return || 0).toFixed(2)}</strong></div>
                 </div>
             `;
         }
@@ -636,6 +639,8 @@
                 </div>
             `).join('');
 
+            const valAposta = ticket.bet_value || ticket.amount || 0;
+
             res.innerHTML = `
                 <div id="comprovanteCard" class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
                     <div class="flex justify-between items-start">
@@ -651,7 +656,7 @@
                     </div>
 
                     <div class="flex justify-between text-xs pt-1">
-                        <span>Aposta: <strong>R$ ${parseFloat(ticket.bet_value || 0).toFixed(2)}</strong></span>
+                        <span>Aposta: <strong>R$ ${parseFloat(valAposta).toFixed(2)}</strong></span>
                         <span>Retorno: <strong class="text-emerald-600">R$ ${parseFloat(ticket.possible_return || 0).toFixed(2)}</strong></span>
                     </div>
 
@@ -754,7 +759,8 @@
 
             let entradas = 0, saídas = 0;
             (data || []).forEach(t => {
-                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(t.bet_value || 0);
+                const valAposta = t.bet_value || t.amount || 0;
+                if (t.status === 'VALIDATED' || t.status === 'WON') entradas += parseFloat(valAposta);
                 if (t.status === 'WON') saídas += parseFloat(t.possible_return || 0);
             });
 
@@ -771,11 +777,12 @@
 
             let html = '';
             (data || []).forEach(t => {
+                const valAposta = t.bet_value || t.amount || 0;
                 html += `
                     <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs shadow-sm">
                         <div>
                             <div class="font-bold text-slate-800">${t.client_name} (PIN: ${t.pin})</div>
-                            <div class="text-slate-500">R$ ${parseFloat(t.bet_value || 0).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
+                            <div class="text-slate-500">R$ ${parseFloat(valAposta).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
                         </div>
                         <span class="font-bold text-amber-600">${t.status}</span>
                     </div>
