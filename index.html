@@ -504,9 +504,10 @@
             let retornoPossivel = valor * totalOdd;
             if (retornoPossivel > 500) retornoPossivel = 500.00;
 
-            // Envia tanto 'bet_value' quanto 'amount' para garantir compatibilidade
+            // Envia tanto 'pin' como 'code', além de 'bet_value' e 'amount' para garantir compatibilidade com qualquer schema
             const ticketPayload = {
                 pin: pinCode,
+                code: pinCode,
                 client_name: nome,
                 bet_value: valor,
                 amount: valor,
@@ -528,7 +529,7 @@
 
             if (error) {
                 console.error("Erro Supabase:", error);
-                alert("Erro ao gravar pré-bilhete. Verifique as permissões da tabela 'tickets'.");
+                alert("Erro ao gravar pré-bilhete. Verifique se executou o comando SQL no Supabase.");
                 return;
             }
 
@@ -558,7 +559,13 @@
             const resContainer = document.getElementById('consultarResult');
             if (!pin) return;
 
-            const { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+            // Busca por pin ou por code
+            let { data, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+            if (error || !data) {
+                const resCode = await supabaseClient.from('tickets').select('*').eq('code', pin).single();
+                data = resCode.data;
+                error = resCode.error;
+            }
 
             resContainer.classList.remove('hidden');
             if (error || !data) {
@@ -625,7 +632,12 @@
             const res = document.getElementById('adminPINResult');
             if (!pin) return;
 
-            const { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+            let { data: ticket, error } = await supabaseClient.from('tickets').select('*').eq('pin', pin).single();
+            if (error || !ticket) {
+                const resCode = await supabaseClient.from('tickets').select('*').eq('code', pin).single();
+                ticket = resCode.data;
+                error = resCode.error;
+            }
 
             if (error || !ticket) {
                 res.innerHTML = `<div class="p-3 bg-red-50 text-red-600 rounded-xl border border-red-200">Bilhete não encontrado.</div>`;
@@ -640,13 +652,14 @@
             `).join('');
 
             const valAposta = ticket.bet_value || ticket.amount || 0;
+            const codigoExibicao = ticket.pin || ticket.code;
 
             res.innerHTML = `
                 <div id="comprovanteCard" class="bg-white p-4 rounded-xl border border-slate-200 space-y-3 shadow-sm">
                     <div class="flex justify-between items-start">
                         <div>
                             <h4 class="font-bold text-slate-800 text-sm">${ticket.client_name}</h4>
-                            <span class="text-[10px] text-slate-500">PIN: <strong class="text-amber-600 font-mono text-xs">${ticket.pin}</strong></span>
+                            <span class="text-[10px] text-slate-500">PIN: <strong class="text-amber-600 font-mono text-xs">${codigoExibicao}</strong></span>
                         </div>
                         <span class="px-2 py-1 bg-amber-100 text-amber-700 font-bold text-[10px] rounded-lg">${ticket.status}</span>
                     </div>
@@ -727,7 +740,7 @@
 
             const novaHome = prompt(`Nova Odd Casa (${match.home_team}):`, match.odd_home);
             const novaDraw = prompt(`Nova Odd Empate:`, match.odd_draw);
-            const novaAway = prompt(`Nova Odd Fora (${match.away_team}):`, match.odd_away);
+            const novaAway = prompt(`Nova Odd Fora (${match.away_team}):`, match.away_team);
 
             if (novaHome && novaDraw && novaAway) {
                 await supabaseClient.from('matches').update({
@@ -778,10 +791,11 @@
             let html = '';
             (data || []).forEach(t => {
                 const valAposta = t.bet_value || t.amount || 0;
+                const codigoExibicao = t.pin || t.code || 'N/A';
                 html += `
                     <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center text-xs shadow-sm">
                         <div>
-                            <div class="font-bold text-slate-800">${t.client_name} (PIN: ${t.pin})</div>
+                            <div class="font-bold text-slate-800">${t.client_name} (PIN: ${codigoExibicao})</div>
                             <div class="text-slate-500">R$ ${parseFloat(valAposta).toFixed(2)} -> R$ ${parseFloat(t.possible_return || 0).toFixed(2)}</div>
                         </div>
                         <span class="font-bold text-amber-600">${t.status}</span>
